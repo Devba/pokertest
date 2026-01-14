@@ -16,10 +16,11 @@ const rootElement = document.getElementById('root');
     </React.StrictMode>,
     rootElement,
   );
-
+   rootElement.style.display = 'block';
   // Hide loading screen and show app content when window has fully loaded
   window.onload = () => {
-    rootElement.style.display = 'block';
+    
+    //rootElement.style.display = 'block';
   };
 
   // Disable react dev tools in production

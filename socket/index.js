@@ -128,6 +128,8 @@ const init = (socket, io) => {
       (seat) => seat && seat.player.socketId === socket.id,
     );
 
+    console.log("leaving tableid====>", tableId, table, player)
+
     if (seat && player) {
       updatePlayerBankroll(player, seat.stack);
     }
@@ -358,7 +360,7 @@ const init = (socket, io) => {
         seat.player.socketId !== socketId &&
         !(seat.lastAction === WINNER && tableCopy.wentToShowdown)
       ) {
-        seat.hand = hiddenHand;
+      //  seat.hand = hiddenHand;
       }
     }
     return tableCopy;

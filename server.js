@@ -1,18 +1,18 @@
 const path = require("path");
 const express = require("express");
 const config = require("./config");
-// const connectDB = require('./config/db');
+const connectDB = require('./config/db');
 const configureMiddleware = require("./middleware");
 const configureRoutes = require("./routes");
 const socketio = require("socket.io");
 const gameSocket = require("./socket/index");
 
 // Connect and get reference to mongodb instance
-// let db;
+let db;
 
-// (async function () {
-//   db = await connectDB();
-// })();
+ (async function () {
+   db = await connectDB();
+ })();
 
 // Init express app
 const app = express();

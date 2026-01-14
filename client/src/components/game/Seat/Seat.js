@@ -29,7 +29,6 @@ export const Seat = ({ currentTable, seatNumber, sitDown }) => {
   const { chipsAmount } = useContext(globalContext)
   const { standUp, seatId, rebuy } = useContext(gameContext)
    
-
   const seat = currentTable.seats[seatNumber]
   const maxBuyin = currentTable.limit
   const minBuyIn = currentTable.minBet * 2 * 10
@@ -155,27 +154,17 @@ export const Seat = ({ currentTable, seatNumber, sitDown }) => {
           >
             <p className="seat-name">{seat.player.name}</p>
             {seat.stack && (
-              <p className="seat-stack">
-                {new Intl.NumberFormat(document.documentElement.lang).format(
-                  seat.stack,
-                )}
-              </p>
+              <>
+                <p className="seat-stack">
+                  {new Intl.NumberFormat(document.documentElement.lang).format(
+                    seat.stack,
+                  )} 
+                </p>
+                <p className="seat-blinds">
+                  ({Math.floor(seat.stack / (currentTable.minBet * 2))} BB)
+                </p>
+              </>
             )}
-
-            {/* <NameTag>
-              <ColoredText primary textAlign="center">
-                {convertOmittedAddress(seat.player.name)}
-                <br />
-                {seat.stack && (
-                  <ColoredText secondary>
-                    <PokerChip width="15" height="15" />{' '}
-                    {new Intl.NumberFormat(
-                      document.documentElement.lang,
-                    ).format(seat.stack)}
-                  </ColoredText>
-                )}
-              </ColoredText>
-            </NameTag> */}
           </PositionedUISlot>
         </PositionedUISlot>
       )}
