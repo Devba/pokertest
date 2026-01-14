@@ -83,6 +83,7 @@ export const Seat = ({ currentTable, seatNumber, sitDown }) => {
             style={{ minWidth: '150px', zIndex: '55' }}
           >
             <ChipsAmountPill chipsAmount={seat.bet} />
+            <ChipsAmountPill chipsAmount={seat.bet} minBet={currentTable.minBet} />
             {!currentTable.handOver && seat.lastAction && (
               <LastAction bgColor={gameActions[seat.lastAction]['bgColor']}>{gameActions[seat.lastAction]['text']}</LastAction>
             )}

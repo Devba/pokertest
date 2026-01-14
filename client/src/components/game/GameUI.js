@@ -4,6 +4,7 @@ import Button from '../buttons/Button'
 import { BetSlider } from './Betslider/BetSlider'
 import { UIWrapper } from './UIWrapper'
 import { Row, Col } from 'react-bootstrap'
+import BetWheelSelector from './BetWheel/BetWheelSelector'
 
 export const GameUI = ({
   currentTable,
@@ -101,6 +102,11 @@ export const GameUI = ({
   )`,
               }}
             >
+              <BetWheelSelector 
+                stack={currentTable.seats[seatId].stack} 
+                onValueChange={(amount) => setBet(amount)}
+                minBet={currentTable.minBet}
+              />
               <BetSlider
                 currentTable={currentTable}
                 seatId={seatId}

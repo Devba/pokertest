@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const Table = require('../pokergame/Table');
 const Player = require('../pokergame/Player');
+const BotManager = require('../pokergame/BotManager');
 const {
   CS_FETCH_LOBBY_INFO,
   SC_RECEIVE_LOBBY_INFO,
@@ -37,6 +38,9 @@ const tables = {
 };
 const players = {};
 
+// Initialize BotManager (will be set when io is available)
+let botManager = null;
+
 function getCurrentPlayers() {
   return Object.values(players).map((player) => ({
     socketId: player.socketId,
@@ -58,6 +62,12 @@ function getCurrentTables() {
 }
 
 const init = (socket, io) => {
+  // Initialize BotManager if not already initialized
+  if (!botManager) {
+    botManager = new BotManager(io, tables, players);
+    console.log('🤖 BotManager initialized');
+  }
+
   socket.on(CS_LOBBY_CONNECT, ({gameId, address, userInfo }) => {
     socket.join(gameId)
     io.to(gameId).emit(SC_LOBBY_CONNECTED, {address, userInfo})
@@ -323,6 +333,9 @@ const init = (socket, io) => {
 
       if (table.handOver) {
         initNewHand(table);
+      } else {
+        // Check if next player is a bot
+        botManager.checkAndActForBot(table, table.id);
       }
     }, 1000);
   }
@@ -335,6 +348,9 @@ const init = (socket, io) => {
       table.clearWinMessages();
       table.startHand();
       broadcastToTable(table, '--- New hand started ---');
+      
+      // Check if first player to act is a bot
+      botManager.checkAndActForBot(table, table.id);
     }, 5000);
   }
 
@@ -368,4 +384,5 @@ const init = (socket, io) => {
 };
 
 
-module.exports = { init }; 
+module.exports = { init, botManager, tables, players };
+ 
