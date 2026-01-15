@@ -21,6 +21,26 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Debug dev:server (nodemon)",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "dev:server"
+            ],
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "NODE_ENV": "development"
+            },
+            "restart": true,
+            "internalConsoleOptions": "neverOpen"
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "Launch Program",
             "skipFiles": [
                 "<node_internals>/**"

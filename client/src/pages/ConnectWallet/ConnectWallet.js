@@ -71,6 +71,7 @@ const ConnectWallet = () => {
             navigate('/play')
           }
         }, 1000)
+        
       }
     } catch (error) {
       console.error('Error conectando con MetaMask:', error)

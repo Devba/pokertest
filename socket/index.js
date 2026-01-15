@@ -115,7 +115,7 @@ const init = (socket, io) => {
   socket.on(CS_JOIN_TABLE, (tableId) => {
     const table = tables[tableId];
     const player = players[socket.id];
-    console.log("tableid====>", tableId, table, player)
+    console.log("Join table", tableId,  player)
     table.addPlayer(player);
     socket.emit(SC_TABLE_JOINED, { tables: getCurrentTables(), tableId });
     socket.broadcast.emit(SC_TABLES_UPDATED, getCurrentTables());
@@ -138,7 +138,7 @@ const init = (socket, io) => {
       (seat) => seat && seat.player.socketId === socket.id,
     );
 
-    console.log("leaving tableid====>", tableId, table, player)
+    console.log("leaving tableid====>", tableId, player)
 
     if (seat && player) {
       updatePlayerBankroll(player, seat.stack);
@@ -376,7 +376,7 @@ const init = (socket, io) => {
         seat.player.socketId !== socketId &&
         !(seat.lastAction === WINNER && tableCopy.wentToShowdown)
       ) {
-      //  seat.hand = hiddenHand;
+        seat.hand = hiddenHand;
       }
     }
     return tableCopy;
@@ -384,5 +384,10 @@ const init = (socket, io) => {
 };
 
 
-module.exports = { init, botManager, tables, players };
+module.exports = { 
+  init, 
+  get botManager() { return botManager; },
+  tables, 
+  players 
+};
  

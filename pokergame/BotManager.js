@@ -78,6 +78,21 @@ class BotManager {
 
     console.log(`🤖 Bot ${bot.name} joined table ${tableId} at seat ${randomSeat}`);
 
+    // Broadcast table update
+    this.broadcastToTable(table, `${bot.name} joined the table`);
+
+    // Start hand if this was the second player to sit and hand is over
+    if (table.activePlayers().length >= 2 && table.handOver) {
+      console.log(`🃏 Starting hand with ${table.activePlayers().length} players`);
+      setTimeout(() => {
+        table.startHand();
+        this.broadcastToTable(table, '--- Hand started ---');
+        
+        // Check if first player to act is a bot
+        this.checkAndActForBot(table, tableId);
+      }, 2000);
+    }
+
     return bot;
   }
 
@@ -294,7 +309,7 @@ class BotManager {
         !(seat.lastAction === 'WINNER' && tableCopy.wentToShowdown)
       ) {
         // Optionally hide cards (commented out in original)
-        // seat.hand = hiddenHand;
+         seat.hand = hiddenHand;
       }
     }
     return tableCopy;
@@ -318,6 +333,18 @@ class BotManager {
     }
 
     console.log(`🤖 Added ${botsToAdd} bots to table ${tableId}`);
+
+    // Start hand if enough players and hand is over
+    if (table.activePlayers().length >= 2 && table.handOver) {
+      console.log(`🃏 Starting initial hand with ${table.activePlayers().length} players`);
+      setTimeout(() => {
+        table.startHand();
+        this.broadcastToTable(table, '--- Hand started with bots ---');
+        
+        // Check if first player to act is a bot
+        this.checkAndActForBot(table, tableId);
+      }, 2000);
+    }
   }
 
   /**

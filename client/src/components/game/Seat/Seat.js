@@ -27,14 +27,14 @@ import './Seat.scss'
 
 export const Seat = ({ currentTable, seatNumber, sitDown }) => {
   const { chipsAmount } = useContext(globalContext)
-  const { standUp, seatId, rebuy } = useContext(gameContext)
+  const { standUp, seatId, rebuy, showAsBlinds, toggleShowAsBlinds } = useContext(gameContext)
    
   const seat = currentTable.seats[seatNumber]
   const maxBuyin = currentTable.limit
   const minBuyIn = currentTable.minBet * 2 * 10
 
   useEffect(() => {
-    console.log(currentTable, seatId, seatNumber, currentTable.seats[seatNumber])
+    console.log("seat effect", currentTable.seats[seatNumber])
     // eslint-disable-next-line
   }, [currentTable])
 
@@ -82,8 +82,12 @@ export const Seat = ({ currentTable, seatNumber, sitDown }) => {
             origin="top center"
             style={{ minWidth: '150px', zIndex: '55' }}
           >
-            <ChipsAmountPill chipsAmount={seat.bet} />
-            <ChipsAmountPill chipsAmount={seat.bet} minBet={currentTable.minBet} />
+            <ChipsAmountPill 
+              chipsAmount={seat.bet} 
+              minBet={currentTable.minBet} 
+              showAsBlinds={showAsBlinds}
+              toggleShowAsBlinds={toggleShowAsBlinds}
+            />
             {!currentTable.handOver && seat.lastAction && (
               <LastAction bgColor={gameActions[seat.lastAction]['bgColor']}>{gameActions[seat.lastAction]['text']}</LastAction>
             )}

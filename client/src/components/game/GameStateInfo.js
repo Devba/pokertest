@@ -3,6 +3,7 @@ import styled from 'styled-components'
  
 import ChipsAmountPill from './ChipsAmountPill'
 import { InfoPill } from './InfoPill'
+import gameContext from '../../context/game/gameContext'
 
 const Wrapper = styled.div`
   display: grid;
@@ -15,7 +16,7 @@ const Wrapper = styled.div`
 `
 
 export const GameStateInfo = ({ currentTable }) => {
-   
+  const { showAsBlinds, toggleShowAsBlinds } = useContext(gameContext)
 
   return (
     <Wrapper>
@@ -34,6 +35,9 @@ export const GameStateInfo = ({ currentTable }) => {
       {!!currentTable.mainPot && (
         <ChipsAmountPill
           chipsAmount={currentTable.mainPot}
+          minBet={currentTable.minBet}
+          showAsBlinds={showAsBlinds}
+          toggleShowAsBlinds={toggleShowAsBlinds}
           style={{ minWidth: '150px' }}
         />
       )}
@@ -42,6 +46,9 @@ export const GameStateInfo = ({ currentTable }) => {
         currentTable.sidePots.map((sidePot) => (
           <ChipsAmountPill
             chipsAmount={sidePot.amount}
+            minBet={currentTable.minBet}
+            showAsBlinds={showAsBlinds}
+            toggleShowAsBlinds={toggleShowAsBlinds}
             style={{ minWidth: '150px' }}
           />
         ))}

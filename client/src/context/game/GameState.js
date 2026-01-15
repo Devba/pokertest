@@ -27,6 +27,7 @@ const GameState = ({ children }) => {
   const [seatId, setSeatId] = useState(null)
   const [turn, setTurn] = useState(false)
   const [turnTimeOutHandle, setHandle] = useState(null)
+  const [showAsBlinds, setShowAsBlinds] = useState(false)
 
   const currentTableRef = React.useRef(currentTable)
 
@@ -42,7 +43,11 @@ const GameState = ({ children }) => {
 
   useEffect(() => {
     if (turn && !turnTimeOutHandle) {
-      const handle = setTimeout(fold, 15000)
+      // Play beep sound when it's player's turn
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZUQ0PVqzn77BdGAo+ltrzxnMpBSl+zPLaizsIGGS56+mjUhELTKXh8bllHAU2j9nyy3kqBSh6y/HajD0HHWq97ueWTg4OUqjm8LRfGgo7k9vzyXUsBSh4yPDej0AIGmi56OabUBEMSqPf8bdfGgU0jNrzzn0vBil3yfDdkEIJGGW56+mjURELTKPf8bdgGgU1jtryz34wBSh4yfDdj0AIGme56+mjUREMSqPf8bdgGgU0jNrzzn0vBil3yfDdkEIJGGW56+mjURELTKPf8bdgGgU1jtryz34wBSh4yfDdj0AIGme56+mjUREMSqPf8bdgGgU0jNrzzn0vBil3yfDdkEIJGGW56+mjURELTKPf8bdgGgU1jtryz34wBSh4yfDdj0AI')
+      audio.play().catch(e => console.log('Audio play failed:', e))
+      
+      const handle = setTimeout(fold, 3000)
       setHandle(handle)
     } else {
       turnTimeOutHandle && clearTimeout(turnTimeOutHandle)
@@ -118,6 +123,7 @@ const GameState = ({ children }) => {
   }
 
   const fold = () => {
+    console.log("fold ---",currentTableRef) ;
     currentTableRef &&
       currentTableRef.current &&
       socket.emit(CS_FOLD, currentTableRef.current.id)
@@ -141,6 +147,10 @@ const GameState = ({ children }) => {
       socket.emit(CS_RAISE, { tableId: currentTableRef.current.id, amount })
   }
 
+  const toggleShowAsBlinds = () => {
+    setShowAsBlinds((prev) => !prev)
+  }
+
   return (
     <GameContext.Provider
       value={{
@@ -157,6 +167,8 @@ const GameState = ({ children }) => {
         call,
         raise,
         rebuy,
+        showAsBlinds,
+        toggleShowAsBlinds,
       }}
     >
       {children}

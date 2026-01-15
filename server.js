@@ -44,24 +44,23 @@ setTimeout(() => {
 
 // Optional: Add bots to tables on server start (after a delay to ensure initialization)
 // Uncomment the code below to auto-populate tables with bots
-/*
+
 setTimeout(() => {
-    const { botManager, tables } = gameSocket;
-    if (botManager) {
+    if (gameSocket.botManager) {
         console.log('🤖 Adding bots to tables...');
         
         // Add bots to table 1
-        botManager.fillTableWithBots(1, 4); // Fill to 4 players
+       // gameSocket.botManager.fillTableWithBots(1, 4); // Fill to 4 players
         
         // Or add specific bots with different strategies:
         // botManager.addBotToTable(1, 'tight');
         // botManager.addBotToTable(1, 'aggressive');
-        // botManager.addBotToTable(1, 'loose');
+         gameSocket.botManager.addBotToTable(1, 'loose');
         
         console.log('✅ Bots added successfully');
     }
-}, 2000); // Wait 2 seconds for full initialization
-*/
+}, 5000); // Wait 2 seconds for full initialization
+
 
 // Error handling - close server
 process.on("unhandledRejection", (err) => {
