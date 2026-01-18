@@ -50,15 +50,22 @@ const Play = () => {
     check,
     call,
     raise,
+    timebfFold,setTimebfFold
   } = useContext(gameContext)
    
 
   const [bet, setBet] = useState(0)
+  const [timeDelay, setTimeDelay] = useState(0)
 
+  // Sync timeDelay slider with timebfFold (convert seconds to milliseconds)
+  useEffect(() => {
+    setTimebfFold(timeDelay * 1000)
+  }, [timeDelay, setTimebfFold])
 
   useEffect(() => {
     console.log(socket, walletAddress)
     if(!socket){
+      console.log("No socket, navigating to home")
       navigate("/")
     }
 
@@ -109,6 +116,32 @@ const Play = () => {
               <Button small secondary onClick={leaveTable}>
                 Leave
               </Button>
+            </PositionedUISlot>
+            <PositionedUISlot
+              top="2vh"
+              right="16rem"
+              scale="0.65"
+              style={{ zIndex: '50' }}
+            >
+              <div style={{ 
+                backgroundColor: 'rgba(0, 0, 0, 0.7)', 
+                padding: '0.5rem 1rem', 
+                borderRadius: '8px',
+                color: 'white',
+                minWidth: '200px'
+              }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                  Time Delay: {timeDelay}s
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="30"
+                  value={timeDelay}
+                  onChange={(e) => setTimeDelay(Number(e.target.value))}
+                  style={{ width: '100%', cursor: 'pointer' }}
+                />
+              </div>
             </PositionedUISlot>
           </>
         )}

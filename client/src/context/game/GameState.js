@@ -28,6 +28,7 @@ const GameState = ({ children }) => {
   const [turn, setTurn] = useState(false)
   const [turnTimeOutHandle, setHandle] = useState(null)
   const [showAsBlinds, setShowAsBlinds] = useState(false)
+  const [timebfFold, setTimebfFold] = useState(20000)
 
   const currentTableRef = React.useRef(currentTable)
 
@@ -47,7 +48,7 @@ const GameState = ({ children }) => {
       const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZUQ0PVqzn77BdGAo+ltrzxnMpBSl+zPLaizsIGGS56+mjUhELTKXh8bllHAU2j9nyy3kqBSh6y/HajD0HHWq97ueWTg4OUqjm8LRfGgo7k9vzyXUsBSh4yPDej0AIGmi56OabUBEMSqPf8bdfGgU0jNrzzn0vBil3yfDdkEIJGGW56+mjURELTKPf8bdgGgU1jtryz34wBSh4yfDdj0AIGme56+mjUREMSqPf8bdgGgU0jNrzzn0vBil3yfDdkEIJGGW56+mjURELTKPf8bdgGgU1jtryz34wBSh4yfDdj0AIGme56+mjUREMSqPf8bdgGgU0jNrzzn0vBil3yfDdkEIJGGW56+mjURELTKPf8bdgGgU1jtryz34wBSh4yfDdj0AI')
       audio.play().catch(e => console.log('Audio play failed:', e))
       
-      const handle = setTimeout(fold, 3000)
+      const handle = setTimeout(fold, timebfFold)
       setHandle(handle)
     } else {
       turnTimeOutHandle && clearTimeout(turnTimeOutHandle)
@@ -169,6 +170,8 @@ const GameState = ({ children }) => {
         rebuy,
         showAsBlinds,
         toggleShowAsBlinds,
+        timebfFold,
+        setTimebfFold,
       }}
     >
       {children}

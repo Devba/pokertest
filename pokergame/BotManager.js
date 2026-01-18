@@ -28,7 +28,7 @@ class BotManager {
       botSocketId,
       botId,
       botName,
-      10000, // Starting chips
+      100000, // Starting chips
       botStrategy
     );
 
@@ -229,7 +229,7 @@ class BotManager {
           // Check if next player is also a bot
           this.checkAndActForBot(table, tableId);
         }
-      }, 800);
+      }, 1000);
     }
   }
 

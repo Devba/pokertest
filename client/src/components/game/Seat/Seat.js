@@ -111,9 +111,9 @@ export const Seat = ({ currentTable, seatNumber, sitDown }) => {
                   <PokerCard
                     key={index}
                     card={card}
-                    width="5vw"
+                    width="8vw"
                     maxWidth="60px"
-                    minWidth="30px"
+                    minWidth="50px"
                   />
                 ))}
             </Hand>
