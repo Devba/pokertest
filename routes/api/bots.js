@@ -97,23 +97,42 @@ router.post('/fill', (req, res) => {
 // @route   DELETE /api/bots/remove
 // @desc    Remove a bot from a table
 // @access  Public
-router.delete('/remove', (req, res) => {
+router.post('/remove', (req, res) => {
+  console.log("Removing bot from table...");
   try {
-    const { tableId, botSocketId } = req.body;
+    const { tableId, botName, botSocketId } = req.body;
     
-    if (!tableId || !botSocketId) {
-      return res.status(400).json({ error: 'Table ID and bot socket ID are required' });
+    if (!tableId) {
+      return res.status(400).json({ error: 'Table ID is required' });
+    }
+
+    if (!botName && !botSocketId) {
+      return res.status(400).json({ error: 'Either bot name or bot socket ID is required' });
     }
 
     if (!botManager) {
       return res.status(500).json({ error: 'Bot manager not initialized' });
     }
 
-    botManager.removeBotFromTable(botSocketId, tableId);
+    let socketId = botSocketId;
+    
+    // If botName provided, find the bot's socket ID
+    if (botName && !botSocketId) {
+      const bots = botManager.getBotsAtTable(tableId);
+      const bot = bots.find(b => b.name === botName);
+      
+      if (!bot) {
+        return res.status(404).json({ error: `Bot "${botName}" not found at table ${tableId}` });
+      }
+      
+      socketId = bot.socketId;
+    }
+
+    botManager.removeBotFromTable(socketId, tableId);
 
     res.json({
       success: true,
-      message: `Bot removed from table ${tableId}`
+      message: `Bot ${botName || socketId} removed from table ${tableId}`
     });
   } catch (error) {
     console.error('Error removing bot:', error);

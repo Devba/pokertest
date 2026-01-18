@@ -117,6 +117,20 @@ const Play = () => {
                 Leave
               </Button>
                <Button small secondary onClick={async () => {
+                // Fetch current bots at the table
+                let botsAtTable = [];
+                try {
+                  const response = await fetch('http://192.168.1.105:3000/api/bots/list/1');
+                  const data = await response.json();
+                  botsAtTable = data.bots || [];
+                } catch (error) {
+                  console.error('Error fetching bots:', error);
+                }
+
+                const botOptions = botsAtTable.length > 0 
+                  ? botsAtTable.map(bot => `<option value="${bot.name}">${bot.name} (${bot.strategy})</option>`).join('')
+                  : '<option value="" disabled>No bots at table</option>';
+
                 const result = await Swal.fire({
                   title: 'Bot Manager',
                   html: `
@@ -133,8 +147,10 @@ const Play = () => {
                       </div>
                       <div style="margin-bottom: 1rem;">
                         <h3 style="margin-bottom: 0.5rem;">Remove Bot</h3>
-                        <label style="display: block; margin-bottom: 0.5rem;">Bot Name:</label>
-                        <input id="bot-name" class="swal2-input" type="text" placeholder="Enter bot name" style="width: 100%;" />
+                        <label style="display: block; margin-bottom: 0.5rem;">Select Bot:</label>
+                        <select id="bot-name" class="swal2-input" style="width: 100%;" ${botsAtTable.length === 0 ? 'disabled' : ''}>
+                          ${botOptions}
+                        </select>
                       </div>
                     </div>
                   `,
@@ -151,8 +167,8 @@ const Play = () => {
                   },
                   preDeny: () => {
                     const botName = document.getElementById('bot-name').value;
-                    if (!botName) {
-                      Swal.showValidationMessage('Please enter a bot name');
+                    if (!botName || botsAtTable.length === 0) {
+                      Swal.showValidationMessage('No bot selected or no bots available');
                       return false;
                     }
                     return {
@@ -331,7 +347,13 @@ const Play = () => {
                 {currentTable.board && currentTable.board.length > 0 && (
                   <>
                     {currentTable.board.map((card, index) => (
-                      <PokerCard key={index} card={card} />
+                      <PokerCard 
+                        key={index} 
+                        card={card} 
+                        width="6.1vw"
+                        maxWidth="94px"
+                        minWidth="65px"
+                      />
                     ))}
                   </>
                 )}

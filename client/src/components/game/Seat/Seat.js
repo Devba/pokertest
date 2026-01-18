@@ -112,7 +112,7 @@ export const Seat = ({ currentTable, seatNumber, sitDown }) => {
                     key={index}
                     card={card}
                     width="8vw"
-                    maxWidth="60px"
+                    maxWidth="85px"
                     minWidth="50px"
                   />
                 ))}
