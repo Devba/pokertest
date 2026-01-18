@@ -101,7 +101,7 @@ const Play = () => {
           backgroundSize: 'contain',
           backgroundPosition: 'center center',
           backgroundAttachment: 'fixed',
-          backgroundColor: 'black',
+          backgroundColor: 'yellow',
         }}
         className="play-area"
       >
@@ -115,6 +115,108 @@ const Play = () => {
             >
               <Button small secondary onClick={leaveTable}>
                 Leave
+              </Button>
+               <Button small secondary onClick={async () => {
+                const result = await Swal.fire({
+                  title: 'Bot Manager',
+                  html: `
+                    <div style="text-align: left; padding: 1rem;">
+                      <div style="margin-bottom: 1.5rem;">
+                        <h3 style="margin-bottom: 0.5rem;">Add Bot</h3>
+                        <label style="display: block; margin-bottom: 0.5rem;">Strategy:</label>
+                        <select id="bot-strategy" class="swal2-input" style="width: 100%;">
+                          <option value="tight">Tight</option>
+                          <option value="aggressive">Aggressive</option>
+                          <option value="loose">Loose</option>
+                          <option value="balanced">Balanced</option>
+                        </select>
+                      </div>
+                      <div style="margin-bottom: 1rem;">
+                        <h3 style="margin-bottom: 0.5rem;">Remove Bot</h3>
+                        <label style="display: block; margin-bottom: 0.5rem;">Bot Name:</label>
+                        <input id="bot-name" class="swal2-input" type="text" placeholder="Enter bot name" style="width: 100%;" />
+                      </div>
+                    </div>
+                  `,
+                  showCancelButton: true,
+                  showDenyButton: true,
+                  confirmButtonText: 'Add Bot',
+                  denyButtonText: 'Remove Bot',
+                  cancelButtonText: 'Cancel',
+                  preConfirm: () => {
+                    return {
+                      action: 'add',
+                      strategy: document.getElementById('bot-strategy').value
+                    }
+                  },
+                  preDeny: () => {
+                    const botName = document.getElementById('bot-name').value;
+                    if (!botName) {
+                      Swal.showValidationMessage('Please enter a bot name');
+                      return false;
+                    }
+                    return {
+                      action: 'remove',
+                      botName: botName
+                    }
+                  }
+                });
+
+                if (result.isConfirmed) {
+                  // Add bot
+                  try {
+                    const response = await fetch('http://192.168.1.105:3000/api/bots/add', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        tableId: 1,
+                        strategy: result.value.strategy
+                      })
+                    });
+                    const data = await response.json();
+                    console.log('Bot added:', data);
+                    toastMixin.fire({
+                      title: `Bot added with ${result.value.strategy} strategy`,
+                      icon: 'success'
+                    });
+                  } catch (error) {
+                    console.error('Error adding bot:', error);
+                    toastMixin.fire({
+                      title: 'Failed to add bot',
+                      icon: 'error'
+                    });
+                  }
+                } else if (result.isDenied) {
+                  // Remove bot
+                  try {
+                    const response = await fetch('http://192.168.1.105:3000/api/bots/remove', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        tableId: 1,
+                        botName: result.value.botName
+                      })
+                    });
+                    const data = await response.json();
+                    console.log('Bot removed:', data);
+                    toastMixin.fire({
+                      title: `Bot ${result.value.botName} removed`,
+                      icon: 'success'
+                    });
+                  } catch (error) {
+                    console.error('Error removing bot:', error);
+                    toastMixin.fire({
+                      title: 'Failed to remove bot',
+                      icon: 'error'
+                    });
+                  }
+                }
+               }}>
+                Manage Bots
               </Button>
             </PositionedUISlot>
             <PositionedUISlot
@@ -138,7 +240,10 @@ const Play = () => {
                   min="0"
                   max="30"
                   value={timeDelay}
-                  onChange={(e) => setTimeDelay(Number(e.target.value))}
+                  onChange={(e) => {
+                    const td = Number(e.target.value) < 29 ? Number(e.target.value) : 300;
+                    setTimeDelay(td);
+                  }}
                   style={{ width: '100%', cursor: 'pointer' }}
                 />
               </div>
@@ -215,7 +320,7 @@ const Play = () => {
               <PositionedUISlot
                 width="100%"
                 origin="center center"
-                scale="0.60"
+                scale="0.20"
                 style={{
                   display: 'flex',
                   textAlign: 'center',

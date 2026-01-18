@@ -8,5 +8,5 @@ export const BetSliderWrapper = styled.div({
   backgroundColor: 'transparent',
   opacity: '0.85',
   borderRadius: '2rem',
-  width: '100%',
+  width: '80%',
 });

@@ -43,19 +43,19 @@ export const GameUI = ({
                   currentTable.callAmount > 0
                 }
                 onClick={check}
-                style={{ minHeight: '100%' }}
+                style={{ height: '50%' }}
               >
                 Check
               </Button>
-            </Col>
-            <Col sm={4}>
-              <Button
+
+               <Button
                 small
                 disabled={
                   currentTable.callAmount === 0 ||
                   currentTable.seats[seatId].bet >= currentTable.callAmount
                 }
                 onClick={call}
+                style={{ height: '50%' }}
               >
                 Call{' '}
                 {/* {currentTable.callAmount &&
@@ -65,19 +65,21 @@ export const GameUI = ({
                   : ''} */}
               </Button>
             </Col>
-          </Row>
-        </Col>
-        <Col sm={12} md={6}>
-          <Row>
             <Col sm={4}>
-              <Button
+             <Button
                 small
                 onClick={() => raise(bet + currentTable.seats[seatId].bet)}
                 style={{ minHeight: '100%' }}
               >
                 Raise
               </Button>
+              
             </Col>
+          </Row>
+        </Col>
+        <Col sm={12} md={6}>
+          <Row>
+           
             <Col
               sm={{span: 7, offset: 1}}
               style={{
@@ -102,18 +104,19 @@ export const GameUI = ({
   )`,
               }}
             >
-              <BetWheelSelector 
-                stack={currentTable.seats[seatId].stack} 
-                onValueChange={(amount) => setBet(amount)}
-                minBet={currentTable.minBet}
-              />
-              <BetSlider
+               <BetSlider
                 currentTable={currentTable}
                 seatId={seatId}
                 bet={bet}
                 setBet={setBet}
                 style={{ display: 'flex', alignItems: 'center' }}
               />
+              <BetWheelSelector 
+                stack={currentTable.seats[seatId].stack} 
+                onValueChange={(amount) => setBet(amount)}
+                minBet={currentTable.minBet}
+              />
+             
             </Col>
           </Row>
         </Col>

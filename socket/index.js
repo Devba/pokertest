@@ -365,6 +365,8 @@ const init = (socket, io) => {
 
   function hideOpponentCards(table, socketId) {
     let tableCopy = JSON.parse(JSON.stringify(table));
+
+    return tableCopy;
     let hiddenCard = { suit: 'hidden', rank: 'hidden' };
     let hiddenHand = [hiddenCard, hiddenCard];
 
