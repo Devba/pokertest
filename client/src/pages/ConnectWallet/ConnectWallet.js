@@ -85,9 +85,32 @@ const ConnectWallet = () => {
   }
 
   // Función para iniciar sesión automáticamente
-  const handleAutoLogin = () => {
+  const handleAutoLogin = async () => {
+    const result = await Swal.fire({
+      title: 'Enter Your Name',
+      input: 'text',
+      inputLabel: 'Your username',
+      inputPlaceholder: 'Enter your username',
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value) {
+          return 'You need to enter a username!'
+        }
+        if (value.length < 3) {
+          return 'Username must be at least 3 characters long'
+        }
+        if (value.length > 20) {
+          return 'Username must be less than 20 characters'
+        }
+      }
+    })
+
+    if (!result.isConfirmed) {
+      return
+    }
+
     const walletAddress = generateRandomWallet()
-    const username = generateRandomUsername()
+    const username = result.value
     const gameId = '1' // ID del juego predeterminado
     
     setIsLoading(true)

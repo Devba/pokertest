@@ -15,7 +15,9 @@ import { GameUI } from '../components/game/GameUI'
 import { GameStateInfo } from '../components/game/GameStateInfo'
 import BrandingImage from '../components/game/BrandingImage'
 import PokerCard from '../components/game/PokerCard'
-import background from '../assets/img/background.png'
+import background from '../assets/img/cards-prepared-poker-night.jpg'
+
+
 import Swal from 'sweetalert2'
 import './Play.scss';
 
@@ -326,17 +328,18 @@ const Play = () => {
                 />
               </PositionedUISlot>
               <PositionedUISlot
-                top="-25%"
-                scale="0.55"
-                origin="top center"
-                style={{ zIndex: '1' }}
+              top="-4"
+              left="2.5"
+              scale="0.10"
+              style={{ zIndex: '50' }}
               >
-                <BrandingImage></BrandingImage>
+               
               </PositionedUISlot>
               <PositionedUISlot
-                width="100%"
+                width="50%"
+                
                 origin="center center"
-                scale="0.20"
+                scale="0.10"
                 style={{
                   display: 'flex',
                   textAlign: 'center',

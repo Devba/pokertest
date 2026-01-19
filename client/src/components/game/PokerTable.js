@@ -5,7 +5,7 @@ import table from '../../assets/game/table.svg';
 const StyledPokerTable = styled.img`
   display: block;
   pointer-events: none;
-  width: 88%;
+  width: 68%;
   height: 45%;
   margin: 32px auto 0px;
   z-index: 2;

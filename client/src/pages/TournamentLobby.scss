@@ -1,0 +1,23 @@
+.tournament-lobby {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.tournament-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 123, 255, 0.2);
+  }
+}
+
+.filter-tabs {
+  button {
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background-color: rgba(0, 123, 255, 0.2);
+    }
+  }
+}
