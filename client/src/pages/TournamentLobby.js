@@ -4,6 +4,7 @@ import Container from '../components/layout/Container'
 import Button from '../components/buttons/Button'
 import socketContext from '../context/websocket/socketContext'
 import globalContext from '../context/global/globalContext'
+import Swal from 'sweetalert2'
 import './TournamentLobby.scss'
 
 const TournamentLobby = () => {
@@ -14,60 +15,87 @@ const TournamentLobby = () => {
   const [selectedTournament, setSelectedTournament] = useState(null)
   const [filter, setFilter] = useState('all') // all, upcoming, live, completed
 
-  // Mock tournament data - replace with real API call
+  // Fetch tournaments from server
   useEffect(() => {
-    const mockTournaments = [
-      {
-        id: 1,
-        name: 'Daily Freeroll',
-        buyIn: 0,
-        prizePool: 1000,
-        maxPlayers: 100,
-        registeredPlayers: 45,
-        startTime: new Date(Date.now() + 3600000), // 1 hour from now
-        status: 'upcoming',
-        structure: 'No Limit Hold\'em',
-        blinds: '10/20',
-        level: 1
-      },
-      {
-        id: 2,
-        name: 'Sunday Million',
-        buyIn: 100,
-        prizePool: 10000,
-        maxPlayers: 500,
-        registeredPlayers: 234,
-        startTime: new Date(Date.now() + 7200000), // 2 hours from now
-        status: 'upcoming',
-        structure: 'No Limit Hold\'em',
-        blinds: '25/50',
-        level: 1
-      },
-      {
-        id: 3,
-        name: 'Turbo Bounty',
-        buyIn: 50,
-        prizePool: 5000,
-        maxPlayers: 200,
-        registeredPlayers: 156,
-        startTime: new Date(Date.now() - 600000), // Started 10 mins ago
-        status: 'live',
-        structure: 'No Limit Hold\'em',
-        blinds: '100/200',
-        level: 5
-      }
-    ]
-    setTournaments(mockTournaments)
-  }, [])
+    if (socket) {
+      // Request tournaments list
+      socket.emit('GET_TOURNAMENTS');
+
+      // Listen for tournaments list
+      socket.on('TOURNAMENTS_LIST', (tournamentsList) => {
+        console.log('Received tournaments:', tournamentsList);
+        setTournaments(tournamentsList);
+      });
+
+      // Listen for tournament updates
+      socket.on('TOURNAMENT_UPDATE', (tournamentInfo) => {
+        console.log('Tournament updated:', tournamentInfo);
+        setTournaments(prev => {
+          const index = prev.findIndex(t => t.id === tournamentInfo.id);
+          if (index >= 0) {
+            const updated = [...prev];
+            updated[index] = tournamentInfo;
+            return updated;
+          } else {
+            return [...prev, tournamentInfo];
+          }
+        });
+      });
+
+      // Listen for tournament created
+      socket.on('TOURNAMENT_CREATED', ({ tournament }) => {
+        console.log('Tournament created:', tournament);
+        setTournaments(prev => {
+          // Check if tournament already exists
+          const exists = prev.some(t => t.id === tournament.id);
+          if (exists) {
+            return prev;
+          }
+          return [...prev, tournament];
+        });
+      });
+
+      return () => {
+        socket.off('TOURNAMENTS_LIST');
+        socket.off('TOURNAMENT_UPDATE');
+        socket.off('TOURNAMENT_CREATED');
+      };
+    }
+  }, [socket]);
 
   const handleRegister = (tournamentId) => {
+    console.log('handleRegister called with:', tournamentId, 'socket:', !!socket, 'walletAddress:', walletAddress);
+    
+    // Generate random wallet if not present
+    let userWallet = walletAddress;
+    if (!userWallet || userWallet.trim() === '') {
+      userWallet = 'wallet_' + Math.random().toString(36).substring(2, 15);
+      console.log('Generated random wallet:', userWallet);
+    }
+    
     // Emit socket event to register for tournament
-    if (socket && walletAddress) {
+    if (socket) {
       socket.emit('REGISTER_TOURNAMENT', { 
         tournamentId, 
-        walletAddress 
+        walletAddress: userWallet 
       })
-      console.log('Registering for tournament:', tournamentId)
+      console.log('Registering for tournament:', tournamentId, 'with wallet:', userWallet)
+      
+      // Show loading toast
+      Swal.fire({
+        title: 'Registering...',
+        text: 'Please wait while we register you for the tournament',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading()
+        }
+      })
+    } else {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cannot Register',
+        text: 'Not connected to server'
+      })
     }
   }
 
@@ -81,19 +109,111 @@ const TournamentLobby = () => {
     }
   }
 
+  // Listen for registration responses
+  useEffect(() => {
+    if (socket) {
+      socket.on('TOURNAMENT_REGISTERED', (result) => {
+        console.log('Registration result:', result)
+        Swal.close() // Close any open Swal dialogs first
+        if (result.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Registration Successful!',
+            text: 'Click OK to join the tournament',
+            confirmButtonText: 'Join Tournament'
+          }).then((swalResult) => {
+            if (swalResult.isConfirmed && result.tournamentId) {
+              navigate(`/tournament/${result.tournamentId}`)
+            }
+          })
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Registration Failed',
+            text: result.message || 'Could not register for tournament'
+          })
+        }
+      })
+
+      socket.on('TOURNAMENT_UNREGISTERED', (result) => {
+        console.log('Unregistration result:', result)
+        Swal.close() // Close any open Swal dialogs first
+        if (result.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Unregistered',
+            text: 'You have been unregistered from the tournament',
+            timer: 2000
+          })
+        }
+      })
+
+      socket.on('TOURNAMENT_STARTED', (result) => {
+        console.log('Tournament started:', result)
+        if (result.success) {
+          const tournamentId = result.tournamentId || result.tournament?.id;
+          Swal.fire({
+            icon: 'success',
+            title: 'Tournament Starting!',
+            text: 'The tournament is now starting. Click OK to join your table.',
+            confirmButtonText: 'Join Table'
+          }).then((swalResult) => {
+            if (swalResult.isConfirmed && tournamentId) {
+              // Navigate to tournament play
+              navigate(`/tournament/${tournamentId}`)
+            }
+          })
+        }
+      })
+
+      socket.on('TOURNAMENT_ERROR', (error) => {
+        console.error('Tournament error:', error)
+        Swal.close() // Close any open Swal dialogs first
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: error.error || 'An error occurred'
+        })
+      })
+
+      socket.on('BOTS_ADDED', (result) => {
+        console.log('Bots added:', result)
+        Swal.close()
+        if (result.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Bots Added!',
+            text: result.message || `Added ${result.count} bot(s)`,
+            timer: 2000
+          })
+        }
+      })
+
+      return () => {
+        socket.off('TOURNAMENT_REGISTERED')
+        socket.off('TOURNAMENT_UNREGISTERED')
+        socket.off('TOURNAMENT_STARTED')
+        socket.off('TOURNAMENT_ERROR')
+        socket.off('BOTS_ADDED')
+      }
+    }
+  }, [socket, navigate])
+
   const filteredTournaments = tournaments.filter(t => 
     filter === 'all' ? true : t.status === filter
   )
 
   const getStatusBadge = (status) => {
     const colors = {
+      registering: '#28a745',
       upcoming: '#28a745',
       live: '#dc3545',
-      completed: '#6c757d'
+      completed: '#6c757d',
+      cancelled: '#6c757d'
     }
     return (
       <span style={{
-        backgroundColor: colors[status],
+        backgroundColor: colors[status] || '#6c757d',
         color: 'white',
         padding: '4px 12px',
         borderRadius: '12px',
@@ -116,9 +236,128 @@ const TournamentLobby = () => {
           marginBottom: '2rem'
         }}>
           <h1>Tournament Lobby</h1>
-          <Button small secondary onClick={() => navigate('/')}>
-            Back to Main
-          </Button>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <Button 
+              small 
+              onClick={async () => {
+                const result = await Swal.fire({
+                  title: 'Create New Tournament',
+                  html: `
+                    <div style="text-align: left; padding: 0.5rem;">
+                      <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Tournament Name</label>
+                        <input id="tournament-name" class="swal2-input" type="text" placeholder="My Tournament" style="width: 100%; margin: 0;" />
+                      </div>
+                      
+                      <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Buy-in Amount ($)</label>
+                        <input id="buy-in" class="swal2-input" type="number" placeholder="0" min="0" style="width: 100%; margin: 0;" />
+                      </div>
+                      
+                      <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Max Players</label>
+                        <select id="max-players" class="swal2-input" style="width: 100%; margin: 0;">
+                          <option value="50">50</option>
+                          <option value="100" selected>100</option>
+                          <option value="200">200</option>
+                          <option value="500">500</option>
+                        </select>
+                      </div>
+                      
+                      <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Starting Chips</label>
+                        <select id="starting-chips" class="swal2-input" style="width: 100%; margin: 0;">
+                          <option value="1000">1,000</option>
+                          <option value="5000" selected>5,000</option>
+                          <option value="10000">10,000</option>
+                          <option value="20000">20,000</option>
+                        </select>
+                      </div>
+                      
+                      <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Blind Structure</label>
+                        <select id="blind-structure" class="swal2-input" style="width: 100%; margin: 0;">
+                          <option value="normal" selected>Normal (10 hands/level)</option>
+                          <option value="turbo">Turbo (5 hands/level)</option>
+                          <option value="hyper">Hyper Turbo (3 hands/level)</option>
+                        </select>
+                      </div>
+                      
+                      <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Start Time</label>
+                        <select id="start-time" class="swal2-input" style="width: 100%; margin: 0;">
+                          <option value="immediate" selected>Start Immediately</option>
+                          <option value="5">In 5 minutes</option>
+                          <option value="15">In 15 minutes</option>
+                          <option value="30">In 30 minutes</option>
+                          <option value="60">In 1 hour</option>
+                        </select>
+                      </div>
+                    </div>
+                  `,
+                  showCancelButton: true,
+                  confirmButtonText: 'Create Tournament',
+                  cancelButtonText: 'Cancel',
+                  width: '600px',
+                  preConfirm: () => {
+                    const name = document.getElementById('tournament-name').value;
+                    const buyIn = document.getElementById('buy-in').value;
+                    const maxPlayers = document.getElementById('max-players').value;
+                    const startingChips = document.getElementById('starting-chips').value;
+                    const blindStructure = document.getElementById('blind-structure').value;
+                    const startTime = document.getElementById('start-time').value;
+                    
+                    if (!name) {
+                      Swal.showValidationMessage('Please enter a tournament name');
+                      return false;
+                    }
+                    
+                    return {
+                      name,
+                      buyIn: parseFloat(buyIn) || 0,
+                      maxPlayers: parseInt(maxPlayers),
+                      startingChips: parseInt(startingChips),
+                      blindStructure,
+                      startTime
+                    };
+                  }
+                });
+                
+                if (result.isConfirmed && socket) {
+                  // Emit socket event to create tournament
+                  socket.emit('CREATE_TOURNAMENT', {
+                    ...result.value,
+                    creatorWallet: walletAddress
+                  });
+                  
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Tournament Created!',
+                    text: `${result.value.name} has been created successfully.`,
+                    timer: 3000
+                  });
+                  
+                  console.log('Tournament created:', result.value);
+                }
+              }}
+            >
+              Create Tournament
+            </Button>
+            <Button 
+              small 
+              secondary
+              onClick={() => navigate('/play')}
+            >
+              Play Cash Game
+            </Button>
+            <Button 
+              small 
+              secondary 
+              onClick={() => navigate('/')}
+            >
+              Back to Main
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -198,7 +437,7 @@ const TournamentLobby = () => {
                 <div>
                   <p style={{ margin: 0, color: '#aaa', fontSize: '12px' }}>Players</p>
                   <p style={{ margin: 0, fontWeight: 'bold' }}>
-                    {tournament.registeredPlayers}/{tournament.maxPlayers}
+                    {tournament.registeredPlayers?.length || 0}/{tournament.maxPlayers}
                   </p>
                   <div style={{
                     width: '100%',
@@ -209,7 +448,7 @@ const TournamentLobby = () => {
                     overflow: 'hidden'
                   }}>
                     <div style={{
-                      width: `${(tournament.registeredPlayers / tournament.maxPlayers) * 100}%`,
+                      width: `${((tournament.registeredPlayers?.length || 0) / tournament.maxPlayers) * 100}%`,
                       height: '100%',
                       backgroundColor: '#007bff'
                     }} />
@@ -218,18 +457,18 @@ const TournamentLobby = () => {
 
                 {/* Start Time / Status */}
                 <div>
-                  {tournament.status === 'upcoming' ? (
+                  {tournament.status === 'registering' || tournament.status === 'upcoming' ? (
                     <>
                       <p style={{ margin: 0, color: '#aaa', fontSize: '12px' }}>Starts in</p>
                       <p style={{ margin: 0, fontWeight: 'bold' }}>
-                        {Math.round((tournament.startTime - new Date()) / 60000)} min
+                        {tournament.startTime ? Math.max(0, Math.round((new Date(tournament.startTime) - new Date()) / 60000)) : 0} min
                       </p>
                     </>
                   ) : tournament.status === 'live' ? (
                     <>
                       <p style={{ margin: 0, color: '#aaa', fontSize: '12px' }}>Level</p>
                       <p style={{ margin: 0, fontWeight: 'bold' }}>
-                        {tournament.level} - {tournament.blinds}
+                        {tournament.blindLevel || 1}
                       </p>
                     </>
                   ) : null}
@@ -240,7 +479,7 @@ const TournamentLobby = () => {
 
                 {/* Action Button */}
                 <div>
-                  {tournament.status === 'upcoming' && (
+                  {(tournament.status === 'registering' || tournament.status === 'upcoming') && (
                     <Button 
                       small 
                       onClick={(e) => {
@@ -310,7 +549,7 @@ const TournamentLobby = () => {
                   >
                     Close
                   </Button>
-                  {selectedTournament.status === 'upcoming' && (
+                  {(selectedTournament.status === 'registering' || selectedTournament.status === 'upcoming') && (
                     <>
                       <Button 
                         small 
@@ -324,6 +563,58 @@ const TournamentLobby = () => {
                         onClick={() => handleUnregister(selectedTournament.id)}
                       >
                         Unregister
+                      </Button>
+                      <Button 
+                        small 
+                        onClick={async () => {
+                          const { value: botCount } = await Swal.fire({
+                            title: 'Add Bots',
+                            input: 'number',
+                            inputLabel: 'How many bots to add?',
+                            inputValue: 2,
+                            inputAttributes: {
+                              min: 1,
+                              max: 10,
+                              step: 1
+                            },
+                            showCancelButton: true,
+                            confirmButtonText: 'Add Bots'
+                          })
+                          
+                          if (botCount && socket) {
+                            socket.emit('ADD_BOTS_TO_TOURNAMENT', {
+                              tournamentId: selectedTournament.id,
+                              botCount: parseInt(botCount)
+                            })
+                            
+                            Swal.fire({
+                              title: 'Adding Bots...',
+                              text: 'Please wait',
+                              allowOutsideClick: false,
+                              didOpen: () => {
+                                Swal.showLoading()
+                              }
+                            })
+                          }
+                        }}
+                      >
+                        Add Bots
+                      </Button>
+                      <Button 
+                        small 
+                        onClick={() => {
+                          if (socket) {
+                            socket.emit('START_TOURNAMENT', { tournamentId: selectedTournament.id })
+                            Swal.fire({
+                              title: 'Starting Tournament...',
+                              text: 'The tournament is being started',
+                              timer: 2000,
+                              showConfirmButton: false
+                            })
+                          }
+                        }}
+                      >
+                        Start Tournament
                       </Button>
                     </>
                   )}

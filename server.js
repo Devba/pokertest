@@ -37,9 +37,13 @@ io.on("connect", (socket) => gameSocket.init(socket, io));
 
 // Initialize bot API routes after socket is set up
 const { initBotRoutes } = require('./routes/api/bots');
+const { initTournamentRoutes } = require('./routes/api/tournaments');
 setTimeout(() => {
     initBotRoutes(gameSocket);
     console.log('🤖 Bot API routes initialized');
+    
+    initTournamentRoutes(gameSocket);
+    console.log('🏆 Tournament API routes initialized');
 }, 1000);
 
 // Optional: Add bots to tables on server start (after a delay to ensure initialization)
