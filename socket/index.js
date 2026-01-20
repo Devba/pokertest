@@ -72,7 +72,7 @@ const init = (socket, io) => {
 
   // Initialize TournamentManager if not already initialized
   if (!tournamentManager) {
-    tournamentManager = new TournamentManager(io);
+    tournamentManager = new TournamentManager(io, botManager);
     console.log('🏆 TournamentManager initialized');
   }
 
@@ -256,20 +256,14 @@ const init = (socket, io) => {
       let successCount = 0;
       
       for (let i = 0; i < count; i++) {
-        const botWallet = 'bot_' + Math.random().toString(36).substring(2, 15);
-        const botName = 'Bot_' + Math.random().toString(36).substring(2, 9);
+        // Create a proper Bot instance with AI
+        const bot = botManager.createBot();
         
-        // Create a bot player with unique identifier
-        const botPlayer = new Player(
-          botWallet, // Use wallet as socketId for bots
-          botWallet,
-          botName,
-          config.INITIAL_CHIPS_AMOUNT
-        );
-        
-        const result = tournamentManager.registerPlayer(tournamentId, botPlayer);
+        // Register the bot in the tournament
+        const result = tournamentManager.registerPlayer(tournamentId, bot);
         if (result.success) {
           successCount++;
+          console.log(`🤖 Bot ${bot.name} registered for tournament ${tournamentId}`);
         }
       }
       
@@ -278,6 +272,8 @@ const init = (socket, io) => {
         count: successCount,
         message: `Successfully added ${successCount} bot(s) to the tournament`
       });
+      
+      console.log(`Added ${successCount} bots to tournament ${tournamentId}`);
       
       console.log(`Added ${successCount} bots to tournament ${tournamentId}`);
     } catch (error) {

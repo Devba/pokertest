@@ -1,13 +1,18 @@
 const TournamentTable = require('./TournamentTable');
 
 class TournamentManager {
-  constructor(io) {
+  constructor(io, botManager = null) {
     this.io = io;
+    this.botManager = botManager;
     this.tournaments = new Map();
     this.nextTournamentId = 1;
   }
 
   createTournament(config) {
+    const now = new Date();
+    const registrationPeriodMs = (config.registrationPeriod || 5) * 60000; // default 5 minutes
+    const registrationEndsAt = new Date(now.getTime() + registrationPeriodMs);
+    
     const tournament = {
       id: this.nextTournamentId++,
       name: config.name,
@@ -23,6 +28,9 @@ class TournamentManager {
       structure: 'No Limit Hold\'em',
       createdAt: new Date(),
       startTime: this.calculateStartTime(config.startTime),
+      registrationPeriod: config.registrationPeriod || 5,
+      registrationEndsAt: registrationEndsAt,
+      lateRegistrationAllowed: (config.registrationPeriod || 5) > 0,
       creatorWallet: config.creatorWallet,
       blindLevel: 1,
       handsPerLevel: this.getHandsPerLevel(config.blindStructure)
@@ -30,7 +38,23 @@ class TournamentManager {
 
     this.tournaments.set(tournament.id, tournament);
     
-    // Schedule automatic start if not immediate
+    // Schedule automatic start based on registration period
+    if (tournament.lateRegistrationAllowed) {
+      console.log(`Scheduling tournament ${tournament.id} to start in ${tournament.registrationPeriod} minutes`);
+      setTimeout(() => {
+        const t = this.tournaments.get(tournament.id);
+        if (t && t.status === 'registering' && t.registeredPlayers.length >= 2) {
+          console.log(`Registration period ended for tournament ${tournament.id}, auto-starting`);
+          this.startTournament(tournament.id);
+        } else if (t && t.registeredPlayers.length < 2) {
+          console.log(`Tournament ${tournament.id} cancelled - not enough players`);
+          t.status = 'cancelled';
+          this.broadcastTournamentUpdate(tournament.id);
+        }
+      }, registrationPeriodMs);
+    }
+    
+    // Also schedule based on start time if not immediate
     if (config.startTime !== 'immediate') {
       this.scheduleStart(tournament.id, config.startTime);
     }
@@ -85,7 +109,12 @@ class TournamentManager {
       return { success: false, message: 'Tournament not found' };
     }
 
-    if (tournament.status !== 'registering') {
+    // Check if registration is still allowed
+    const now = new Date();
+    if (tournament.status === 'live' && tournament.lateRegistrationAllowed && now <= tournament.registrationEndsAt) {
+      // Late registration allowed
+      console.log('Late registration accepted for tournament', tournamentId);
+    } else if (tournament.status !== 'registering') {
       return { success: false, message: 'Tournament registration is closed' };
     }
 
@@ -181,6 +210,13 @@ class TournamentManager {
       if (activePlayers >= 2) {
         console.log(`Starting hand on table ${idx}`);
         table.startHand();
+        
+        // Check if first player to act is a bot
+        if (this.botManager) {
+          setTimeout(() => {
+            this.botManager.checkAndActForBot(table, table.id);
+          }, 1500);
+        }
       } else {
         console.log(`Not starting hand on table ${idx} - only ${activePlayers} players`);
       }

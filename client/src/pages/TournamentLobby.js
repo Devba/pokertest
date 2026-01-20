@@ -284,6 +284,18 @@ const TournamentLobby = () => {
                       </div>
                       
                       <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Registration Period</label>
+                        <select id="registration-period" class="swal2-input" style="width: 100%; margin: 0;">
+                          <option value="0">No Late Registration</option>
+                          <option value="5" selected>5 minutes</option>
+                          <option value="10">10 minutes</option>
+                          <option value="15">15 minutes</option>
+                          <option value="30">30 minutes</option>
+                          <option value="60">1 hour</option>
+                        </select>
+                      </div>
+                      
+                      <div style="margin-bottom: 1rem;">
                         <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Start Time</label>
                         <select id="start-time" class="swal2-input" style="width: 100%; margin: 0;">
                           <option value="immediate" selected>Start Immediately</option>
@@ -305,6 +317,7 @@ const TournamentLobby = () => {
                     const maxPlayers = document.getElementById('max-players').value;
                     const startingChips = document.getElementById('starting-chips').value;
                     const blindStructure = document.getElementById('blind-structure').value;
+                    const registrationPeriod = document.getElementById('registration-period').value;
                     const startTime = document.getElementById('start-time').value;
                     
                     if (!name) {
@@ -318,6 +331,7 @@ const TournamentLobby = () => {
                       maxPlayers: parseInt(maxPlayers),
                       startingChips: parseInt(startingChips),
                       blindStructure,
+                      registrationPeriod: parseInt(registrationPeriod),
                       startTime
                     };
                   }

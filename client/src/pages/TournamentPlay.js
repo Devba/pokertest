@@ -46,7 +46,7 @@ const TournamentPlay = () => {
     
     if (!socket) {
       console.log('No socket, redirecting to home');
-      navigate('/')
+      navigate('/tournament-lobby')
       return
     }
 
