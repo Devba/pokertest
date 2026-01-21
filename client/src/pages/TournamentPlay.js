@@ -36,10 +36,18 @@ const TournamentPlay = () => {
     check,
     call,
     raise,
+    timebfFold,
+    setTimebfFold
   } = useContext(gameContext)
 
   const [bet, setBet] = useState(0)
   const [tournamentInfo, setTournamentInfo] = useState(null)
+  const [timeDelay, setTimeDelay] = useState(10000)
+
+  // Sync timeDelay slider with timebfFold (convert seconds to milliseconds)
+  useEffect(() => {
+    setTimebfFold(timeDelay * 1000)
+  }, [timeDelay, setTimebfFold])
 
   useEffect(() => {
     console.log('TournamentPlay mounted - tournamentId:', tournamentId, 'socket:', !!socket, 'walletAddress:', walletAddress);
@@ -151,6 +159,37 @@ const TournamentPlay = () => {
               <Button small secondary onClick={handleLeaveTournament}>
                 Leave Tournament
               </Button>
+            </PositionedUISlot>
+
+            {/* Time Delay Slider */}
+            <PositionedUISlot
+              top="2vh"
+              left="12rem"
+              scale="0.65"
+              style={{ zIndex: '50' }}
+            >
+              <div style={{ 
+                backgroundColor: 'rgba(0, 0, 0, 0.7)', 
+                padding: '0.5rem 1rem', 
+                borderRadius: '8px',
+                color: 'white',
+                minWidth: '200px'
+              }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                  Time Delay: {timeDelay}s
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="30"
+                  value={timeDelay}
+                  onChange={(e) => {
+                    const td = Number(e.target.value) < 29 ? Number(e.target.value) : 300;
+                    setTimeDelay(td);
+                  }}
+                  style={{ width: '100%', cursor: 'pointer' }}
+                />
+              </div>
             </PositionedUISlot>
 
             {/* Tournament Info */}

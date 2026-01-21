@@ -313,7 +313,8 @@ class Bot extends Player {
    * Generate a random bot name
    */
   static generateBotName(index) {
-    const prefixes = ['Bot', 'AI', 'Player', 'Ace', 'King', 'Pro', 'Shark', 'Fish'];
+   // const prefixes = ['Bot', 'AI', 'Player', 'Ace', 'King', 'Pro', 'Shark', 'Fish'];
+    const prefixes = ['Bot'];
     const suffixes = ['Master', 'Killer', 'Genius', 'Wizard', 'Expert', 'Ninja', 'Hunter'];
     
     const useSimple = Math.random() > 0.5;

@@ -28,6 +28,7 @@ class TournamentManager {
       structure: 'No Limit Hold\'em',
       createdAt: new Date(),
       startTime: this.calculateStartTime(config.startTime),
+      startTimeOption: config.startTime, // Store original config value
       registrationPeriod: config.registrationPeriod || 5,
       registrationEndsAt: registrationEndsAt,
       lateRegistrationAllowed: (config.registrationPeriod || 5) > 0,
@@ -122,10 +123,11 @@ class TournamentManager {
       return { success: false, message: 'Tournament is full' };
     }
 
-    // Check if player already registered
-   /* if (tournament.registeredPlayers.find(p => p.walletAddress === player.walletAddress)) {
+    // Check if player already registered (commented out to allow multiple bots)
+    // Note: Bots can have duplicate checks, but we skip this for flexibility
+    if (!player.isBot && tournament.registeredPlayers.find(p => p.id === player.id || p.walletAddress === player.walletAddress)) {
       return { success: false, message: 'Player already registered' };
-    }*/
+    }
 
     tournament.registeredPlayers.push({
       ...player,
@@ -138,8 +140,15 @@ class TournamentManager {
     console.log(`Player ${player.name} registered for tournament ${tournament.id}`);
     this.broadcastTournamentUpdate(tournamentId);
 
-    // Auto-start if immediate and min players met
-    if (tournament.startTime <= new Date() && tournament.registeredPlayers.length >= 2) {
+    // Only auto-start if:
+    // 1. Start time was set to "immediate" AND
+    // 2. No registration period (or user explicitly wants immediate start)
+    // 3. Minimum 2 players met
+    if (tournament.startTimeOption === 'immediate' && 
+        tournament.registrationPeriod === 0 &&
+        tournament.registeredPlayers.length >= 2 && 
+        tournament.status === 'registering') {
+      console.log(`Auto-starting tournament ${tournamentId} - immediate start with no registration period`);
       this.startTournament(tournamentId);
     }
 

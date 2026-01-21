@@ -49,7 +49,7 @@ setTimeout(() => {
 // Optional: Add bots to tables on server start (after a delay to ensure initialization)
 // Uncomment the code below to auto-populate tables with bots
 
-setTimeout(() => {
+false && setTimeout(() => {
     if (gameSocket.botManager) {
         console.log('🤖 Adding bots to tables...');
         

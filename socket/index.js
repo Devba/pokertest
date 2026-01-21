@@ -165,31 +165,6 @@ const init = (socket, io) => {
     console.log('Tournament IDs in map:', tournamentManager ? Array.from(tournamentManager.tournaments.keys()) : 'N/A');
     
     try {
-      let player = players[socket.id];
-      console.log('Player found:', player ? `${player.name} (${player.id})` : 'NOT FOUND');
-      
-      // If no player exists, create a temporary spectator or look them up by wallet
-      if (!player && walletAddress && walletAddress !== 'spectator') {
-        // Try to find player by wallet address
-        player = Object.values(players).find(p => p.id === walletAddress);
-        if (player) {
-          console.log('Found player by walletAddress:', player.name);
-        }
-      }
-      
-      // If still no player, create temporary spectator
-      if (!player) {
-        console.log('Creating temporary spectator player');
-        const spectatorName = 'Spectator_' + Math.random().toString(36).substring(2, 9);
-        player = new Player(
-          socket.id,
-          walletAddress || `spectator_${socket.id}`,
-          spectatorName,
-          0 // Spectators have 0 chips
-        );
-        players[socket.id] = player;
-      }
-
       const tournament = tournamentManager.tournaments.get(tournamentIdNum);
       if (!tournament) {
         console.log('Tournament not found:', tournamentIdNum, 'Available:', Array.from(tournamentManager.tournaments.keys()));
@@ -198,20 +173,77 @@ const init = (socket, io) => {
       }
       
       console.log('Tournament found:', tournament.name, 'Status:', tournament.status, 'Tables:', tournament.tables.length);
-
-      // For spectators or players not seated, just show the first table
+      
+      let player = players[socket.id];
+      console.log('Player found in socket:', player ? `${player.name} (${player.id})` : 'NOT FOUND');
+      
+      // Check if this player is registered in the tournament
+      const registeredPlayer = tournament.registeredPlayers.find(p => 
+        p.id === walletAddress || p.walletAddress === walletAddress
+      );
+      
+      // Also check if player is already seated at a table
+      let seatedPlayer = null;
       let playerTable = null;
       
-      // First try to find the player's assigned table
       for (const table of tournament.tables) {
-        console.log('Checking table:', table.id, 'for player:', player.id);
-        // seats is an object, not an array - iterate over its values
         const seatsArray = Object.values(table.seats);
-        const seat = seatsArray.find(seat => seat && seat.player && seat.player.id === player.id);
+        const seat = seatsArray.find(seat => 
+          seat && seat.player && 
+          (seat.player.id === walletAddress || seat.player.walletAddress === walletAddress)
+        );
         if (seat) {
+          seatedPlayer = seat.player;
           playerTable = table;
-          console.log('Player found at table:', table.id, 'seat:', seat.id);
+          console.log('Player already seated at table:', table.id, 'seat:', seat.id);
           break;
+        }
+      }
+      
+      if (seatedPlayer) {
+        // Player is already seated - update their socket ID
+        seatedPlayer.socketId = socket.id;
+        players[socket.id] = seatedPlayer;
+        player = seatedPlayer;
+        console.log('Updated seated player socketId:', socket.id);
+      } else if (registeredPlayer) {
+        console.log('Player is registered in tournament:', registeredPlayer.name);
+        // Use the registered player and update their socket
+        if (!player) {
+          registeredPlayer.socketId = socket.id;
+          players[socket.id] = registeredPlayer;
+          player = registeredPlayer;
+          console.log('Updated registered player socketId:', socket.id);
+        }
+      } else {
+        // Not registered - create spectator
+        if (!player) {
+          console.log('Creating temporary spectator player');
+          const spectatorName = 'Spectator_' + Math.random().toString(36).substring(2, 9);
+          player = new Player(
+            socket.id,
+            'spectator',
+            spectatorName,
+            0 // Spectators have 0 chips
+          );
+          players[socket.id] = player;
+        }
+      }
+
+      // Find player's table (already done above if seated, but check again for all players)
+      if (!playerTable) {
+        // Try to find the player's assigned table
+        for (const table of tournament.tables) {
+          console.log('Checking table:', table.id, 'for player:', player.id);
+          // seats is an object, not an array - iterate over its values
+          const seatsArray = Object.values(table.seats);
+          const seat = seatsArray.find(seat => seat && seat.player && 
+            (seat.player.id === player.id || seat.player.socketId === socket.id));
+          if (seat) {
+            playerTable = table;
+            console.log('Player found at table:', table.id, 'seat:', seat.id);
+            break;
+          }
         }
       }
       
