@@ -220,6 +220,9 @@ class TournamentManager {
         console.log(`Starting hand on table ${idx}`);
         table.startHand();
         
+        // Broadcast table state to all connected clients after starting hand
+        this.broadcastTableState(table);
+        
         // Check if first player to act is a bot
         if (this.botManager) {
           setTimeout(() => {
@@ -502,6 +505,31 @@ class TournamentManager {
     }
 
     return null;
+  }
+
+  // Broadcast table state to all connected players and spectators
+  broadcastTableState(table) {
+    if (!this.io) return;
+    
+    // Emit to the table room (includes spectators)
+    this.io.to(`table-${table.id}`).emit('TABLE_UPDATED', {
+      table: table,
+      message: '',
+      action: '',
+      notification: ''
+    });
+
+    // Also emit to individual players
+    table.players.forEach(player => {
+      if (player && player.socketId) {
+        this.io.to(player.socketId).emit('TABLE_UPDATED', {
+          table: table,
+          message: '',
+          action: '',
+          notification: ''
+        });
+      }
+    });
   }
 }
 

@@ -42,6 +42,11 @@ class Seat {
     this.stack -= amount;
   }
 
+  placeAnte(amount) {
+    this.bet += amount;
+    this.stack -= amount;
+  }
+
   callRaise(amount) {
     let amountCalled = amount - this.bet;
     if (amountCalled >= this.stack) amountCalled = this.stack;

@@ -453,28 +453,56 @@ const init = (socket, io) => {
   });
 
   socket.on(CS_FOLD, (tableId) => {
+    console.log('CS_FOLD received for table:', tableId, 'socket:', socket.id);
     let table = tables[tableId];
+    
+    if (!table) {
+      console.error('Table not found for fold:', tableId, 'Available tables:', Object.keys(tables));
+      return;
+    }
+    
     let res = table.handleFold(socket.id);
     res && broadcastToTable(table, res.message);
     res && changeTurnAndBroadcast(table, res.seatId);
   });
 
   socket.on(CS_CHECK, (tableId) => {
+    console.log('CS_CHECK received for table:', tableId, 'socket:', socket.id);
     let table = tables[tableId];
+    
+    if (!table) {
+      console.error('Table not found for check:', tableId);
+      return;
+    }
+    
     let res = table.handleCheck(socket.id);
     res && broadcastToTable(table, res.message);
     res && changeTurnAndBroadcast(table, res.seatId);
   });
 
   socket.on(CS_CALL, (tableId) => {
+    console.log('CS_CALL received for table:', tableId, 'socket:', socket.id);
     let table = tables[tableId];
+    
+    if (!table) {
+      console.error('Table not found for call:', tableId);
+      return;
+    }
+    
     let res = table.handleCall(socket.id);
     res && broadcastToTable(table, res.message);
     res && changeTurnAndBroadcast(table, res.seatId);
   });
 
   socket.on(CS_RAISE, ({ tableId, amount }) => {
+    console.log('CS_RAISE received for table:', tableId, 'amount:', amount, 'socket:', socket.id);
     let table = tables[tableId];
+    
+    if (!table) {
+      console.error('Table not found for raise:', tableId);
+      return;
+    }
+    
     let res = table.handleRaise(socket.id, amount);
     res && broadcastToTable(table, res.message);
     res && changeTurnAndBroadcast(table, res.seatId);
@@ -663,6 +691,11 @@ const init = (socket, io) => {
 
   function hideOpponentCards(table, socketId) {
     let tableCopy = JSON.parse(JSON.stringify(table));
+
+    // Don't hide cards in tournament tables - spectators can see everything
+    if (tableCopy.isTournament) {
+      return tableCopy;
+    }
 
     return tableCopy;
     let hiddenCard = { suit: 'hidden', rank: 'hidden' };

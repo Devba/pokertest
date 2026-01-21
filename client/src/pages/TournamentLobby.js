@@ -227,7 +227,7 @@ const TournamentLobby = () => {
 
   return (
     <Container fullHeight style={{ backgroundColor: '#1a1a2e', color: 'white' }}>
-      <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+      <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
         {/* Header */}
         <div style={{ 
           display: 'flex', 
@@ -236,7 +236,18 @@ const TournamentLobby = () => {
           marginBottom: '2rem'
         }}>
           <h1>Tournament Lobby</h1>
-          <div style={{ display: 'flex', gap: '1rem' }}>
+          
+          {/* Buttons - Vertical on the right */}
+          <div style={{ 
+            position: 'fixed',
+            right: '2rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'flex', 
+            flexDirection: 'column',
+            gap: '1rem',
+            zIndex: 100
+          }}>
             <Button 
               small 
               onClick={async () => {
@@ -510,8 +521,8 @@ const TournamentLobby = () => {
                       secondary
                       onClick={(e) => {
                         e.stopPropagation()
-                        // Navigate to tournament table
-                        navigate(`/tournament/${tournament.id}`)
+                        // Navigate to tournament table as spectator
+                        navigate(`/tournament/${tournament.id}?mode=spectator`)
                       }}
                     >
                       Watch
@@ -633,12 +644,21 @@ const TournamentLobby = () => {
                     </>
                   )}
                   {selectedTournament.status === 'live' && (
-                    <Button 
-                      small 
-                      onClick={() => navigate(`/tournament/${selectedTournament.id}`)}
-                    >
-                      Join Table
-                    </Button>
+                    <>
+                      <Button 
+                        small 
+                        secondary
+                        onClick={() => navigate(`/tournament/${selectedTournament.id}?mode=spectator`)}
+                      >
+                        Watch
+                      </Button>
+                      <Button 
+                        small 
+                        onClick={() => navigate(`/tournament/${selectedTournament.id}?mode=player`)}
+                      >
+                        Join Table
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>

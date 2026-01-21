@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Container from '../components/layout/Container'
 import Button from '../components/buttons/Button'
 import gameContext from '../context/game/gameContext'
@@ -22,6 +22,8 @@ import './Play.scss'
 const TournamentPlay = () => {
   const navigate = useNavigate()
   const { tournamentId } = useParams()
+  const [searchParams] = useSearchParams()
+  const mode = searchParams.get('mode') // 'player' or 'spectator'
   const { socket } = useContext(socketContext)
   const { walletAddress } = useContext(globalContext)
   const {
@@ -60,8 +62,24 @@ const TournamentPlay = () => {
 
     // Get tournament info and join tournament table
     if (socket && tournamentId) {
-      console.log('Emitting GET_TOURNAMENT_TABLE for tournament:', tournamentId);
-      socket.emit('GET_TOURNAMENT_TABLE', { tournamentId, walletAddress: walletAddress || 'spectator' })
+      console.log('Emitting GET_TOURNAMENT_TABLE for tournament:', tournamentId, 'mode:', mode);
+      
+      // If mode is 'player', check if user has wallet address
+      if (mode === 'player' && (!walletAddress || walletAddress.trim() === '')) {
+        Swal.fire({
+          title: 'Not Connected',
+          text: 'You need to connect your wallet to join as a player',
+          icon: 'warning',
+          confirmButtonText: 'OK'
+        }).then(() => {
+          navigate('/tournament-lobby')
+        })
+        return
+      }
+      
+      // If mode is 'player', use walletAddress; if 'spectator' or undefined, use 'spectator'
+      const requestWallet = mode === 'player' ? walletAddress : 'spectator';
+      socket.emit('GET_TOURNAMENT_TABLE', { tournamentId, walletAddress: requestWallet })
     }
 
     return () => {
@@ -145,6 +163,7 @@ const TournamentPlay = () => {
           backgroundPosition: 'center center',
           backgroundAttachment: 'fixed',
           backgroundColor: 'black',
+          pointerEvents: 'none',
         }}
         className="play-area"
       >
@@ -295,6 +314,8 @@ const TournamentPlay = () => {
               </PositionedUISlot>
               <PositionedUISlot
                 width="100%"
+                bottom="34%"
+                left="50%"
                 origin="center center"
                 scale="0.20"
                 style={{
@@ -302,6 +323,8 @@ const TournamentPlay = () => {
                   textAlign: 'center',
                   justifyContent: 'center',
                   alignItems: 'center',
+                  transform: 'translate(-50%, 0%)',
+                  zIndex: '10',
                 }}
               >
                 {currentTable.board && currentTable.board.length > 0 && (
@@ -313,6 +336,7 @@ const TournamentPlay = () => {
                         width="6.1vw"
                         maxWidth="94px"
                         minWidth="65px"
+                        
                       />
                     ))}
                   </>

@@ -74,12 +74,41 @@ const GameState = ({ children }) => {
         console.log(SC_TABLE_UPDATED, { table, message, from })
         setCurrentTable(table)
         message && addMessage(message)
+        
+        // Find player's seat in tournament tables (where players are pre-seated)
+        if (table && table.seats && !seatId) {
+          for (let i = 1; i <= table.maxPlayers; i++) {
+            const seat = table.seats[i]
+            if (seat && seat.player && seat.player.socketId === socket.id) {
+              console.log('Found player seat:', i)
+              setSeatId(i)
+              break
+            }
+          }
+        }
       })
 
       socket.on(SC_TABLE_JOINED, ({ tables, tableId }) => {
         console.log(SC_TABLE_JOINED, { tables, tableId })
-        if (tables[0].currentNumberPlayers > 0)
-          setSeatId(tables[0].currentNumberPlayers)
+        
+        // Check if player is already seated (tournament tables)
+        if (tables && tables[0] && tables[0].seats) {
+          let foundSeat = null
+          for (let i = 1; i <= tables[0].maxPlayers; i++) {
+            const seat = tables[0].seats[i]
+            if (seat && seat.player && seat.player.socketId === socket.id) {
+              foundSeat = i
+              console.log('Player already seated at:', i)
+              break
+            }
+          }
+          
+          if (foundSeat) {
+            setSeatId(foundSeat)
+          } else if (tables[0].currentNumberPlayers > 0) {
+            setSeatId(tables[0].currentNumberPlayers)
+          }
+        }
       })
 
       socket.on(SC_TABLE_LEFT, ({ tables, tableId }) => {

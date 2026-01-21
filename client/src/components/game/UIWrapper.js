@@ -7,6 +7,8 @@ export const UIWrapper = styled.div`
   transform-origin: bottom right;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+  pointer-events: auto;
+  z-index: 100;
 
   @media screen and (max-width: 1068px) {
     transform: scale(0.8);

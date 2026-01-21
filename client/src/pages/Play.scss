@@ -5,6 +5,7 @@
     left: calc(0px - (100vw - 100%) / 2);   
     height: 100%;
     width: calc((100vw - 100%) / 2);
+    pointer-events: none;
 }
 .play-area:after{
     content: '';
@@ -13,4 +14,5 @@
     right: calc(0px - (100vw - 100%) / 2);   
     height: 100%;
     width: calc((100vw - 100%) / 2);
+    pointer-events: none;
 }

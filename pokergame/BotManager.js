@@ -270,6 +270,9 @@ class BotManager {
         // Start bot actions for new hand
         this.checkAndActForBot(table, tableId);
       }, 5000);
+    } else if (table.activePlayers().length === 1) {
+      // Only one player left - broadcast final state
+      this.broadcastToTable(table, 'Waiting for more players');
     }
   }
 
@@ -290,13 +293,28 @@ class BotManager {
         });
       }
     }
+    
+    // Also broadcast to room for spectators
+    const tableCopyForSpectators = this.hideOpponentCards(table, 'spectator');
+    this.io.to(`table-${table.id}`).emit('SC_TABLE_UPDATED', {
+      table: tableCopyForSpectators ,
+      message,
+      from,
+    });
   }
 
   /**
    * Hide opponent cards (keep same logic as original)
+   * For tournament tables, cards are not hidden to allow spectators to see all hands
    */
   hideOpponentCards(table, socketId) {
     let tableCopy = JSON.parse(JSON.stringify(table));
+    
+    // Don't hide cards in tournament tables - spectators can see everything
+    if (tableCopy.isTournament) {
+      return tableCopy;
+    }
+    
     let hiddenCard = { suit: 'hidden', rank: 'hidden' };
     let hiddenHand = [hiddenCard, hiddenCard];
 

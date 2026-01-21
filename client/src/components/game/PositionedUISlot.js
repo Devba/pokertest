@@ -11,7 +11,7 @@ export const PositionedUISlot = styled.div`
   transform-origin: ${({ origin }) => origin || 'top left'};
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  z-index: 4;
+  pointer-events: auto;
 
   @media screen and (max-width: 1068px) {
     transform: ${({ scale }) => `scale(${+scale + 0.3})` || '1'};
