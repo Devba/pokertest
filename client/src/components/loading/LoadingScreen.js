@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import Loader from './Loader';
 import loadingImage from './../../assets/game/loading-background.jpg'

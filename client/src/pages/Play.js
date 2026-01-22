@@ -13,7 +13,6 @@ import { Seat } from '../components/game/Seat/Seat'
 import { InfoPill } from '../components/game/InfoPill'
 import { GameUI } from '../components/game/GameUI'
 import { GameStateInfo } from '../components/game/GameStateInfo'
-import BrandingImage from '../components/game/BrandingImage'
 import PokerCard from '../components/game/PokerCard'
 import background from '../assets/img/cards-prepared-poker-night.jpg'
 
@@ -52,7 +51,7 @@ const Play = () => {
     check,
     call,
     raise,
-    timebfFold,setTimebfFold
+    setTimebfFold
   } = useContext(gameContext)
    
 

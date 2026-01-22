@@ -16,7 +16,6 @@ import {
 } from '../../pokergame/actions'
 import socketContext from '../websocket/socketContext'
 import GameContext from './gameContext'
-import globalContext from '../global/globalContext'
 
 const GameState = ({ children }) => {
   const { socket } = useContext(socketContext)

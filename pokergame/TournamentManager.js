@@ -125,7 +125,7 @@ class TournamentManager {
 
     // Check if player already registered (commented out to allow multiple bots)
     // Note: Bots can have duplicate checks, but we skip this for flexibility
-    if (!player.isBot && tournament.registeredPlayers.find(p => p.id === player.id || p.walletAddress === player.walletAddress)) {
+    if (!player.isBot && tournament.registeredPlayers.find(p => p.id === player.id)) {
       return { success: false, message: 'Player already registered' };
     }
 

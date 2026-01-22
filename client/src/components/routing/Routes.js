@@ -5,6 +5,7 @@ import NotFoundPage from '../../pages/NotFoundPage';
 import ConnectWallet from '../../pages/ConnectWallet';
 import TournamentLobby from '../../pages/TournamentLobby';
 import TournamentPlay from '../../pages/TournamentPlay';
+import TournamentWaitingRoom from '../../pages/TournamentWaitingRoom';
 
 const AppRoutes = () => {
 
@@ -16,6 +17,7 @@ const AppRoutes = () => {
       <Route path="/" element={<ConnectWallet />} />
       <Route path="/play" element={<Play />} />
       <Route path="/tournament-lobby" element={<TournamentLobby />} />
+      <Route path="/tournament/:tournamentId/waiting" element={<TournamentWaitingRoom />} />
       <Route path="/tournament/:tournamentId" element={<TournamentPlay />} />
       <Route element={<NotFoundPage />} />
     </Routes>

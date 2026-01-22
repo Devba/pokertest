@@ -250,10 +250,11 @@ const TournamentPlay = () => {
             <>
               <PositionedUISlot
                 top="-5%"
-                left="0"
+                left="0%"
                 scale="0.55"
                 origin="top left"
               >
+                <p>1</p>
                 <Seat
                   seatNumber={1}
                   currentTable={currentTable}
@@ -262,7 +263,7 @@ const TournamentPlay = () => {
               </PositionedUISlot>
               <PositionedUISlot
                 top="-5%"
-                right="2%"
+                right="5%"
                 scale="0.55"
                 origin="top right"
               >
@@ -273,8 +274,8 @@ const TournamentPlay = () => {
                 />
               </PositionedUISlot>
               <PositionedUISlot
-                bottom="15%"
-                right="2%"
+                bottom="-5%"
+                right="5%"
                 scale="0.55"
                 origin="bottom right"
               >
@@ -284,7 +285,7 @@ const TournamentPlay = () => {
                   sitDown={sitDown}
                 />
               </PositionedUISlot>
-              <PositionedUISlot bottom="8%" scale="0.55" origin="bottom center">
+              <PositionedUISlot bottom="-11%" scale="0.55" origin="bottom center">
                 <Seat
                   seatNumber={4}
                   currentTable={currentTable}
@@ -292,8 +293,8 @@ const TournamentPlay = () => {
                 />
               </PositionedUISlot>
               <PositionedUISlot
-                bottom="15%"
-                left="0"
+                bottom="0%"
+                left="0%"
                 scale="0.55"
                 origin="bottom left"
               >

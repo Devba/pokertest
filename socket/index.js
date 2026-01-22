@@ -89,21 +89,21 @@ const init = (socket, io) => {
     }
   });
 
-  socket.on('REGISTER_TOURNAMENT', ({ tournamentId, walletAddress }) => {
+  socket.on('REGISTER_TOURNAMENT', ({ tournamentId, walletAddress, username }) => {
     try {
       let player = players[socket.id];
       
       // If player doesn't exist, create a temporary one for tournament registration
       if (!player) {
-        const username = 'Player_' + Math.random().toString(36).substring(2, 9);
+        const playerName = username || 'Player_' + Math.random().toString(36).substring(2, 9);
         player = new Player(
           socket.id,
           walletAddress,
-          username,
+          playerName,
           config.INITIAL_CHIPS_AMOUNT
         );
         players[socket.id] = player;
-        console.log('Created temporary player for tournament registration:', username);
+        console.log('Created temporary player for tournament registration:', playerName);
       }
       
       const result = tournamentManager.registerPlayer(tournamentId, player);
@@ -152,6 +152,48 @@ const init = (socket, io) => {
       io.emit('TOURNAMENT_STARTED', result);
     } catch (error) {
       console.error('Error starting tournament:', error);
+      socket.emit('TOURNAMENT_ERROR', { error: error.message });
+    }
+  });
+
+  socket.on('GET_TOURNAMENT_INFO', ({ tournamentId }) => {
+    console.log('GET_TOURNAMENT_INFO received - tournamentId:', tournamentId, 'socketId:', socket.id);
+    
+    // Convert tournamentId to number
+    const tournamentIdNum = parseInt(tournamentId);
+    
+    try {
+      const tournament = tournamentManager.tournaments.get(tournamentIdNum);
+      if (!tournament) {
+        socket.emit('TOURNAMENT_ERROR', { error: 'Tournament not found' });
+        return;
+      }
+      
+      console.log('Sending tournament info:', tournament.name, 'Status:', tournament.status);
+      
+      // Send tournament information
+      socket.emit('TOURNAMENT_INFO', {
+        id: tournament.id,
+        name: tournament.name,
+        status: tournament.status,
+        buyIn: tournament.buyIn,
+        startingChips: tournament.startingChips,
+        registrationEndsAt: tournament.registrationEndsAt,
+        startTime: tournament.startTime,
+        maxPlayers: tournament.maxPlayers,
+        registeredPlayers: tournament.registeredPlayers.map(p => ({
+          id: p.id,
+          name: p.name,
+          walletAddress: p.walletAddress,
+          chips: p.chips,
+          isBot: p.isBot || false
+        })),
+        prizePool: tournament.prizePool,
+        structure: tournament.structure,
+        blindStructure: tournament.blindStructure
+      });
+    } catch (error) {
+      console.error('Error getting tournament info:', error);
       socket.emit('TOURNAMENT_ERROR', { error: error.message });
     }
   });
@@ -658,7 +700,12 @@ const init = (socket, io) => {
       broadcastToTable(table);
 
       if (table.handOver) {
-        initNewHand(table);
+        // For tournament tables, use BotManager to handle the next hand
+        if (table.isTournament) {
+          botManager.handleHandOver(table, table.id);
+        } else {
+          initNewHand(table);
+        }
       } else {
         // Check if next player is a bot
         botManager.checkAndActForBot(table, table.id);
@@ -667,6 +714,13 @@ const init = (socket, io) => {
   }
 
   function initNewHand(table) {
+    // This function should only be called for non-tournament tables
+    if (table.isTournament) {
+      console.warn('initNewHand called for tournament table - using BotManager instead');
+      botManager.handleHandOver(table, table.id);
+      return;
+    }
+    
     if (table.activePlayers().length > 1) {
       broadcastToTable(table, '---New hand starting in 5 seconds---');
     }

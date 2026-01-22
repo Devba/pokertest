@@ -10,7 +10,7 @@ import { CS_FETCH_LOBBY_INFO } from '../../pokergame/actions'
 import './ConnectWallet.scss'
 
 const ConnectWallet = () => {
-  const { setWalletAddress, setChipsAmount } = useContext(globalContext)
+  const { setWalletAddress } = useContext(globalContext)
   const { socket } = useContext(socketContext)
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
@@ -25,14 +25,14 @@ const ConnectWallet = () => {
   }
 
   // Generar username aleatorio
-  const generateRandomUsername = () => {
-    const adjectives = ['Happy', 'Lucky', 'Clever', 'Brave', 'Swift', 'Bold']
-    const nouns = ['Player', 'Gambler', 'Poker', 'Dealer', 'Ace', 'King']
-    const adj = adjectives[Math.floor(Math.random() * adjectives.length)]
-    const noun = nouns[Math.floor(Math.random() * nouns.length)]
-    const num = Math.floor(Math.random() * 999)
-    return `${adj}${noun}${num}`
-  }
+  // const generateRandomUsername = () => {
+  //   const adjectives = ['Happy', 'Lucky', 'Clever', 'Brave', 'Swift', 'Bold']
+  //   const nouns = ['Player', 'Gambler', 'Poker', 'Dealer', 'Ace', 'King']
+  //   const adj = adjectives[Math.floor(Math.random() * adjectives.length)]
+  //   const noun = nouns[Math.floor(Math.random() * nouns.length)]
+  //   const num = Math.floor(Math.random() * 999)
+  //   return `${adj}${noun}${num}`
+  // }
   
   // Conectar con MetaMask
   const handleMetaMaskLogin = async () => {

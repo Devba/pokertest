@@ -10,7 +10,7 @@ import './TournamentLobby.scss'
 const TournamentLobby = () => {
   const navigate = useNavigate()
   const { socket } = useContext(socketContext)
-  const { walletAddress } = useContext(globalContext)
+  const { walletAddress, username } = useContext(globalContext)
   const [tournaments, setTournaments] = useState([])
   const [selectedTournament, setSelectedTournament] = useState(null)
   const [filter, setFilter] = useState('all') // all, upcoming, live, completed
@@ -63,8 +63,40 @@ const TournamentLobby = () => {
     }
   }, [socket]);
 
-  const handleRegister = (tournamentId) => {
+  const handleRegister = async (tournamentId) => {
     console.log('handleRegister called with:', tournamentId, 'socket:', !!socket, 'walletAddress:', walletAddress);
+    
+    // Check if username is set, if not ask for it
+    let playerUsername = username;
+    if (!playerUsername || playerUsername.trim() === '') {
+      const { value: enteredUsername } = await Swal.fire({
+        title: 'Enter Your Username',
+        input: 'text',
+        inputLabel: 'Choose a username for the tournament',
+        inputPlaceholder: 'Enter your username',
+        showCancelButton: true,
+        confirmButtonText: 'Register',
+        cancelButtonText: 'Cancel',
+        inputValidator: (value) => {
+          if (!value) {
+            return 'You need to enter a username!'
+          }
+          if (value.length < 3) {
+            return 'Username must be at least 3 characters!'
+          }
+          if (value.length > 20) {
+            return 'Username must be less than 20 characters!'
+          }
+        }
+      });
+
+      if (!enteredUsername) {
+        // User cancelled
+        return;
+      }
+
+      playerUsername = enteredUsername;
+    }
     
     // Generate random wallet if not present
     let userWallet = walletAddress;
@@ -77,9 +109,10 @@ const TournamentLobby = () => {
     if (socket) {
       socket.emit('REGISTER_TOURNAMENT', { 
         tournamentId, 
-        walletAddress: userWallet 
+        walletAddress: userWallet,
+        username: playerUsername
       })
-      console.log('Registering for tournament:', tournamentId, 'with wallet:', userWallet)
+      console.log('Registering for tournament:', tournamentId, 'with wallet:', userWallet, 'username:', playerUsername)
       
       // Show loading toast
       Swal.fire({
@@ -109,6 +142,16 @@ const TournamentLobby = () => {
     }
   }
 
+  const isUserRegistered = (tournamentId) => {
+    const tournament = tournaments.find(t => t.id === tournamentId)
+    if (!tournament || !tournament.registeredPlayers) return false
+    // registeredPlayers can be a number (count) or array, handle both
+    if (Array.isArray(tournament.registeredPlayers)) {
+      return tournament.registeredPlayers.some(p => p.walletAddress === walletAddress)
+    }
+    return false
+  }
+
   // Listen for registration responses
   useEffect(() => {
     if (socket) {
@@ -116,14 +159,15 @@ const TournamentLobby = () => {
         console.log('Registration result:', result)
         Swal.close() // Close any open Swal dialogs first
         if (result.success) {
+          const tournamentId = result.tournamentId || result.tournament?.id
           Swal.fire({
             icon: 'success',
             title: 'Registration Successful!',
-            text: 'Click OK to join the tournament',
-            confirmButtonText: 'Join Tournament'
+            text: 'Click OK to go to waiting room',
+            confirmButtonText: 'Go to Waiting Room'
           }).then((swalResult) => {
-            if (swalResult.isConfirmed && result.tournamentId) {
-              navigate(`/tournament/${result.tournamentId}`)
+            if (swalResult.isConfirmed && tournamentId) {
+              navigate(`/tournament/${tournamentId}/waiting`)
             }
           })
         } else {
@@ -240,8 +284,8 @@ const TournamentLobby = () => {
           {/* Buttons - Vertical on the right */}
           <div style={{ 
             position: 'fixed',
-            right: '2rem',
-            top: '50%',
+            left: '6rem',
+            top: '20%',
             transform: 'translateY(-50%)',
             display: 'flex', 
             flexDirection: 'column',
@@ -255,55 +299,61 @@ const TournamentLobby = () => {
                   title: 'Create New Tournament',
                   html: `
                     <div style="text-align: left; padding: 0.5rem;">
-                      <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Tournament Name</label>
-                        <input id="tournament-name" class="swal2-input" type="text" placeholder="My Tournament" style="width: 100%; margin: 0;" />
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                          <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Tournament Name</label>
+                          <input id="tournament-name" class="swal2-input" type="text" placeholder="My Tournament" style="width: 100%; margin: 0;" />
+                        </div>
+                        
+                        <div>
+                          <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Buy-in Amount ($)</label>
+                          <input id="buy-in" class="swal2-input" type="number" placeholder="0" min="0" style="width: 100%; margin: 0;" />
+                        </div>
                       </div>
                       
-                      <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Buy-in Amount ($)</label>
-                        <input id="buy-in" class="swal2-input" type="number" placeholder="0" min="0" style="width: 100%; margin: 0;" />
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                          <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Max Players</label>
+                          <select id="max-players" class="swal2-input" style="width: 100%; margin: 0;">
+                            <option value="50">50</option>
+                            <option value="100" selected>100</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Starting Chips</label>
+                          <select id="starting-chips" class="swal2-input" style="width: 100%; margin: 0;">
+                            <option value="1000">1,000</option>
+                            <option value="5000" selected>5,000</option>
+                            <option value="10000">10,000</option>
+                            <option value="20000">20,000</option>
+                          </select>
+                        </div>
                       </div>
                       
-                      <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Max Players</label>
-                        <select id="max-players" class="swal2-input" style="width: 100%; margin: 0;">
-                          <option value="50">50</option>
-                          <option value="100" selected>100</option>
-                          <option value="200">200</option>
-                          <option value="500">500</option>
-                        </select>
-                      </div>
-                      
-                      <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Starting Chips</label>
-                        <select id="starting-chips" class="swal2-input" style="width: 100%; margin: 0;">
-                          <option value="1000">1,000</option>
-                          <option value="5000" selected>5,000</option>
-                          <option value="10000">10,000</option>
-                          <option value="20000">20,000</option>
-                        </select>
-                      </div>
-                      
-                      <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Blind Structure</label>
-                        <select id="blind-structure" class="swal2-input" style="width: 100%; margin: 0;">
-                          <option value="normal" selected>Normal (10 hands/level)</option>
-                          <option value="turbo">Turbo (5 hands/level)</option>
-                          <option value="hyper">Hyper Turbo (3 hands/level)</option>
-                        </select>
-                      </div>
-                      
-                      <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Registration Period</label>
-                        <select id="registration-period" class="swal2-input" style="width: 100%; margin: 0;">
-                          <option value="0">No Late Registration</option>
-                          <option value="5" selected>5 minutes</option>
-                          <option value="10">10 minutes</option>
-                          <option value="15">15 minutes</option>
-                          <option value="30">30 minutes</option>
-                          <option value="60">1 hour</option>
-                        </select>
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                          <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Blind Structure</label>
+                          <select id="blind-structure" class="swal2-input" style="width: 100%; margin: 0;">
+                            <option value="normal" selected>Normal (10 hands/level)</option>
+                            <option value="turbo">Turbo (5 hands/level)</option>
+                            <option value="hyper">Hyper Turbo (3 hands/level)</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Registration Period</label>
+                          <select id="registration-period" class="swal2-input" style="width: 100%; margin: 0;">
+                            <option value="0">No Late Registration</option>
+                            <option value="5" selected>5 minutes</option>
+                            <option value="10">10 minutes</option>
+                            <option value="15">15 minutes</option>
+                            <option value="30">30 minutes</option>
+                            <option value="60">1 hour</option>
+                          </select>
+                        </div>
                       </div>
                       
                       <div style="margin-bottom: 1rem;">
@@ -321,7 +371,7 @@ const TournamentLobby = () => {
                   showCancelButton: true,
                   confirmButtonText: 'Create Tournament',
                   cancelButtonText: 'Cancel',
-                  width: '600px',
+                  width: '700px',
                   preConfirm: () => {
                     const name = document.getElementById('tournament-name').value;
                     const buyIn = document.getElementById('buy-in').value;
@@ -503,17 +553,31 @@ const TournamentLobby = () => {
                 </div>
 
                 {/* Action Button */}
-                <div>
+                <div style={{ display: 'flex', gap: '8px' }}>
                   {(tournament.status === 'registering' || tournament.status === 'upcoming') && (
-                    <Button 
-                      small 
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleRegister(tournament.id)
-                      }}
-                    >
-                      Register
-                    </Button>
+                    <>
+                      {isUserRegistered(tournament.id) ? (
+                        <Button 
+                          small 
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigate(`/tournament/${tournament.id}/waiting`)
+                          }}
+                        >
+                          Waiting Room
+                        </Button>
+                      ) : (
+                        <Button 
+                          small 
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRegister(tournament.id)
+                          }}
+                        >
+                          Register
+                        </Button>
+                      )}
+                    </>
                   )}
                   {tournament.status === 'live' && (
                     <Button 
@@ -643,6 +707,17 @@ const TournamentLobby = () => {
                       </Button>
                     </>
                   )}
+                  {console.log('Selected Tournament Status:', selectedTournament.status)}
+                  {/* {(selectedTournament.status === 'registering' || selectedTournament.status === 'upcoming') && isUserRegistered(selectedTournament.id) */}
+
+                  {true && (
+                    <Button 
+                      small 
+                      onClick={() => navigate(`/tournament/${selectedTournament.id}/waiting`)}
+                    >
+                      Go to Waiting Room
+                    </Button>
+                  )}
                   {selectedTournament.status === 'live' && (
                     <>
                       <Button 
@@ -652,12 +727,24 @@ const TournamentLobby = () => {
                       >
                         Watch
                       </Button>
-                      <Button 
-                        small 
-                        onClick={() => navigate(`/tournament/${selectedTournament.id}?mode=player`)}
-                      >
-                        Join Table
-                      </Button>
+                      {isUserRegistered(selectedTournament.id) ? (
+                        <Button 
+                          small 
+                          onClick={() => navigate(`/tournament/${selectedTournament.id}?mode=player`)}
+                        >
+                          Join Table
+                        </Button>
+                      ) : (
+                        <Button 
+                          small 
+                          onClick={async () => {
+                            await handleRegister(selectedTournament.id)
+                            // Don't navigate - the TOURNAMENT_REGISTERED handler will do it
+                          }}
+                        >
+                          Register & Play
+                        </Button>
+                      )}
                     </>
                   )}
                 </div>
