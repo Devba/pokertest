@@ -66,8 +66,11 @@ const Play = () => {
   useEffect(() => {
     console.log(socket, walletAddress)
     if(!socket){
-      console.log("No socket, navigating to home")
-      navigate("/")
+      console.log("No socket, reloading page in 5 seconds")
+      setTimeout(() => {
+        window.location.reload()
+      }, 5000)
+      return
     }
 
     // !walletAddress && navigate("/")

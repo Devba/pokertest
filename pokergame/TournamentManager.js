@@ -171,7 +171,7 @@ class TournamentManager {
     }
 
     const playerIndex = tournament.registeredPlayers.findIndex(
-      p => p.walletAddress === walletAddress
+      p => (p.id === walletAddress || p.walletAddress === walletAddress)    
     );
 
     if (playerIndex === -1) {
@@ -430,7 +430,13 @@ class TournamentManager {
       buyIn: tournament.buyIn,
       prizePool: tournament.prizePool,
       maxPlayers: tournament.maxPlayers,
-      registeredPlayers: tournament.registeredPlayers.length,
+      registeredPlayers: tournament.registeredPlayers.map(p => ({
+        id: p.id,
+        name: p.name,
+        walletAddress: p.walletAddress,
+        chips: p.chips,
+        isBot: p.isBot || false
+      })),
       startingChips: tournament.startingChips,
       startTime: tournament.startTime,
       status: tournament.status,

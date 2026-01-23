@@ -172,7 +172,7 @@ const TournamentPlay = () => {
             <PositionedUISlot
               top="2vh"
               left="1.5rem"
-              scale="0.65"
+              scale="0.25"
               style={{ zIndex: '50' }}
             >
               <Button small secondary onClick={handleLeaveTournament}>
@@ -182,9 +182,9 @@ const TournamentPlay = () => {
 
             {/* Time Delay Slider */}
             <PositionedUISlot
-              top="2vh"
-              left="12rem"
-              scale="0.65"
+              top="9vh"
+              left="1rem"
+              scale="0.25"
               style={{ zIndex: '50' }}
             >
               <div style={{ 
@@ -192,7 +192,7 @@ const TournamentPlay = () => {
                 padding: '0.5rem 1rem', 
                 borderRadius: '8px',
                 color: 'white',
-                minWidth: '200px'
+                minWidth: '50px'
               }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
                   Time Delay: {timeDelay}s
@@ -206,7 +206,7 @@ const TournamentPlay = () => {
                     const td = Number(e.target.value) < 29 ? Number(e.target.value) : 300;
                     setTimeDelay(td);
                   }}
-                  style={{ width: '100%', cursor: 'pointer' }}
+                  style={{ width: '90%', cursor: 'pointer' }}
                 />
               </div>
             </PositionedUISlot>
@@ -215,7 +215,7 @@ const TournamentPlay = () => {
             {tournamentInfo && (
               <PositionedUISlot
                 top="2vh"
-                right="1.5rem"
+                right="6.5rem"
                 scale="0.65"
                 style={{ zIndex: '50' }}
               >
@@ -304,15 +304,7 @@ const TournamentPlay = () => {
                   sitDown={sitDown}
                 />
               </PositionedUISlot>
-              <PositionedUISlot
-                width="50%"
-                top="-25%"
-                scale="0.125"
-                origin="top center"
-                style={{ zIndex: '1' }}
-              >
-                <BrandingImage></BrandingImage>
-              </PositionedUISlot>
+            
               <PositionedUISlot
                 width="100%"
                 bottom="34%"

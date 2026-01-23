@@ -434,7 +434,7 @@ const init = (socket, io) => {
     socket.join(`table-${tableId}`);
     console.log(`Socket ${socket.id} joined room: table-${tableId}`);
     
-    if (!isSpectator) {
+ /*   if (!isSpectator && false) {
       table.addPlayer(player);
       sitDown(tableId, table.players.length, table.limit);
     } else {
@@ -442,7 +442,7 @@ const init = (socket, io) => {
       // Send initial table state to spectator
       const tableCopy = hideOpponentCards(table, socket.id);
       socket.emit(SC_TABLE_UPDATED, { table: tableCopy });
-    }
+    }*/
     
     socket.emit(SC_TABLE_JOINED, { tables: getCurrentTables(), tableId });
     socket.broadcast.emit(SC_TABLES_UPDATED, getCurrentTables())
