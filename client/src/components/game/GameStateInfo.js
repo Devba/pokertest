@@ -36,6 +36,7 @@ export const GameStateInfo = ({ currentTable }) => {
         <ChipsAmountPill
           chipsAmount={currentTable.mainPot}
           minBet={currentTable.minBet}
+          bigBlind={currentTable.minRaise || currentTable.minBet * 2}
           showAsBlinds={showAsBlinds}
           toggleShowAsBlinds={toggleShowAsBlinds}
           style={{ minWidth: '150px' }}
@@ -47,6 +48,7 @@ export const GameStateInfo = ({ currentTable }) => {
           <ChipsAmountPill
             chipsAmount={sidePot.amount}
             minBet={currentTable.minBet}
+            bigBlind={currentTable.minRaise || currentTable.minBet * 2}
             showAsBlinds={showAsBlinds}
             toggleShowAsBlinds={toggleShowAsBlinds}
             style={{ minWidth: '150px' }}

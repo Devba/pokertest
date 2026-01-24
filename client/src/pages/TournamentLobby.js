@@ -142,6 +142,32 @@ const TournamentLobby = () => {
     }
   }
 
+  const handleDeleteTournament = async (tournamentId) => {
+    const result = await Swal.fire({
+      title: 'Delete Tournament?',
+      text: 'This action cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel'
+    })
+
+    if (result.isConfirmed && socket) {
+      socket.emit('DELETE_TOURNAMENT', { tournamentId })
+      
+      Swal.fire({
+        title: 'Deleting...',
+        text: 'Please wait',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading()
+        }
+      })
+    }
+  }
+
   const isUserRegistered = (tournamentId) => {
     const tournament = tournaments.find(t => t.id === tournamentId)
     if (!tournament || !tournament.registeredPlayers) return false
@@ -210,6 +236,28 @@ const TournamentLobby = () => {
         }
       })
 
+      socket.on('TOURNAMENT_DELETED', (result) => {
+        console.log('Tournament deleted:', result)
+        Swal.close()
+        if (result.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Tournament Deleted',
+            text: 'The tournament has been deleted',
+            timer: 2000
+          })
+          setSelectedTournament(null)
+          // Remove from local state
+          setTournaments(prev => prev.filter(t => t.id !== result.tournamentId))
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Delete Failed',
+            text: result.message || 'Could not delete tournament'
+          })
+        }
+      })
+
       socket.on('TOURNAMENT_ERROR', (error) => {
         console.error('Tournament error:', error)
         Swal.close() // Close any open Swal dialogs first
@@ -237,6 +285,7 @@ const TournamentLobby = () => {
         socket.off('TOURNAMENT_REGISTERED')
         socket.off('TOURNAMENT_UNREGISTERED')
         socket.off('TOURNAMENT_STARTED')
+        socket.off('TOURNAMENT_DELETED')
         socket.off('TOURNAMENT_ERROR')
         socket.off('BOTS_ADDED')
       }
@@ -555,29 +604,15 @@ const TournamentLobby = () => {
                 {/* Action Button */}
                 <div style={{ display: 'flex', gap: '8px' }}>
                   {(tournament.status === 'registering' || tournament.status === 'upcoming') && (
-                    <>
-                      {isUserRegistered(tournament.id) ? (
-                        <Button 
-                          small 
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate(`/tournament/${tournament.id}/waiting`)
-                          }}
-                        >
-                          Waiting Room
-                        </Button>
-                      ) : (
-                        <Button 
-                          small 
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleRegister(tournament.id)
-                          }}
-                        >
-                          Register
-                        </Button>
-                      )}
-                    </>
+                    <Button 
+                      small 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate(`/tournament/${tournament.id}/waiting`)
+                      }}
+                    >
+                      View Tournament
+                    </Button>
                   )}
                   {tournament.status === 'live' && (
                     <Button 
@@ -652,6 +687,14 @@ const TournamentLobby = () => {
                         onClick={() => handleUnregister(selectedTournament.id)}
                       >
                         Unregister
+                      </Button>
+                      <Button 
+                        small 
+                        secondary
+                        onClick={() => handleDeleteTournament(selectedTournament.id)}
+                        style={{ backgroundColor: '#d33', borderColor: '#d33' }}
+                      >
+                        Delete
                       </Button>
                       <Button 
                         small 

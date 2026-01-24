@@ -80,6 +80,70 @@ const TournamentWaitingRoom = () => {
     }
   }, [tournament])
 
+  // Listen for socket events
+  useEffect(() => {
+    if (socket) {
+      socket.on('BOTS_ADDED', (result) => {
+        console.log('Bots added:', result)
+        Swal.close()
+        if (result.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Bots Added!',
+            text: result.message || `Added ${result.count} bot(s)`,
+            timer: 2000
+          })
+        }
+      })
+
+      socket.on('TOURNAMENT_DELETED', (result) => {
+        console.log('Tournament deleted:', result)
+        Swal.close()
+        if (result.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Tournament Deleted',
+            text: 'The tournament has been deleted',
+            timer: 2000
+          }).then(() => {
+            navigate('/tournament-lobby')
+          })
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Delete Failed',
+            text: result.message || 'Could not delete tournament'
+          })
+        }
+      })
+
+      socket.on('TOURNAMENT_REGISTERED', (result) => {
+        console.log('Registration result:', result)
+        Swal.close()
+        if (result.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Registration Successful!',
+            text: 'You are now registered for the tournament',
+            timer: 2000
+          })
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Registration Failed',
+            text: result.message || 'Could not register for tournament'
+          })
+        }
+      })
+
+      return () => {
+        socket.off('BOTS_ADDED')
+        socket.off('TOURNAMENT_DELETED')
+        socket.off('TOURNAMENT_REGISTERED')
+      }
+    }
+  }, [socket, navigate])
+
   const handleLeave = () => {
     navigate('/tournament-lobby')
   }
@@ -129,9 +193,99 @@ const TournamentWaitingRoom = () => {
               {tournament.status === 'registering' ? 'Registration Open' : tournament.status.toUpperCase()}
             </div>
           </div>
-          <Button secondary onClick={handleLeave}>
-            Leave
-          </Button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {tournament.status === 'registering' && (
+              <>
+                <Button 
+                  small
+                  onClick={async () => {
+                    const { value: botCount } = await Swal.fire({
+                      title: 'Add Bots',
+                      input: 'number',
+                      inputLabel: 'How many bots to add?',
+                      inputValue: 2,
+                      inputAttributes: {
+                        min: 1,
+                        max: 10,
+                        step: 1
+                      },
+                      showCancelButton: true,
+                      confirmButtonText: 'Add Bots'
+                    })
+                    
+                    if (botCount && socket) {
+                      socket.emit('ADD_BOTS_TO_TOURNAMENT', {
+                        tournamentId: parseInt(tournamentId),
+                        botCount: parseInt(botCount)
+                      })
+                      
+                      Swal.fire({
+                        title: 'Adding Bots...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                          Swal.showLoading()
+                        }
+                      })
+                    }
+                  }}
+                >
+                  Add Bots
+                </Button>
+                <Button 
+                  small
+                  onClick={() => {
+                    if (socket) {
+                      socket.emit('START_TOURNAMENT', { tournamentId: parseInt(tournamentId) })
+                      Swal.fire({
+                        title: 'Starting Tournament...',
+                        text: 'The tournament is being started',
+                        timer: 2000,
+                        showConfirmButton: false
+                      })
+                    }
+                  }}
+                >
+                  Start Now
+                </Button>
+                <Button 
+                  small
+                  secondary
+                  onClick={async () => {
+                    const result = await Swal.fire({
+                      title: 'Delete Tournament?',
+                      text: 'This action cannot be undone!',
+                      icon: 'warning',
+                      showCancelButton: true,
+                      confirmButtonColor: '#d33',
+                      cancelButtonColor: '#3085d6',
+                      confirmButtonText: 'Yes, delete it!',
+                      cancelButtonText: 'Cancel'
+                    })
+
+                    if (result.isConfirmed && socket) {
+                      socket.emit('DELETE_TOURNAMENT', { tournamentId: parseInt(tournamentId) })
+                      
+                      Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                          Swal.showLoading()
+                        }
+                      })
+                    }
+                  }}
+                  style={{ backgroundColor: '#d33', borderColor: '#d33' }}
+                >
+                  Delete
+                </Button>
+              </>
+            )}
+            <Button secondary onClick={handleLeave}>
+              Leave
+            </Button>
+          </div>
         </div>
 
         {/* Tournament Info Grid */}
@@ -200,9 +354,7 @@ const TournamentWaitingRoom = () => {
         )}
 
         {/* Registration Status */}
-                {console.log("alf -WR- isUserRegistered:", isUserRegistered,"Status:",    tournament.status)}
-        { !isUserRegistered && tournament.status === 'registering' && ( 
-             // {true && (
+        {!isUserRegistered && tournament.status === 'registering' && ( 
           <div style={{ 
             textAlign: 'center',
             padding: '1.5rem',
@@ -211,9 +363,68 @@ const TournamentWaitingRoom = () => {
             marginBottom: '2rem',
             border: '2px solid rgba(231, 76, 60, 0.3)'
           }}>
-            <p style={{ margin: 0, color: '#e74c3c', fontSize: '1.125rem' }}>
+            <p style={{ margin: '0 0 1rem 0', color: '#e74c3c', fontSize: '1.125rem' }}>
               ⚠️ You are not registered for this tournament
             </p>
+            <Button
+              onClick={async () => {
+                // Check if username is set, if not ask for it
+                let playerUsername = localStorage.getItem('username')
+                if (!playerUsername || playerUsername.trim() === '') {
+                  const { value: enteredUsername } = await Swal.fire({
+                    title: 'Enter Your Username',
+                    input: 'text',
+                    inputLabel: 'Choose a username for the tournament',
+                    inputPlaceholder: 'Enter your username',
+                    showCancelButton: true,
+                    confirmButtonText: 'Register',
+                    cancelButtonText: 'Cancel',
+                    inputValidator: (value) => {
+                      if (!value) {
+                        return 'You need to enter a username!'
+                      }
+                      if (value.length < 3) {
+                        return 'Username must be at least 3 characters!'
+                      }
+                      if (value.length > 20) {
+                        return 'Username must be less than 20 characters!'
+                      }
+                    }
+                  })
+
+                  if (!enteredUsername) {
+                    return
+                  }
+
+                  playerUsername = enteredUsername
+                }
+                
+                // Generate random wallet if not present
+                let userWallet = walletAddress
+                if (!userWallet || userWallet.trim() === '') {
+                  userWallet = 'wallet_' + Math.random().toString(36).substring(2, 15)
+                }
+                
+                if (socket) {
+                  socket.emit('REGISTER_TOURNAMENT', { 
+                    tournamentId: parseInt(tournamentId), 
+                    walletAddress: userWallet,
+                    username: playerUsername
+                  })
+                  
+                  Swal.fire({
+                    title: 'Registering...',
+                    text: 'Please wait while we register you for the tournament',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                      Swal.showLoading()
+                    }
+                  })
+                }
+              }}
+            >
+              Register Now
+            </Button>
           </div>
         )}
 

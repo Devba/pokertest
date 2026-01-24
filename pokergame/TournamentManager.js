@@ -253,7 +253,9 @@ class TournamentManager {
         `Tournament ${tournamentId} - Table ${i + 1}`,
         10000, // limit
         playersPerTable,
-        tournamentId
+        tournamentId,
+        1, // blindLevel
+        this // pass tournamentManager
       );
       table.handsPerLevel = tournament.handsPerLevel;
       tournament.tables.push(table);
@@ -491,8 +493,12 @@ class TournamentManager {
 
   broadcastTournamentUpdate(tournamentId) {
     const tournamentInfo = this.getTournamentInfo(tournamentId);
+    console.log(`Broadcasting TOURNAMENT_UPDATE for tournament ${tournamentId}:`, tournamentInfo);
     if (tournamentInfo && this.io) {
       this.io.emit('TOURNAMENT_UPDATE', tournamentInfo);
+      console.log('TOURNAMENT_UPDATE emitted successfully');
+    } else {
+      console.log('Failed to broadcast: tournamentInfo=', !!tournamentInfo, 'io=', !!this.io);
     }
   }
 
@@ -517,19 +523,22 @@ class TournamentManager {
   broadcastTableState(table) {
     if (!this.io) return;
     
+    // Remove circular reference before broadcasting
+    const { tournamentManager, ...cleanTable } = table;
+    
     // Emit to the table room (includes spectators)
-    this.io.to(`table-${table.id}`).emit('TABLE_UPDATED', {
-      table: table,
+    this.io.to(`table-${cleanTable.id}`).emit('TABLE_UPDATED', {
+      table: cleanTable,
       message: '',
       action: '',
       notification: ''
     });
 
     // Also emit to individual players
-    table.players.forEach(player => {
+    cleanTable.players.forEach(player => {
       if (player && player.socketId) {
         this.io.to(player.socketId).emit('TABLE_UPDATED', {
-          table: table,
+          table: cleanTable,
           message: '',
           action: '',
           notification: ''

@@ -1,11 +1,12 @@
 const Table = require('./Table');
 
 class TournamentTable extends Table {
-  constructor(id, name, limit, maxPlayers, tournamentId, blindLevel = 1) {
+  constructor(id, name, limit, maxPlayers, tournamentId, blindLevel = 1, tournamentManager = null) {
     super(id, name, limit, maxPlayers);
     
     // Tournament-specific properties
     this.tournamentId = tournamentId;
+    this.tournamentManager = tournamentManager;
     this.blindLevel = blindLevel;
     this.blindSchedule = this.initBlindSchedule();
     this.currentBlindIndex = 0;
@@ -47,6 +48,17 @@ class TournamentTable extends Table {
       const newBlinds = this.getCurrentBlinds();
       this.minBet = newBlinds.smallBlind;
       this.minRaise = newBlinds.bigBlind;
+      this.blindLevel = newBlinds.level;
+      
+      // Update tournament's blind level and broadcast
+      if (this.tournamentManager) {
+        const tournament = this.tournamentManager.getTournament(this.tournamentId);
+        if (tournament) {
+          tournament.blindLevel = this.blindLevel;
+          console.log(`Tournament ${this.tournamentId} blind level updated to ${this.blindLevel}`);
+          this.tournamentManager.broadcastTournamentUpdate(this.tournamentId);
+        }
+      }
       
       return {
         message: `Blinds increased to ${newBlinds.smallBlind}/${newBlinds.bigBlind}`,
@@ -121,19 +133,34 @@ class TournamentTable extends Table {
   }
 
   checkForEliminations() {
+    let playersEliminated = false;
+    
     for (let i = 1; i <= this.maxPlayers; i++) {
       const seat = this.seats[i];
       if (seat && seat.stack === 0 && !seat.eliminated) {
         seat.eliminated = true;
+        playersEliminated = true;
+        
         this.eliminatedPlayers.push({
           player: seat.player,
           position: this.getTournamentPosition(),
           eliminatedAt: new Date()
         });
         
-        this.winMessages.push(
-          `${seat.player.name} eliminated in position ${this.getTournamentPosition()}`
-        );
+        const eliminationMessage = `${seat.player.name} eliminated in position ${this.getTournamentPosition()}`;
+        this.winMessages.push(eliminationMessage);
+        
+        // Auto-clear the elimination message after 3 seconds
+        setTimeout(() => {
+          const msgIndex = this.winMessages.indexOf(eliminationMessage);
+          if (msgIndex > -1) {
+            this.winMessages.splice(msgIndex, 1);
+          }
+        }, 3000);
+        
+        // Remove eliminated player from seat
+        console.log(`Removing eliminated player ${seat.player.name} from tournament table seat ${i}`);
+        this.seats[i] = null;
       }
     }
 
@@ -141,6 +168,9 @@ class TournamentTable extends Table {
     if (this.activePlayers().length === 1) {
       this.endTournament();
     }
+    
+    // Return true if any players were eliminated (so we can broadcast tournament update)
+    return playersEliminated;
   }
 
   getTournamentPosition() {

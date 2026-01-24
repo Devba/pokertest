@@ -203,6 +203,18 @@ const ConnectWallet = () => {
           >
             Iniciar Juego Automáticamente
           </button>
+
+          <button 
+            onClick={() => navigate('/tournament-lobby')}
+            style={{
+              ...buttonStyle,
+              backgroundColor: '#28a745'
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
+          >
+            🏆 Tournament Lobby
+          </button>
         </div>
       )}
     </>

@@ -73,6 +73,8 @@ const init = (socket, io) => {
   // Initialize TournamentManager if not already initialized
   if (!tournamentManager) {
     tournamentManager = new TournamentManager(io, botManager);
+    // Give BotManager access to TournamentManager for broadcasting tournament updates
+    botManager.tournamentManager = tournamentManager;
     console.log('🏆 TournamentManager initialized');
   }
 
@@ -153,6 +155,26 @@ const init = (socket, io) => {
     } catch (error) {
       console.error('Error starting tournament:', error);
       socket.emit('TOURNAMENT_ERROR', { error: error.message });
+    }
+  });
+
+  socket.on('DELETE_TOURNAMENT', ({ tournamentId }) => {
+    try {
+      const result = tournamentManager.cancelTournament(tournamentId);
+      console.log(`DELETE_TOURNAMENT ${tournamentId} result:`, result);
+      
+      if (result.success) {
+        // Remove tournament from the map
+        tournamentManager.tournaments.delete(tournamentId);
+        socket.emit('TOURNAMENT_DELETED', { success: true, tournamentId });
+        // Broadcast to all clients
+        io.emit('TOURNAMENT_UPDATE', { id: tournamentId, status: 'deleted' });
+      } else {
+        socket.emit('TOURNAMENT_DELETED', { success: false, message: result.message });
+      }
+    } catch (error) {
+      console.error('Error deleting tournament:', error);
+      socket.emit('TOURNAMENT_DELETED', { success: false, message: error.message });
     }
   });
 
@@ -303,20 +325,12 @@ const init = (socket, io) => {
 
       // Emit the table assignment
       console.log('Emitting TOURNAMENT_TABLE_ASSIGNED for table:', playerTable.id);
+      const tournamentInfo = tournamentManager.getTournamentInfo(tournamentId);
       socket.emit('TOURNAMENT_TABLE_ASSIGNED', {
         tournamentId,
         tableId: playerTable.id,
         table: playerTable.getTournamentStatus(),
-        tournament: {
-          id: tournament.id,
-          name: tournament.name,
-          status: tournament.status,
-          currentLevel: tournament.currentBlindLevel,
-          totalPlayers: tournament.registeredPlayers.length,
-          remainingPlayers: tournament.remainingPlayers,
-          prizePool: tournament.prizePool,
-          payouts: tournament.payouts,
-        }
+        tournament: tournamentInfo
       });
     } catch (error) {
       console.error('Error getting tournament table:', error);
@@ -674,10 +688,13 @@ const init = (socket, io) => {
   }
 
   function broadcastToTable(table, message = null, from = null) {
+    // Remove circular reference before any processing
+    const { tournamentManager, ...cleanTable } = table;
+    
     // Broadcast to all players in the table
-    for (let i = 0; i < table.players.length; i++) {
-      let socketId = table.players[i].socketId;
-      let tableCopy = hideOpponentCards(table, socketId);
+    for (let i = 0; i < cleanTable.players.length; i++) {
+      let socketId = cleanTable.players[i].socketId;
+      let tableCopy = hideOpponentCards(cleanTable, socketId);
       io.to(socketId).emit(SC_TABLE_UPDATED, {
         table: tableCopy,
         message,
@@ -686,8 +703,8 @@ const init = (socket, io) => {
     }
     
     // Also broadcast to room for spectators (they see all cards hidden except shown ones)
-    const tableCopyForSpectators = hideOpponentCards(table, 'spectator');
-    io.to(`table-${table.id}`).emit(SC_TABLE_UPDATED, {
+    const tableCopyForSpectators = hideOpponentCards(cleanTable, 'spectator');
+    io.to(`table-${cleanTable.id}`).emit(SC_TABLE_UPDATED, {
       table: tableCopyForSpectators,
       message,
       from,
@@ -744,6 +761,7 @@ const init = (socket, io) => {
   }
 
   function hideOpponentCards(table, socketId) {
+    // Table is already cleaned of circular references
     let tableCopy = JSON.parse(JSON.stringify(table));
 
     // Don't hide cards in tournament tables - spectators can see everything
@@ -751,7 +769,6 @@ const init = (socket, io) => {
       return tableCopy;
     }
 
-    return tableCopy;
     let hiddenCard = { suit: 'hidden', rank: 'hidden' };
     let hiddenHand = [hiddenCard, hiddenCard];
 

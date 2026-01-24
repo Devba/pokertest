@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import chipImg from '../../assets/game/gglab_green.png'
 
 
-const ChipsAmountPill = ({ chipsAmount, minBet, showAsBlinds, toggleShowAsBlinds }) => {
+const ChipsAmountPill = ({ bigBlind,chipsAmount, minBet, showAsBlinds, toggleShowAsBlinds }) => {
   const handleContextMenu = (e) => {
     e.preventDefault();
     console.log("handleContextMenu");
@@ -14,7 +14,7 @@ const ChipsAmountPill = ({ chipsAmount, minBet, showAsBlinds, toggleShowAsBlinds
   };
 
   const displayValue = showAsBlinds && minBet
-    ? `${Math.floor(chipsAmount / (minBet * 2))} BB`
+    ? `${(chipsAmount / (bigBlind)).toFixed(1)} BB`
     : chipsAmount;
 
   return (
@@ -32,6 +32,7 @@ const ChipsAmountPill = ({ chipsAmount, minBet, showAsBlinds, toggleShowAsBlinds
 ChipsAmountPill.propTypes = {
   chipsAmount: PropTypes.number,
   minBet: PropTypes.number,
+  bigBlind: PropTypes.number,
   showAsBlinds: PropTypes.bool,
   toggleShowAsBlinds: PropTypes.func,
 };

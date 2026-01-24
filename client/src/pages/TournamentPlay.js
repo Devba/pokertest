@@ -90,7 +90,9 @@ const TournamentPlay = () => {
     }
   }, [socket, walletAddress, tournamentId])
 
-  useEffect(() => {
+ 
+
+useEffect(() => {
     if (socket) {
       socket.on('TOURNAMENT_TABLE_ASSIGNED', ({ tableId, tournament }) => {
         console.log('TOURNAMENT_TABLE_ASSIGNED received - tableId:', tableId, 'tournament:', tournament)
@@ -103,6 +105,23 @@ const TournamentPlay = () => {
       socket.on('TOURNAMENT_INFO', (info) => {
         console.log('TOURNAMENT_INFO received:', info)
         setTournamentInfo(info)
+      })
+
+      socket.on('TOURNAMENT_UPDATE', (info) => {
+        console.log('TOURNAMENT_UPDATE received:', info)
+        console.log('Current tournamentId:', tournamentId, 'Update tournamentId:', info.id)
+        console.log('Comparison result:', info.id === parseInt(tournamentId))
+        if (info.id === parseInt(tournamentId)) {
+          console.log('Updating tournament info with:', info)
+          setTournamentInfo(prev => {
+            const updated = {
+              ...prev,
+              ...info
+            }
+            console.log('Updated tournament info:', updated)
+            return updated
+          })
+        }
       })
       
       socket.on('TOURNAMENT_ERROR', (error) => {
@@ -119,10 +138,12 @@ const TournamentPlay = () => {
       return () => {
         socket.off('TOURNAMENT_TABLE_ASSIGNED')
         socket.off('TOURNAMENT_INFO')
+        socket.off('TOURNAMENT_UPDATE')
         socket.off('TOURNAMENT_ERROR')
       }
     }
   }, [socket, joinTable])
+
 
   useEffect(() => {
     if (currentTable) {

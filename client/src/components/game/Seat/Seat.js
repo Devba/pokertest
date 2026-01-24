@@ -84,7 +84,8 @@ export const Seat = ({ currentTable, seatNumber, sitDown }) => {
           >
             <ChipsAmountPill 
               chipsAmount={seat.bet} 
-              minBet={currentTable.minBet} 
+              minBet={currentTable.minBet}
+              bigBlind={currentTable.minRaise || currentTable.minBet * 2}
               showAsBlinds={showAsBlinds}
               toggleShowAsBlinds={toggleShowAsBlinds}
             />

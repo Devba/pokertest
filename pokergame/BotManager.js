@@ -259,6 +259,17 @@ class BotManager {
    * Handle when hand is over
    */
   handleHandOver(table, tableId) {
+    // Check if this is a tournament table and if players were eliminated
+    if (table.isTournament && table.checkForEliminations && typeof table.checkForEliminations === 'function') {
+      const playersEliminated = table.checkForEliminations();
+      
+      // If players were eliminated in a tournament, broadcast tournament update
+      if (playersEliminated && table.tournamentId && this.tournamentManager) {
+        console.log(`Players eliminated in tournament ${table.tournamentId}, broadcasting update`);
+        this.tournamentManager.broadcastTournamentUpdate(table.tournamentId);
+      }
+    }
+    
     if (table.activePlayers().length >= 2) {
       this.broadcastToTable(table, '---New hand starting in 5 seconds---');
       
@@ -280,9 +291,12 @@ class BotManager {
    * Broadcast table state to all players
    */
   broadcastToTable(table, message = null, from = null) {
-    for (let i = 0; i < table.players.length; i++) {
-      let socketId = table.players[i].socketId;
-      let tableCopy = this.hideOpponentCards(table, socketId);
+    // Remove circular reference before any processing
+    const cleanTable = this.cleanTableForBroadcast(table);
+    
+    for (let i = 0; i < cleanTable.players.length; i++) {
+      let socketId = cleanTable.players[i].socketId;
+      let tableCopy = this.hideOpponentCards(cleanTable, socketId);
       
       // Only emit to real players (not bots)
       if (!socketId.startsWith('bot_')) {
@@ -295,8 +309,8 @@ class BotManager {
     }
     
     // Also broadcast to room for spectators
-    const tableCopyForSpectators = this.hideOpponentCards(table, 'spectator');
-    this.io.to(`table-${table.id}`).emit('SC_TABLE_UPDATED', {
+    const tableCopyForSpectators = this.hideOpponentCards(cleanTable, 'spectator');
+    this.io.to(`table-${cleanTable.id}`).emit('SC_TABLE_UPDATED', {
       table: tableCopyForSpectators ,
       message,
       from,
@@ -304,10 +318,19 @@ class BotManager {
   }
 
   /**
+   * Clean table object by removing circular references
+   */
+  cleanTableForBroadcast(table) {
+    const { tournamentManager, ...cleanTable } = table;
+    return cleanTable;
+  }
+
+  /**
    * Hide opponent cards (keep same logic as original)
    * For tournament tables, cards are not hidden to allow spectators to see all hands
    */
   hideOpponentCards(table, socketId) {
+    // Table is already cleaned of circular references
     let tableCopy = JSON.parse(JSON.stringify(table));
     
     // Don't hide cards in tournament tables - spectators can see everything

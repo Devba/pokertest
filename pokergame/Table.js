@@ -214,8 +214,26 @@ class Table {
     for (let i of Object.keys(this.seats)) {
       const seat = this.seats[i];
       if ((seat && seat.stack == 0) || (seat && seat.stack < 0)) {
-        seat.sittingOut = true;
+        console.log(`Removing player ${seat.player.name} from seat ${i} - no chips remaining`);
+        
+        // Add elimination message
+        this.winMessages.push(
+          `${seat.player.name} has been eliminated - No chips remaining`
+        );
+        
+        // Auto-clear the message after 3 seconds
+        setTimeout(() => {
+          this.clearWinMessages();
+        }, 3000);
+        
+        this.seats[i] = null; // Remove player from seat
       }
+    }
+    
+    // Check if table needs reset or hand should end
+    const satPlayers = Object.values(this.seats).filter((seat) => seat != null);
+    if (satPlayers.length === 0) {
+      this.resetEmptyTable();
     }
   }
   endWithoutShowdown() {
