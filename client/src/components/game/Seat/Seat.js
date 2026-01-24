@@ -153,7 +153,7 @@ export const Seat = ({ currentTable, seatNumber, sitDown }) => {
           )}
 
           <PositionedUISlot
-            top="6vh"
+            top="7vh"
             style={{ minWidth: '150px', zIndex: '55' }}
             origin="bottom center"
           >

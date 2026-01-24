@@ -386,8 +386,16 @@ const Play = () => {
               </PositionedUISlot>
             </>
           )}
-        </PokerTableWrapper>
 
+             <PositionedUISlot 
+              bottom="1%" 
+              left="50%" 
+              scale="0.60" 
+              origin="bottom center"
+              style={{
+                transform: 'translateX(-50%)',
+              }}
+            >
         {currentTable &&
           currentTable.seats[seatId] &&
           currentTable.seats[seatId].turn && (
@@ -403,6 +411,9 @@ const Play = () => {
               call={call}
             />
           )}
+          </PositionedUISlot>
+        </PokerTableWrapper>
+      
       </Container>
     </>
   )

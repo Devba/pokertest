@@ -13,7 +13,7 @@ const StyledOccupiedSeat = styled(EmptySeat)`
   background-size: cover;
   background-repeat: no-repeat;
   padding: 0;
-  border: ${({ hasTurn }) => (hasTurn ? `none` : `10px double transparent`)};
+  border: ${({ hasTurn }) => (hasTurn ? `none` : `0px double transparent`)};
   background-clip: content-box, border-box;
   background-origin: border-box;
   transition: all 0.3s;
@@ -57,13 +57,13 @@ const StyledOccupiedSeat = styled(EmptySeat)`
         border-left-color: transparent;
         border-top-color: transparent;
         z-index: 5;
+        animation: timer-slide-lt 15s linear infinite, green-flash 1s ease-in-out infinite;
       }
       .timer-lt {
-        animation: 15s linear infinite timer-slide-lt;
         left: 100%;
       }
       .timer-rt {
-        animation: 15s linear infinite timer-slide-rt;
+        animation: timer-slide-rt 15s linear infinite, green-flash 1s ease-in-out infinite;
       }
     }
   }
@@ -110,6 +110,21 @@ const StyledOccupiedSeat = styled(EmptySeat)`
     }
     100% {
       transform: rotate(135deg);
+    }
+  }
+
+  @keyframes green-flash {
+    0% {
+      border-color: #219653;
+      filter: drop-shadow(0 0 2px #219653);
+    }
+    50% {
+      border-color: #4eff7a;
+      filter: drop-shadow(0 0 8px #4eff7a);
+    }
+    100% {
+      border-color: #219653;
+      filter: drop-shadow(0 0 2px #219653);
     }
   }
 `
