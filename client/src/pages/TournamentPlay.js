@@ -281,6 +281,7 @@ useEffect(() => {
                   seatNumber={1}
                   currentTable={currentTable}
                   sitDown={sitDown}
+                  folded={currentTable.seats[1]?.folded}
                 />
               </PositionedUISlot>
               <PositionedUISlot
@@ -293,6 +294,7 @@ useEffect(() => {
                   seatNumber={2}
                   currentTable={currentTable}
                   sitDown={sitDown}
+                  folded={currentTable.seats[2]?.folded}
                 />
               </PositionedUISlot>
               <PositionedUISlot
@@ -305,6 +307,7 @@ useEffect(() => {
                   seatNumber={3}
                   currentTable={currentTable}
                   sitDown={sitDown}
+                  folded={currentTable.seats[3]?.folded}
                 />
               </PositionedUISlot>
               <PositionedUISlot bottom="-11%" scale="0.55" origin="bottom center">
@@ -312,6 +315,7 @@ useEffect(() => {
                   seatNumber={4}
                   currentTable={currentTable}
                   sitDown={sitDown}
+                  folded={currentTable.seats[4]?.folded}
                 />
               </PositionedUISlot>
               <PositionedUISlot
@@ -324,6 +328,7 @@ useEffect(() => {
                   seatNumber={5}
                   currentTable={currentTable}
                   sitDown={sitDown}
+                  folded={currentTable.seats[5]?.folded}
                 />
               </PositionedUISlot>
             
@@ -379,10 +384,13 @@ useEffect(() => {
                 )}
               </PositionedUISlot>
 
-               <PositionedUISlot top="12%" scale="0.60" origin="center center">
+               <PositionedUISlot top="12%" scale="0.30" origin="left center"
+               width="25%"
+                bottom="34%"
+                left="50%">
                  {currentTable &&
                 currentTable.seats[seatId] &&
-                currentTable.seats[seatId].turn && 
+                //currentTable.seats[seatId].turn && 
                 (
                     <GameUI
                     currentTable={currentTable}

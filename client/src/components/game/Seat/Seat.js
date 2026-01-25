@@ -25,7 +25,7 @@ import { StyledSeat } from './StyledSeat'
 import { convertOmittedAddress } from '../../../helpers/common'
 import './Seat.scss'
 
-export const Seat = ({ currentTable, seatNumber, sitDown }) => {
+export const Seat = ({ currentTable, seatNumber, sitDown, folded }) => {
   const { chipsAmount } = useContext(globalContext)
   const { standUp, seatId, rebuy, showAsBlinds, toggleShowAsBlinds } = useContext(gameContext)
    
@@ -58,7 +58,17 @@ export const Seat = ({ currentTable, seatNumber, sitDown }) => {
   }
 
   return (
-    <StyledSeat>
+    <div
+      className="seat-root"
+      style={{
+        opacity: folded ? 0.5 : 1,
+        transition: 'opacity 0.3s',
+        display: 'flex',
+        textAlign: 'center',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
       {!seat ? (
         <>
           <EmptySeat>
@@ -174,6 +184,6 @@ export const Seat = ({ currentTable, seatNumber, sitDown }) => {
           </PositionedUISlot>
         </PositionedUISlot>
       )}
-    </StyledSeat>
+    </div>
   )
 }

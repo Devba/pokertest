@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { UIWrapper } from './UIWrapper'
 
@@ -124,10 +124,25 @@ export const GameUI = ({
   check,
   call,
 }) => {
+  const [autoFold, setAutoFold] = useState(false)
   const bigBlind = currentTable.minBet * 2
   const minRaise = currentTable.minRaise || bigBlind
   const maxBet = currentTable.seats[seatId].stack
   const pot = currentTable.pot
+
+  // Auto-fold effect
+  useEffect(() => {
+    if (
+      autoFold &&
+      currentTable &&
+      currentTable.seats[seatId] &&
+      currentTable.seats[seatId].turn
+    ) {
+      fold()
+    }
+    // Only run when it's the player's turn or autoFold changes
+    // eslint-disable-next-line
+  }, [autoFold, currentTable?.seats[seatId]?.turn])
 
   const handleQuickBet = (type) => {
     switch(type) {
@@ -169,6 +184,20 @@ export const GameUI = ({
   return (
     <UIWrapper>
       <GameUIContainer>
+        {/* Auto Fold Checkbox */}
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+          <input
+            type="checkbox"
+            id="autoFold"
+            checked={autoFold}
+            onChange={e => setAutoFold(e.target.checked)}
+            style={{ marginRight: '0.5em' }}
+          />
+          <label htmlFor="autoFold" style={{ color: 'white', fontSize: '0.95em' }}>
+            Auto Fold
+          </label>
+        </div>
+
         {/* Quick Bet Buttons */}
         <QuickBetRow>
           <QuickBetButton onClick={() => handleQuickBet('min')}>

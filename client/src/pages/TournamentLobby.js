@@ -335,7 +335,7 @@ const TournamentLobby = () => {
           {/* Buttons - Vertical on the right */}
           <div style={{ 
             position: 'fixed',
-            left: '6rem',
+            right: '15rem',
             top: '20%',
             transform: 'translateY(-50%)',
             display: 'flex', 

@@ -192,9 +192,13 @@ class BotManager {
 
     // Get bot's decision alf hay que dejarlo en
     const decision = bot.makeDecision(gameState);
-    if (decision.amount && decision.amount > seat.stack) {
+    if (decision.amount > seat.stack) {
       decision.amount = seat.stack;
     }
+    if( decision.amount <= 0){
+      decision.action = 'CS_CHECK';}
+
+
 
     console.log(`🤖 ${bot.name} decides to ${decision.action}${decision.amount ? ` $${decision.amount}` : ''}`);
 
