@@ -178,8 +178,23 @@ export const GameUI = ({
   }
 
   const callAmount = currentTable.callAmount - currentTable.seats[seatId].bet
-  const canCheck = currentTable.callAmount === currentTable.seats[seatId].bet || currentTable.callAmount === 0
+  const canCheck = currentTable.callAmount === currentTable.seats[seatId].bet || callAmount == 0
   const canCall = callAmount > 0 && currentTable.seats[seatId].bet < currentTable.callAmount
+
+console.log('GameUI Props:', {
+  playerName: currentTable.seats[seatId].player.name,
+  seatId,
+  bet,
+  callAmount,
+  canCheck,
+  canCall,
+  autoFold
+})
+console.log('Current Table State:', {
+  checkStatus: callAmount == 0 ? 'Can Check' : 'Cannot Check'
+});
+ console.log('Rendering GameUI:', {callAmount, canCheck, canCall, bet, autoFold})
+
 
   return (
     <UIWrapper>
@@ -217,7 +232,7 @@ export const GameUI = ({
         {/* Bet Control Slider */}
         <BetControlRow>
           <BetButton onClick={decreaseBet}>−</BetButton>
-          <BetDisplay>{(bet / bigBlind).toFixed(2)} BB</BetDisplay>
+          <BetDisplay>{(bet ).toFixed(2)} </BetDisplay>
           <BetButton onClick={increaseBet}>+</BetButton>
         </BetControlRow>
 
@@ -234,13 +249,13 @@ export const GameUI = ({
             onClick={canCheck ? check : call}
             disabled={!canCheck && !canCall}
           >
-            {canCheck ? 'Check' : `Call ${(callAmount / bigBlind).toFixed(2)} BB`}
+            {canCheck ? 'Check' : `Call ${(callAmount)} `}
           </ActionButton>
           <ActionButton 
             borderColor="#00bcd4"
             onClick={() => raise(bet + currentTable.seats[seatId].bet)}
           >
-            Raise {(bet / bigBlind).toFixed(2)} BB
+            Raise {bet }
           </ActionButton>
         </ActionRow>
       </GameUIContainer>
