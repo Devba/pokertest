@@ -100,10 +100,12 @@ const TournamentLobby = () => {
     
     // Generate random wallet if not present
     let userWallet = walletAddress;
-    if (!userWallet || userWallet.trim() === '') {
+    if ( false && !userWallet || userWallet.trim() === '') {
       userWallet = 'wallet_' + Math.random().toString(36).substring(2, 15);
       console.log('Generated random wallet:', userWallet);
     }
+    userWallet = 'wallet_' + Math.random().toString(36).substring(2, 15);
+      console.log('Generated random wallet:', userWallet);
     
     // Emit socket event to register for tournament
     if (socket) {

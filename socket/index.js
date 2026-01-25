@@ -93,7 +93,8 @@ const init = (socket, io) => {
 
   socket.on('REGISTER_TOURNAMENT', ({ tournamentId, walletAddress, username }) => {
     try {
-      let player = players[socket.id];
+      //let player = players[socket.id]; alf ,pasamos del socket 
+      let player= null;
       
       // If player doesn't exist, create a temporary one for tournament registration
       if (!player) {
@@ -129,7 +130,27 @@ const init = (socket, io) => {
   socket.on('GET_TOURNAMENTS', () => {
     try {
       const tournaments = tournamentManager.getAllTournaments();
-      socket.emit('TOURNAMENTS_LIST', tournaments);
+      // Sanitize tournaments to avoid circular references
+      const safeTournaments = tournaments.map(t => ({
+        id: t.id,
+        name: t.name,
+        status: t.status,
+        buyIn: t.buyIn,
+        startingChips: t.startingChips,
+        registrationEndsAt: t.registrationEndsAt,
+        startTime: t.startTime,
+        maxPlayers: t.maxPlayers,
+        registeredPlayers: t.registeredPlayers.map(p => ({
+          id: p.id,
+          name: p.name,
+          walletAddress: p.walletAddress,
+          isBot: p.isBot || false
+        })),
+        prizePool: t.prizePool,
+        structure: t.structure,
+        blindStructure: t.blindStructure
+      }));
+      socket.emit('TOURNAMENTS_LIST', safeTournaments);
     } catch (error) {
       console.error('Error getting tournaments:', error);
       socket.emit('TOURNAMENT_ERROR', { error: error.message });

@@ -187,8 +187,14 @@ class BotManager {
       numPlayers: table.unfoldedPlayers().length
     };
 
-    // Get bot's decision
+
+    //if (seat.stack <= 0) {console.log(`🤖 ${bot.name} is all-in and cannot act.`); //return;}
+
+    // Get bot's decision alf hay que dejarlo en
     const decision = bot.makeDecision(gameState);
+    if (decision.amount && decision.amount > seat.stack) {
+      decision.amount = seat.stack;
+    }
 
     console.log(`🤖 ${bot.name} decides to ${decision.action}${decision.amount ? ` $${decision.amount}` : ''}`);
 

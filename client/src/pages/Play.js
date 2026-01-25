@@ -391,7 +391,7 @@ const Play = () => {
               bottom="1%" 
               left="50%" 
               scale="0.60" 
-              origin="bottom center"
+              origin="bottom left"
               style={{
                 transform: 'translateX(-50%)',
               }}

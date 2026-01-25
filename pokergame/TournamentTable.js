@@ -201,8 +201,9 @@ class TournamentTable extends Table {
       // Player leaving voluntarily - mark as eliminated
       seat.stack = 0;
       seat.sittingOut = true;
-      this.checkForEliminations();
     }
+    // Always check for eliminations (and thus tournament end)
+    this.checkForEliminations();
   }
 
   getTournamentStatus() {

@@ -378,26 +378,37 @@ useEffect(() => {
                   <GameStateInfo currentTable={currentTable} />
                 )}
               </PositionedUISlot>
+
+               <PositionedUISlot top="12%" scale="0.60" origin="center center">
+                 {currentTable &&
+                currentTable.seats[seatId] &&
+                currentTable.seats[seatId].turn && 
+                (
+                    <GameUI
+                    currentTable={currentTable}
+                    seatId={seatId}
+                    bet={bet}
+                    setBet={setBet}
+                    raise={raise}
+                    standUp={standUp}
+                    fold={fold}
+                    check={check}
+                    call={call}
+                    />
+                )}
+              </PositionedUISlot>
+
+
+
+               
+
+
+
+              
             </>
           )}
         </PokerTableWrapper>
 
-        {currentTable &&
-          currentTable.seats[seatId] &&
-          //currentTable.seats[seatId].turn && 
-          (
-            <GameUI
-              currentTable={currentTable}
-              seatId={seatId}
-              bet={bet}
-              setBet={setBet}
-              raise={raise}
-              standUp={standUp}
-              fold={fold}
-              check={check}
-              call={call}
-            />
-          )}
       </Container>
     </>
   )

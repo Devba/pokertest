@@ -20,17 +20,23 @@ const WebSocketProvider = ({ children }) => {
   const [socketId, setSocketId] = useState(null)
 
   useEffect(() => {
+    // Only add 'beforeunload' (not 'beforeclose', which is not standard)
     window.addEventListener('beforeunload', cleanUp)
-    window.addEventListener('beforeclose', cleanUp)
-    return () => cleanUp()
+    // Remove event listener on cleanup, do NOT call cleanUp directly here
+   // return () => {
+    //  window.removeEventListener('beforeunload', cleanUp)
+    //}
     // eslint-disable-next-line
   }, [])
 
   useEffect(() => {
-      console.log('socket context')
-      const webSocket = socket || connect()
+    //console.log('socket context')
+    const webSocket = socket || connect()
 
-      return () => cleanUp()
+    // Only clean up socket connection on unmount, not via event listeners
+    return () => {
+      //cleanUp()
+    }
     // eslint-disable-next-line
   }, [])
 
@@ -44,6 +50,8 @@ const WebSocketProvider = ({ children }) => {
   }
 
   function connect() {
+    console.log('Connecting to WebSocket server at', config.socketURI)  
+
     const socket = io(config.socketURI, {
       transports: ['websocket'],
       upgrade: false,

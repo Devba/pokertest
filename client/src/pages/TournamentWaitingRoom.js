@@ -170,122 +170,125 @@ const TournamentWaitingRoom = () => {
         padding: '2rem',
         color: 'white'
       }}>
-        {/* Header */}
+        {/* Header: Tournament name and status */}
         <div style={{ 
           display: 'flex', 
-          justifyContent: 'space-between', 
           alignItems: 'center',
-          marginBottom: '2rem',
-          borderBottom: '2px solid rgba(255, 255, 255, 0.1)',
-          paddingBottom: '1rem'
+          gap: '1.5rem',
+          marginBottom: '0.5rem',
         }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '2rem' }}>{tournament.name}</h1>
-            <div style={{ 
-              display: 'inline-block',
-              padding: '0.25rem 0.75rem',
-              borderRadius: '4px',
-              backgroundColor: tournament.status === 'registering' ? '#f39c12' : '#27ae60',
-              color: 'white',
-              fontSize: '0.875rem',
-              marginTop: '0.5rem'
-            }}>
-              {tournament.status === 'registering' ? 'Registration Open' : tournament.status.toUpperCase()}
-            </div>
+          <h1 style={{ margin: 0, fontSize: '2rem' }}>{tournament.name}</h1>
+          <div style={{ 
+            display: 'inline-block',
+            padding: '0.25rem 0.75rem',
+            borderRadius: '4px',
+            backgroundColor: tournament.status === 'registering' ? '#f39c12' : '#27ae60',
+            color: 'white',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            letterSpacing: '0.03em'
+          }}>
+            {tournament.status === 'registering' ? 'Registration Open' : tournament.status.toUpperCase()}
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {tournament.status === 'registering' && (
-              <>
-                <Button 
-                  small
-                  onClick={async () => {
-                    const { value: botCount } = await Swal.fire({
-                      title: 'Add Bots',
-                      input: 'number',
-                      inputLabel: 'How many bots to add?',
-                      inputValue: 2,
-                      inputAttributes: {
-                        min: 1,
-                        max: 10,
-                        step: 1
-                      },
-                      showCancelButton: true,
-                      confirmButtonText: 'Add Bots'
+        </div>
+        {/* Action Buttons Row */}
+        <div style={{
+          display: 'flex',
+          gap: '0.5rem',
+          marginBottom: '2rem',
+          flexWrap: 'wrap',
+        }}>
+          {tournament.status === 'registering' && (
+            <>
+              <Button 
+                small
+                onClick={async () => {
+                  const { value: botCount } = await Swal.fire({
+                    title: 'Add Bots',
+                    input: 'number',
+                    inputLabel: 'How many bots to add?',
+                    inputValue: 2,
+                    inputAttributes: {
+                      min: 1,
+                      max: 10,
+                      step: 1
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: 'Add Bots'
+                  })
+                  
+                  if (botCount && socket) {
+                    socket.emit('ADD_BOTS_TO_TOURNAMENT', {
+                      tournamentId: parseInt(tournamentId),
+                      botCount: parseInt(botCount)
                     })
                     
-                    if (botCount && socket) {
-                      socket.emit('ADD_BOTS_TO_TOURNAMENT', {
-                        tournamentId: parseInt(tournamentId),
-                        botCount: parseInt(botCount)
-                      })
-                      
-                      Swal.fire({
-                        title: 'Adding Bots...',
-                        text: 'Please wait',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                          Swal.showLoading()
-                        }
-                      })
-                    }
-                  }}
-                >
-                  Add Bots
-                </Button>
-                <Button 
-                  small
-                  onClick={() => {
-                    if (socket) {
-                      socket.emit('START_TOURNAMENT', { tournamentId: parseInt(tournamentId) })
-                      Swal.fire({
-                        title: 'Starting Tournament...',
-                        text: 'The tournament is being started',
-                        timer: 2000,
-                        showConfirmButton: false
-                      })
-                    }
-                  }}
-                >
-                  Start Now
-                </Button>
-                <Button 
-                  small
-                  secondary
-                  onClick={async () => {
-                    const result = await Swal.fire({
-                      title: 'Delete Tournament?',
-                      text: 'This action cannot be undone!',
-                      icon: 'warning',
-                      showCancelButton: true,
-                      confirmButtonColor: '#d33',
-                      cancelButtonColor: '#3085d6',
-                      confirmButtonText: 'Yes, delete it!',
-                      cancelButtonText: 'Cancel'
+                    Swal.fire({
+                      title: 'Adding Bots...',
+                      text: 'Please wait',
+                      allowOutsideClick: false,
+                      didOpen: () => {
+                        Swal.showLoading()
+                      }
                     })
+                  }
+                }}
+              >
+                Add Bots
+              </Button>
+              <Button 
+                small
+                onClick={() => {
+                  if (socket) {
+                    socket.emit('START_TOURNAMENT', { tournamentId: parseInt(tournamentId) })
+                    Swal.fire({
+                      title: 'Starting Tournament...',
+                      text: 'The tournament is being started',
+                      timer: 2000,
+                      showConfirmButton: false
+                    })
+                  }
+                }}
+              >
+                Start Now
+              </Button>
+              <Button 
+                small
+                secondary
+                onClick={async () => {
+                  const result = await Swal.fire({
+                    title: 'Delete Tournament?',
+                    text: 'This action cannot be undone!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                  })
 
-                    if (result.isConfirmed && socket) {
-                      socket.emit('DELETE_TOURNAMENT', { tournamentId: parseInt(tournamentId) })
-                      
-                      Swal.fire({
-                        title: 'Deleting...',
-                        text: 'Please wait',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                          Swal.showLoading()
-                        }
-                      })
-                    }
-                  }}
-                  style={{ backgroundColor: '#d33', borderColor: '#d33' }}
-                >
-                  Delete
-                </Button>
-              </>
-            )}
-            <Button secondary onClick={handleLeave}>
-              Leave
-            </Button>
-          </div>
+                  if (result.isConfirmed && socket) {
+                    socket.emit('DELETE_TOURNAMENT', { tournamentId: parseInt(tournamentId) })
+                    
+                    Swal.fire({
+                      title: 'Deleting...',
+                      text: 'Please wait',
+                      allowOutsideClick: false,
+                      didOpen: () => {
+                        Swal.showLoading()
+                      }
+                    })
+                  }
+                }}
+                style={{ backgroundColor: '#d33', borderColor: '#d33' }}
+              >
+                Delete
+              </Button>
+            </>
+          )}
+          <Button secondary onClick={handleLeave}>
+            Leave
+          </Button>
         </div>
 
         {/* Tournament Info Grid */}
@@ -334,26 +337,7 @@ const TournamentWaitingRoom = () => {
           </div>
         </div>
 
-        {/* Countdown */}
-        {tournament.status === 'registering' && countdown && (
-          <div style={{ 
-            textAlign: 'center',
-            padding: '2rem',
-            backgroundColor: 'rgba(243, 156, 18, 0.1)',
-            borderRadius: '8px',
-            marginBottom: '2rem',
-            border: '2px solid rgba(243, 156, 18, 0.3)'
-          }}>
-            <div style={{ fontSize: '0.875rem', color: '#f39c12', marginBottom: '0.5rem' }}>
-              Tournament Starts In
-            </div>
-            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#f39c12' }}>
-              {countdown}
-            </div>
-          </div>
-        )}
-
-        {/* Registration Status */}
+           {/* Registration Status */}
         {!isUserRegistered && tournament.status === 'registering' && ( 
           <div style={{ 
             textAlign: 'center',
@@ -443,6 +427,27 @@ const TournamentWaitingRoom = () => {
           </div>
         )}
 
+
+        {/* Countdown */}
+        {tournament.status === 'registering' && countdown && (
+          <div style={{ 
+            textAlign: 'center',
+            padding: '2rem',
+            backgroundColor: 'rgba(243, 156, 18, 0.1)',
+            borderRadius: '8px',
+            marginBottom: '2rem',
+            border: '2px solid rgba(243, 156, 18, 0.3)'
+          }}>
+            <div style={{ fontSize: '0.875rem', color: '#f39c12', marginBottom: '0.5rem' }}>
+              Tournament Starts In
+            </div>
+            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#f39c12' }}>
+              {countdown}
+            </div>
+          </div>
+        )}
+
+     
         {/* Registered Players */}
         <div>
           <h3 style={{ marginBottom: '1rem' }}>
