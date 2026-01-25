@@ -46,7 +46,7 @@ class TournamentTable extends Table {
     if (this.currentBlindIndex < this.blindSchedule.length - 1) {
       this.currentBlindIndex++;
       const newBlinds = this.getCurrentBlinds();
-      this.minBet = newBlinds.smallBlind;
+      this.minBet = newBlinds.bigBlind;
       this.minRaise = newBlinds.bigBlind;
       this.blindLevel = newBlinds.level;
       

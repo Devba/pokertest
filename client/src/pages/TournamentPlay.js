@@ -254,10 +254,11 @@ useEffect(() => {
                   </h4>
                   <div style={{ fontSize: '0.75rem', color: '#aaa' }}>
                     <div>Players: {tournamentInfo.activePlayers || 0}</div>
-                    <div>
-                      Blinds: Level {tournamentInfo.blindLevel || 1}
-                    </div>
+                    <div>Blinds: Level {tournamentInfo.blindLevel || 1}</div>
                     <div>Prize Pool: ${tournamentInfo.prizePool || 0}</div>
+                    <div>Min Bet: {currentTable?.minBet ?? 'N/A'}</div>
+                    <div>Big Blind: {currentTable?.minRaise ?? (currentTable?.minBet ? currentTable.minBet * 2 : 'N/A')}</div>
+                    <div>Ante: {currentTable?.ante ?? 'N/A'}</div>
                   </div>
                 </div>
               </PositionedUISlot>
@@ -383,7 +384,8 @@ useEffect(() => {
 
         {currentTable &&
           currentTable.seats[seatId] &&
-          currentTable.seats[seatId].turn && (
+          //currentTable.seats[seatId].turn && 
+          (
             <GameUI
               currentTable={currentTable}
               seatId={seatId}
