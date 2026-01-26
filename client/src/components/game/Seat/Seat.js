@@ -61,7 +61,7 @@ export const Seat = ({ currentTable, seatNumber, sitDown, folded }) => {
     <div
       className="seat-root"
       style={{
-        opacity: folded ? 0.5 : 1,
+        opacity: folded ? 0.2 : 1,
         transition: 'opacity 0.3s',
         display: 'flex',
         textAlign: 'center',

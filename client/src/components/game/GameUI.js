@@ -249,7 +249,7 @@ console.log('Current Table State:', {
             onClick={canCheck ? check : call}
             disabled={!canCheck && !canCall}
           >
-            {canCheck ? 'Check' : `Call ${(callAmount)} `}
+            {canCheck ? 'Check' : `Call ${(callAmount).toFixed(2)} `}
           </ActionButton>
           <ActionButton 
             borderColor="#00bcd4"

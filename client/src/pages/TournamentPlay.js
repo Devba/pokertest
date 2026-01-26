@@ -18,6 +18,7 @@ import PokerCard from '../components/game/PokerCard'
 import background from '../assets/img/background.png'
 import Swal from 'sweetalert2'
 import './Play.scss'
+import { TournInfoPanel } from '../components/game/TourninfoPanel'
 
 const TournamentPlay = () => {
   const navigate = useNavigate()
@@ -183,7 +184,7 @@ useEffect(() => {
         fullHeight
         style={{
           backgroundImage: `url(${background})`,
-          backgroundRepeat: 'no-repeat',
+          //backgroundRepeat: 'no-repeat',
           backgroundSize: 'contain',
           backgroundPosition: 'center center',
           backgroundAttachment: 'fixed',
@@ -194,8 +195,9 @@ useEffect(() => {
       >
         {currentTable && (
           <>
+          {/* Leave Button */}
             <PositionedUISlot
-              top="2vh"
+              bottom="2vh"
               left="1.5rem"
               scale="0.25"
               style={{ zIndex: '50' }}
@@ -207,7 +209,7 @@ useEffect(() => {
 
             {/* Time Delay Slider */}
             <PositionedUISlot
-              top="9vh"
+              bottom="9vh"
               left="1rem"
               scale="0.25"
               style={{ zIndex: '50' }}
@@ -217,7 +219,7 @@ useEffect(() => {
                 padding: '0.5rem 1rem', 
                 borderRadius: '8px',
                 color: 'white',
-                minWidth: '50px'
+                minWidth: '40px'
               }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
                   Time Delay: {timeDelay}s
@@ -238,79 +240,36 @@ useEffect(() => {
 
             {/* Tournament Info */}
             {tournamentInfo && (
-              <PositionedUISlot
-                top="2vh"
-                right="20.5rem"
-                scale="0.65"
-                style={{ zIndex: '50' }}
-              >
-                <div
-                  style={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '8px',
-                    color: 'white',
-                    minWidth: '220px',
-                  }}
+            <PositionedUISlot
+                  bottom="1vh"
+                  left="17.5rem"
+                  scale="0.65"
+                  style={{ zIndex: '50' }}
                 >
-                  <div style={{ display: 'flex', marginBottom: '0.5rem' }}>
-                    <button
-                      style={{
-                        flex: 1,
-                        background: infoTab === 'general' ? '#222' : 'transparent',
-                        color: 'white',
-                        border: 'none',
-                        borderBottom: infoTab === 'general' ? '2px solid #00bcd4' : '1px solid #444',
-                        cursor: 'pointer',
-                        fontWeight: infoTab === 'general' ? 'bold' : 'normal',
-                        fontSize: '1em',
-                        padding: '0.3em 0'
-                      }}
-                      onClick={() => setInfoTab('general')}
-                    >
-                      General
-                    </button>
-                    <button
-                      style={{
-                        flex: 1,
-                        background: infoTab === 'blinds' ? '#222' : 'transparent',
-                        color: 'white',
-                        border: 'none',
-                        borderBottom: infoTab === 'blinds' ? '2px solid #00bcd4' : '1px solid #444',
-                        cursor: 'pointer',
-                        fontWeight: infoTab === 'blinds' ? 'bold' : 'normal',
-                        fontSize: '1em',
-                        padding: '0.3em 0'
-                      }}
-                      onClick={() => setInfoTab('blinds')}
-                    >
-                      Blinds
-                    </button>
-                  </div>
-                  {infoTab === 'general' ? (
-                    <div style={{ fontSize: '0.95em', color: '#aaa' }}>
-                      <div style={{ fontWeight: 'bold', fontSize: '1.1em', marginBottom: '0.3em' }}>
-                        {tournamentInfo.name}
-                      </div>
-                      <div>Players: {tournamentInfo.activePlayers || 0}</div>
-                      <div>Seats: {Object.values(currentTable.seats).filter(seat => seat !== null).length}</div>
-                      <div>Prize: ${tournamentInfo.prizePool || 0}</div>
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: '0.95em', color: '#aaa' }}>
-                      <div>Level: {tournamentInfo.blindLevel || 1}</div>
-                      <div>Big Blind: {currentTable.blindSchedule[currentTable.blindLevel - 1].bigBlind}</div>
-                      <div>Ante: {currentTable.blindSchedule[currentTable.blindLevel - 1]?.ante ?? 'N/A'}</div>
-                      <div>Hand: {currentTable.handCount}</div>
-                      <div>Min Bet: {currentTable.minBet}</div>
-                       <div>Min Raise: {currentTable.minRaise}</div>
-                        <div>Hands plevel: {currentTable.handsPerLevel}</div>
-                        <div>pot: {currentTable.pot}</div>
-                    </div>
-                  )}
-                </div>
+                  <TournInfoPanel tournamentInfo={tournamentInfo} currentTable={currentTable} />
+                </PositionedUISlot>
+                            )}
+
+             {/* GameUI*/}               
+            <PositionedUISlot>
+                 {currentTable &&
+                currentTable.seats[seatId] &&
+                currentTable.seats[seatId].turn && 
+                (
+                    <GameUI
+                    currentTable={currentTable}
+                    seatId={seatId}
+                    bet={bet}
+                    setBet={setBet}
+                    raise={raise}
+                    standUp={standUp}
+                    fold={fold}
+                    check={check}
+                    call={call}
+                    />
+                )}
               </PositionedUISlot>
-            )}
+      
           </>
         )}
 
@@ -346,7 +305,7 @@ useEffect(() => {
                 />
               </PositionedUISlot>
               <PositionedUISlot
-                bottom="-5%"
+                bottom="45%"
                 right="5%"
                 scale="0.55"
                 origin="bottom right"
@@ -358,7 +317,9 @@ useEffect(() => {
                   folded={currentTable.seats[3]?.folded}
                 />
               </PositionedUISlot>
-              <PositionedUISlot bottom="-1%" scale="0.55" origin="bottom center">
+              <PositionedUISlot bottom="-30%" right="40%" scale="0.55" origin="center center"
+              
+              zIndex="100">
                 <Seat
                   seatNumber={4}
                   currentTable={currentTable}
@@ -433,27 +394,7 @@ useEffect(() => {
                 )}
               </PositionedUISlot>
 
-               <PositionedUISlot top="12%" scale="0.30" origin="bottom  right"
-               width="25%"
-                bottom="34%"
-                left="50%">
-                 {currentTable &&
-                currentTable.seats[seatId] &&
-                //currentTable.seats[seatId].turn && 
-                (
-                    <GameUI
-                    currentTable={currentTable}
-                    seatId={seatId}
-                    bet={bet}
-                    setBet={setBet}
-                    raise={raise}
-                    standUp={standUp}
-                    fold={fold}
-                    check={check}
-                    call={call}
-                    />
-                )}
-              </PositionedUISlot>
+               
 
 
 
@@ -465,6 +406,7 @@ useEffect(() => {
             </>
           )}
         </PokerTableWrapper>
+
 
       </Container>
     </>

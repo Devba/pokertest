@@ -2,8 +2,8 @@ import styled from 'styled-components';
 
 export const UIWrapper = styled.div`
   position: fixed;
-  bottom: 2vh;
-  right: 15vw;
+  top: 2vh;
+  right: 40vw;
   transform-origin: bottom right;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
