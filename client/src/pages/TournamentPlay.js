@@ -80,7 +80,9 @@ const TournamentPlay = () => {
       
       // If mode is 'player', use walletAddress; if 'spectator' or undefined, use 'spectator'
       const requestWallet = mode === 'player' ? walletAddress : 'spectator';
-      socket.emit('GET_TOURNAMENT_TABLE', { tournamentId, walletAddress: requestWallet })
+      //socket.emit('GET_TOURNAMENT_TABLE', { tournamentId, walletAddress: requestWallet })
+      socket.emit('GET_TOURNAMENT_TABLE', { tournamentId, walletAddress: localStorage.wallet || 'spectator' })
+      
     }
 
     return () => {
@@ -200,10 +202,13 @@ useEffect(() => {
               bottom="2vh"
               left="1.5rem"
               scale="0.25"
-              style={{ zIndex: '50' }}
+              style={{ zIndex: '50', display: 'flex', gap: '0.5rem' }}
             >
               <Button small secondary onClick={handleLeaveTournament}>
                 Leave Tournament
+              </Button>
+              <Button small onClick={standUp} style={{ marginLeft: '0.5rem' }}>
+                Stand Up
               </Button>
             </PositionedUISlot>
 

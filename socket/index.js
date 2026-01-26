@@ -38,6 +38,7 @@ const tables = {
   1: new Table(1, 'Table 1', config.INITIAL_CHIPS_AMOUNT),
 };
 const players = {};
+const playersW = {};
 
 // Initialize BotManager and TournamentManager (will be set when io is available)
 let botManager = null;
@@ -90,11 +91,13 @@ const init = (socket, io) => {
       socket.emit('TOURNAMENT_ERROR', { error: error.message });
     }
   });
-
+  
   socket.on('REGISTER_TOURNAMENT', ({ tournamentId, walletAddress, username }) => {
     try {
-      //let player = players[socket.id]; alf ,pasamos del socket 
-      let player= null;
+      //let player = players[socket.id]; //alf ,pasamos del socket 
+      //let player= null;
+      let player=playersW[walletAddress]
+      //let player = Object.values(playersW.find(p => p.walletAddress === walletAddress));
       
       // If player doesn't exist, create a temporary one for tournament registration
       if (!player) {
@@ -105,7 +108,10 @@ const init = (socket, io) => {
           playerName,
           config.INITIAL_CHIPS_AMOUNT
         );
+        
+
         players[socket.id] = player;
+        playersW[walletAddress]=player; //alf
         console.log('Created temporary player for tournament registration:', playerName);
       }
       

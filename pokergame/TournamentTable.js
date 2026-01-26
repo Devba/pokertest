@@ -194,16 +194,17 @@ class TournamentTable extends Table {
   }
 
   // Override standPlayer to prevent leaving during tournament
+
+
+  // Allow players to leave and return later in tournaments
   standPlayer(socketId) {
-    // In tournaments, players can't stand up - they're eliminated
     const seat = this.findPlayerBySocketId(socketId);
     if (seat && seat.stack > 0) {
-      // Player leaving voluntarily - mark as eliminated
-      seat.stack = 0;
+      // Mark as sitting out, but do NOT eliminate or set stack to 0
       seat.sittingOut = true;
+      // Optionally, store disconnect time or status for reconnection logic
     }
-    // Always check for eliminations (and thus tournament end)
-    this.checkForEliminations();
+    // Do NOT call checkForEliminations here, as leaving is not elimination
   }
 
   getTournamentStatus() {

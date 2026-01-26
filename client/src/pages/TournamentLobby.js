@@ -116,7 +116,15 @@ const TournamentLobby = () => {
       })
       console.log('Registering for tournament:', tournamentId, 'with wallet:', userWallet, 'username:', playerUsername)
       
-      // Show loading toast
+      // Save to localStorage
+          localStorage.setItem('socketId', socket.id);         // Save current socket id
+          localStorage.setItem('wallet', userWallet);       // Save wallet address
+          localStorage.setItem('username', playerUsername);  
+            localStorage.setItem('TournamentId', tournamentId);         // Save tournament ID
+              
+
+
+// Show loading toast
       Swal.fire({
         title: 'Registering...',
         text: 'Please wait while we register you for the tournament',
