@@ -93,56 +93,58 @@ const TournamentPlay = () => {
  
 
 useEffect(() => {
-    if (socket) {
-      socket.on('TOURNAMENT_TABLE_ASSIGNED', ({ tableId, tournament }) => {
-        console.log('TOURNAMENT_TABLE_ASSIGNED received - tableId:', tableId, 'tournament:', tournament)
-        setTournamentInfo(tournament)
-        // Join the specific tournament table
-        console.log('Joining table:', tableId)
-        joinTable(tableId)
-      })
+  if (socket) {
+    socket.on('TOURNAMENT_TABLE_ASSIGNED', ({ tableId, tournament }) => {
+      console.log('TOURNAMENT_TABLE_ASSIGNED received - tableId:', tableId, 'tournament:', tournament)
+      setTournamentInfo(tournament)
+      // Join the specific tournament table
+      console.log('Joining table:', tableId)
+      joinTable(tableId)
+      // Fetch tournament info after joining table
+      socket.emit('GET_TOURNAMENT_INFO', { tournamentId })
+    })
 
-      socket.on('TOURNAMENT_INFO', (info) => {
-        console.log('TOURNAMENT_INFO received:', info)
-        setTournamentInfo(info)
-      })
+    socket.on('TOURNAMENT_INFO', (info) => {
+      console.log('TOURNAMENT_INFO received:', info)
+      setTournamentInfo(info)
+    })
 
-      socket.on('TOURNAMENT_UPDATE', (info) => {
-        console.log('TOURNAMENT_UPDATE received:', info)
-        console.log('Current tournamentId:', tournamentId, 'Update tournamentId:', info.id)
-        console.log('Comparison result:', info.id === parseInt(tournamentId))
-        if (info.id === parseInt(tournamentId)) {
-          console.log('Updating tournament info with:', info)
-          setTournamentInfo(prev => {
-            const updated = {
-              ...prev,
-              ...info
-            }
-            console.log('Updated tournament info:', updated)
-            return updated
-          })
-        }
-      })
-      
-      socket.on('TOURNAMENT_ERROR', (error) => {
-        console.error('TOURNAMENT_ERROR:', error)
-        Swal.fire({
-          icon: 'error',
-          title: 'Tournament Error',
-          text: error.error || 'Could not load tournament'
-        }).then(() => {
-          navigate('/tournament-lobby')
+    socket.on('TOURNAMENT_UPDATE', (info) => {
+      console.log('TOURNAMENT_UPDATE received:', info)
+      console.log('Current tournamentId:', tournamentId, 'Update tournamentId:', info.id)
+      console.log('Comparison result:', info.id === parseInt(tournamentId))
+      if (info.id === parseInt(tournamentId)) {
+        console.log('Updating tournament info with:', info)
+        setTournamentInfo(prev => {
+          const updated = {
+            ...prev,
+            ...info
+          }
+          console.log('Updated tournament info:', updated)
+          return updated
         })
-      })
-
-      return () => {
-        socket.off('TOURNAMENT_TABLE_ASSIGNED')
-        socket.off('TOURNAMENT_INFO')
-        socket.off('TOURNAMENT_UPDATE')
-        socket.off('TOURNAMENT_ERROR')
       }
+    })
+      
+    socket.on('TOURNAMENT_ERROR', (error) => {
+      console.error('TOURNAMENT_ERROR:', error)
+      Swal.fire({
+        icon: 'error',
+        title: 'Tournament Error',
+        text: error.error || 'Could not load tournament'
+      }).then(() => {
+        navigate('/tournament-lobby')
+      })
+    })
+
+    return () => {
+      socket.off('TOURNAMENT_TABLE_ASSIGNED')
+      socket.off('TOURNAMENT_INFO')
+      socket.off('TOURNAMENT_UPDATE')
+      socket.off('TOURNAMENT_ERROR')
     }
-  }, [socket, joinTable])
+  }
+}, [socket, joinTable, tournamentId])
 
 
   useEffect(() => {
@@ -171,6 +173,8 @@ useEffect(() => {
       }
     })
   }
+
+  const [infoTab, setInfoTab] = useState('general')
 
   return (
     <>
@@ -236,7 +240,7 @@ useEffect(() => {
             {tournamentInfo && (
               <PositionedUISlot
                 top="2vh"
-                right="6.5rem"
+                right="20.5rem"
                 scale="0.65"
                 style={{ zIndex: '50' }}
               >
@@ -246,20 +250,64 @@ useEffect(() => {
                     padding: '0.5rem 1rem',
                     borderRadius: '8px',
                     color: 'white',
-                    minWidth: '250px',
+                    minWidth: '220px',
                   }}
                 >
-                  <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem' }}>
-                    {tournamentInfo.name}
-                  </h4>
-                  <div style={{ fontSize: '0.75rem', color: '#aaa' }}>
-                    <div>Players: {tournamentInfo.activePlayers || 0}</div>
-                    <div>Blinds: Level {tournamentInfo.blindLevel || 1}</div>
-                    <div>Prize Pool: ${tournamentInfo.prizePool || 0}</div>
-                    <div>Min Bet: {currentTable?.minBet ?? 'N/A'}</div>
-                    <div>Big Blind: {currentTable?.minRaise ?? (currentTable?.minBet ? currentTable.minBet * 2 : 'N/A')}</div>
-                    <div>Ante: {currentTable?.ante ?? 'N/A'}</div>
+                  <div style={{ display: 'flex', marginBottom: '0.5rem' }}>
+                    <button
+                      style={{
+                        flex: 1,
+                        background: infoTab === 'general' ? '#222' : 'transparent',
+                        color: 'white',
+                        border: 'none',
+                        borderBottom: infoTab === 'general' ? '2px solid #00bcd4' : '1px solid #444',
+                        cursor: 'pointer',
+                        fontWeight: infoTab === 'general' ? 'bold' : 'normal',
+                        fontSize: '1em',
+                        padding: '0.3em 0'
+                      }}
+                      onClick={() => setInfoTab('general')}
+                    >
+                      General
+                    </button>
+                    <button
+                      style={{
+                        flex: 1,
+                        background: infoTab === 'blinds' ? '#222' : 'transparent',
+                        color: 'white',
+                        border: 'none',
+                        borderBottom: infoTab === 'blinds' ? '2px solid #00bcd4' : '1px solid #444',
+                        cursor: 'pointer',
+                        fontWeight: infoTab === 'blinds' ? 'bold' : 'normal',
+                        fontSize: '1em',
+                        padding: '0.3em 0'
+                      }}
+                      onClick={() => setInfoTab('blinds')}
+                    >
+                      Blinds
+                    </button>
                   </div>
+                  {infoTab === 'general' ? (
+                    <div style={{ fontSize: '0.95em', color: '#aaa' }}>
+                      <div style={{ fontWeight: 'bold', fontSize: '1.1em', marginBottom: '0.3em' }}>
+                        {tournamentInfo.name}
+                      </div>
+                      <div>Players: {tournamentInfo.activePlayers || 0}</div>
+                      <div>Seats: {Object.values(currentTable.seats).filter(seat => seat !== null).length}</div>
+                      <div>Prize: ${tournamentInfo.prizePool || 0}</div>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '0.95em', color: '#aaa' }}>
+                      <div>Level: {tournamentInfo.blindLevel || 1}</div>
+                      <div>Big Blind: {currentTable.blindSchedule[currentTable.blindLevel - 1].bigBlind}</div>
+                      <div>Ante: {currentTable.blindSchedule[currentTable.blindLevel - 1]?.ante ?? 'N/A'}</div>
+                      <div>Hand: {currentTable.handCount}</div>
+                      <div>Min Bet: {currentTable.minBet}</div>
+                       <div>Min Raise: {currentTable.minRaise}</div>
+                        <div>Hands plevel: {currentTable.handsPerLevel}</div>
+                        <div>pot: {currentTable.pot}</div>
+                    </div>
+                  )}
                 </div>
               </PositionedUISlot>
             )}
@@ -310,7 +358,7 @@ useEffect(() => {
                   folded={currentTable.seats[3]?.folded}
                 />
               </PositionedUISlot>
-              <PositionedUISlot bottom="-11%" scale="0.55" origin="bottom center">
+              <PositionedUISlot bottom="-1%" scale="0.55" origin="bottom center">
                 <Seat
                   seatNumber={4}
                   currentTable={currentTable}
@@ -321,7 +369,7 @@ useEffect(() => {
               <PositionedUISlot
                 bottom="0%"
                 left="0%"
-                scale="0.55"
+                scale="0.15"
                 origin="bottom left"
               >
                 <Seat
@@ -331,6 +379,7 @@ useEffect(() => {
                   folded={currentTable.seats[5]?.folded}
                 />
               </PositionedUISlot>
+              <p>seat 5</p>
             
               <PositionedUISlot
                 width="100%"
@@ -384,7 +433,7 @@ useEffect(() => {
                 )}
               </PositionedUISlot>
 
-               <PositionedUISlot top="12%" scale="0.30" origin="left center"
+               <PositionedUISlot top="12%" scale="0.30" origin="bottom  right"
                width="25%"
                 bottom="34%"
                 left="50%">

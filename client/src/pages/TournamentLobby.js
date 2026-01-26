@@ -407,6 +407,26 @@ const TournamentLobby = () => {
                         </div>
                       </div>
                       
+
+
+                <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Starting Blind Level</label>
+                            <select id="starting-blind-level" class="swal2-input" style="width: 100%; margin: 0;">
+                              <option value="1" selected>Level 1</option>
+                              <option value="2">Level 2</option>
+                              <option value="3">Level 3</option>
+                              <option value="4">Level 4</option>
+                              <option value="5">Level 5</option>
+                              <option value="6">Level 6</option>
+                              <option value="7">Level 7</option>
+                              <option value="8">Level 8</option>
+                              <option value="9">Level 9</option>
+                              <option value="10">Level 10</option>
+                            </select>
+                          </div>
+
+
+                      
                       <div style="margin-bottom: 1rem;">
                         <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Start Time</label>
                         <select id="start-time" class="swal2-input" style="width: 100%; margin: 0;">
@@ -431,12 +451,13 @@ const TournamentLobby = () => {
                     const blindStructure = document.getElementById('blind-structure').value;
                     const registrationPeriod = document.getElementById('registration-period').value;
                     const startTime = document.getElementById('start-time').value;
-                    
+                    const startingBlindLevel = document.getElementById('starting-blind-level').value;
+
                     if (!name) {
                       Swal.showValidationMessage('Please enter a tournament name');
                       return false;
                     }
-                    
+
                     return {
                       name,
                       buyIn: parseFloat(buyIn) || 0,
@@ -444,7 +465,8 @@ const TournamentLobby = () => {
                       startingChips: parseInt(startingChips),
                       blindStructure,
                       registrationPeriod: parseInt(registrationPeriod),
-                      startTime
+                      startTime,
+                      startingBlindLevel: parseInt(startingBlindLevel)
                     };
                   }
                 });
@@ -466,9 +488,9 @@ const TournamentLobby = () => {
                   console.log('Tournament created:', result.value);
                 }
               }}
-            >
-              Create Tournament
-            </Button>
+>
+  Create Tournament
+</Button>
             <Button 
               small 
               secondary

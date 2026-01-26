@@ -10,9 +10,12 @@ class TournamentManager {
 
   createTournament(config) {
     const now = new Date();
-    const registrationPeriodMs = (config.registrationPeriod || 5) * 60000; // default 5 minutes
+    const registrationPeriodMs = (config.registrationPeriod || 5) * 60000;
     const registrationEndsAt = new Date(now.getTime() + registrationPeriodMs);
-    
+
+    // Use config.startingBlindLevel or default to 1
+    const startingBlindLevel = config.startingBlindLevel || 1;
+
     const tournament = {
       id: this.nextTournamentId++,
       name: config.name,
@@ -20,7 +23,7 @@ class TournamentManager {
       maxPlayers: config.maxPlayers,
       startingChips: config.startingChips || 5000,
       blindStructure: config.blindStructure || 'normal',
-      status: 'registering', // registering, starting, live, completed, cancelled
+      status: 'registering',
       registeredPlayers: [],
       tables: [],
       eliminatedPlayers: [],
@@ -28,17 +31,18 @@ class TournamentManager {
       structure: 'No Limit Hold\'em',
       createdAt: new Date(),
       startTime: this.calculateStartTime(config.startTime),
-      startTimeOption: config.startTime, // Store original config value
+      startTimeOption: config.startTime,
       registrationPeriod: config.registrationPeriod || 5,
       registrationEndsAt: registrationEndsAt,
       lateRegistrationAllowed: (config.registrationPeriod || 5) > 0,
       creatorWallet: config.creatorWallet,
-      blindLevel: 1,
-      handsPerLevel: this.getHandsPerLevel(config.blindStructure)
+      blindLevel: startingBlindLevel,
+      handsPerLevel: this.getHandsPerLevel(config.blindStructure),
+      startingBlindLevel
     };
 
     this.tournaments.set(tournament.id, tournament);
-    
+
     // Schedule automatic start based on registration period
     if (tournament.lateRegistrationAllowed) {
       console.log(`Scheduling tournament ${tournament.id} to start in ${tournament.registrationPeriod} minutes`);
@@ -54,7 +58,7 @@ class TournamentManager {
         }
       }, registrationPeriodMs);
     }
-    
+
     // Also schedule based on start time if not immediate
     if (config.startTime !== 'immediate') {
       this.scheduleStart(tournament.id, config.startTime);
@@ -62,7 +66,7 @@ class TournamentManager {
 
     console.log(`Tournament created: ${tournament.name} (ID: ${tournament.id})`);
     this.broadcastTournamentUpdate(tournament.id);
-    
+
     return tournament;
   }
 
@@ -105,7 +109,7 @@ class TournamentManager {
 
   registerPlayer(tournamentId, player) {
     const tournament = this.tournaments.get(tournamentId);
-    
+
     if (!tournament) {
       return { success: false, message: 'Tournament not found' };
     }
@@ -144,24 +148,20 @@ class TournamentManager {
     // 1. Start time was set to "immediate" AND
     // 2. No registration period (or user explicitly wants immediate start)
     // 3. Minimum 2 players met
-    if (tournament.startTimeOption === 'immediate' && 
+    if (tournament.startTimeOption === 'immediate' &&
         tournament.registrationPeriod === 0 &&
-        tournament.registeredPlayers.length >= 2 && 
+        tournament.registeredPlayers.length >= 2 &&
         tournament.status === 'registering') {
       console.log(`Auto-starting tournament ${tournamentId} - immediate start with no registration period`);
       this.startTournament(tournamentId);
     }
 
-    return { 
-      success: true, 
-      tournamentId: tournament.id,
-      tournament: this.getTournamentInfo(tournamentId)
-    };
+    return { success: true, tournamentId: tournament.id, tournament: this.getTournamentInfo(tournamentId) };
   }
 
   unregisterPlayer(tournamentId, walletAddress) {
     const tournament = this.tournaments.get(tournamentId);
-    
+
     if (!tournament) {
       return { success: false, message: 'Tournament not found' };
     }
@@ -171,7 +171,7 @@ class TournamentManager {
     }
 
     const playerIndex = tournament.registeredPlayers.findIndex(
-      p => (p.id === walletAddress || p.walletAddress === walletAddress)    
+      p => (p.id === walletAddress || p.walletAddress === walletAddress)
     );
 
     if (playerIndex === -1) {
@@ -189,7 +189,7 @@ class TournamentManager {
 
   startTournament(tournamentId) {
     const tournament = this.tournaments.get(tournamentId);
-    
+
     if (!tournament) {
       return { success: false, message: 'Tournament not found' };
     }
@@ -219,10 +219,10 @@ class TournamentManager {
       if (activePlayers >= 2) {
         console.log(`Starting hand on table ${idx}`);
         table.startHand();
-        
+
         // Broadcast table state to all connected clients after starting hand
         this.broadcastTableState(table);
-        
+
         // Check if first player to act is a bot
         if (this.botManager) {
           setTimeout(() => {
@@ -234,11 +234,7 @@ class TournamentManager {
       }
     });
 
-    return { 
-      success: true,
-      tournamentId: tournament.id,
-      tournament: this.getTournamentInfo(tournamentId)
-    };
+    return { success: true, tournamentId: tournament.id, tournament: this.getTournamentInfo(tournamentId) };
   }
 
   createTables(tournamentId) {
@@ -254,28 +250,28 @@ class TournamentManager {
         10000, // limit
         playersPerTable,
         tournamentId,
-        1, // blindLevel
-        this // pass tournamentManager
+        tournament.startingBlindLevel || 1,
+        this
       );
       table.handsPerLevel = tournament.handsPerLevel;
       tournament.tables.push(table);
-      
-      console.log(`Created tournament table: ${tableId}`);
+
+      console.log(`Created tournament table: ${tableId} (blindLevel: ${tournament.startingBlindLevel || 1})`);
     }
   }
 
   seatPlayers(tournamentId) {
     const tournament = this.tournaments.get(tournamentId);
     const shuffledPlayers = [...tournament.registeredPlayers].sort(() => Math.random() - 0.5);
-    
+
     console.log(`Seating ${shuffledPlayers.length} players in tournament ${tournamentId}`);
-    
+
     let tableIndex = 0;
     let seatIndex = 1;
 
     shuffledPlayers.forEach(player => {
       const table = tournament.tables[tableIndex];
-      
+
       console.log(`Seating player ${player.name} at table ${tableIndex}, seat ${seatIndex}`);
       table.addPlayer(player);
       table.sitPlayer(player, seatIndex, tournament.startingChips);
@@ -286,7 +282,7 @@ class TournamentManager {
         tableIndex++;
       }
     });
-    
+
     // Log final state
     tournament.tables.forEach((table, idx) => {
       console.log(`Table ${idx}: ${table.activePlayers().length} active players`);
@@ -301,7 +297,7 @@ class TournamentManager {
     if (!table) return;
 
     const position = this.getTotalActivePlayers(tournamentId) + 1 + tournament.eliminatedPlayers.length;
-    
+
     tournament.eliminatedPlayers.push({
       player: playerId,
       position: position,
@@ -334,7 +330,7 @@ class TournamentManager {
     if (!tournament || tournament.tables.length <= 1) return;
 
     // Remove empty tables
-    tournament.tables = tournament.tables.filter(table => 
+    tournament.tables = tournament.tables.filter(table =>
       table.activePlayers().length > 0
     );
 
@@ -396,7 +392,7 @@ class TournamentManager {
 
   cancelTournament(tournamentId) {
     const tournament = this.tournaments.get(tournamentId);
-    
+
     if (!tournament) {
       return { success: false, message: 'Tournament not found' };
     }
@@ -522,10 +518,10 @@ class TournamentManager {
   // Broadcast table state to all connected players and spectators
   broadcastTableState(table) {
     if (!this.io) return;
-    
+
     // Remove circular reference before broadcasting
     const { tournamentManager, ...cleanTable } = table;
-    
+
     // Emit to the table room (includes spectators)
     this.io.to(`table-${cleanTable.id}`).emit('TABLE_UPDATED', {
       table: cleanTable,
