@@ -266,6 +266,7 @@ const init = (socket, io) => {
       console.log('Tournament found:', tournament.name, 'Status:', tournament.status, 'Tables:', tournament.tables.length);
       
       let player = players[socket.id];
+      let playerW=playersW[walletAddress]; //alf
       console.log('Player found in socket:', player ? `${player.name} (${player.id})` : 'NOT FOUND');
       
       // Check if this player is registered in the tournament
@@ -293,39 +294,44 @@ const init = (socket, io) => {
       
       if (seatedPlayer) {
         // Player is already seated - update their socket ID
-        seatedPlayer.socketId = socket.id;
-        players[socket.id] = seatedPlayer;
-        player = seatedPlayer;
-        console.log('Updated seated player socketId:', socket.id);
+        //seatedPlayer.socketId = socket.id;
+        //players[socket.id] = seatedPlayer;
+        //player = seatedPlayer;
+        //console.log('Updated seated player socketId:', socket.id);
       } else if (registeredPlayer) {
         console.log('Player is registered in tournament:', registeredPlayer.name);
         // Use the registered player and update their socket
-        if (!player) {
-          registeredPlayer.socketId = socket.id;
+        if (!playerW) {
+          
+         /* registeredPlayer.socketId = socket.id;
           players[socket.id] = registeredPlayer;
           player = registeredPlayer;
-          console.log('Updated registered player socketId:', socket.id);
+          console.log('Updated registered player socketId:', socket.id);*/
         }
       } else {
         // Not registered - create spectator
-        if (!player) {
+        if (!playerW) {
           console.log('Creating temporary spectator player');
           const spectatorName = 'Spectator_' + Math.random().toString(36).substring(2, 9);
-          player = new Player(
+          playerW = new Player(
             socket.id,
             'spectator',
             spectatorName,
             0 // Spectators have 0 chips
           );
-          players[socket.id] = player;
+          playersW[walletAddress] = playerW;
         }
       }
 
+
+
+ 
+
       // Find player's table (already done above if seated, but check again for all players)
-      if (!playerTable) {
+      if (false && !playerTable) {
         // Try to find the player's assigned table
         for (const table of tournament.tables) {
-          console.log('Checking table:', table.id, 'for player:', player.id);
+          console.log('Checking table:', table.id, 'for player:', playerW.id);
           // seats is an object, not an array - iterate over its values
           const seatsArray = Object.values(table.seats);
           const seat = seatsArray.find(seat => seat && seat.player && 

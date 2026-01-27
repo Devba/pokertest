@@ -12,14 +12,14 @@ const GlobalState = ({ children }) => {
   
   // Generate or retrieve fake wallet address
   const generateFakeWallet = () => {
-    return 'wallet_' + Math.random().toString(36).substring(2, 15);
+    return 'wall_' + Math.random().toString(36).substring(2, 15);
   };
   
   const getOrCreateWallet = () => {
-    let wallet = localStorage.getItem('fakeWallet');
+    let wallet = localStorage.getItem('wallet');
     if (!wallet) {
       wallet = generateFakeWallet();
-      localStorage.setItem('fakeWallet', wallet);
+      localStorage.setItem('wallet', wallet);
     }
     return wallet;
   };

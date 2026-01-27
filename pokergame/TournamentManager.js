@@ -419,7 +419,7 @@ class TournamentManager {
   }
 
   getTournamentInfo(tournamentId) {
-    const tournament = this.tournaments.get(tournamentId);
+    const tournament = this.tournaments.get(Number(tournamentId));
     if (!tournament) return null;
 
     return {

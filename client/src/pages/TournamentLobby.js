@@ -99,13 +99,18 @@ const TournamentLobby = () => {
     }
     
     // Generate random wallet if not present
-    let userWallet = walletAddress;
-    if ( false && !userWallet || userWallet.trim() === '') {
+    let userWallet = localStorage.getItem('wallet');
+    if (  !userWallet || userWallet.trim() === '') {
       userWallet = 'wallet_' + Math.random().toString(36).substring(2, 15);
-      console.log('Generated random wallet:', userWallet);
+
+        localStorage.setItem('socketId', socket.id);         // Save current socket id
+          localStorage.setItem('wallet', userWallet);       // Save wallet address
+          localStorage.setItem('username', playerUsername);  
+            localStorage.setItem('TournamentId', tournamentId);   
+     
+      console.log('wallet from LS :', userWallet);
     }
-    userWallet = 'wallet_' + Math.random().toString(36).substring(2, 15);
-      console.log('Generated random wallet:', userWallet);
+   
     
     // Emit socket event to register for tournament
     if (socket) {
@@ -117,10 +122,7 @@ const TournamentLobby = () => {
       console.log('Registering for tournament:', tournamentId, 'with wallet:', userWallet, 'username:', playerUsername)
       
       // Save to localStorage
-          localStorage.setItem('socketId', socket.id);         // Save current socket id
-          localStorage.setItem('wallet', userWallet);       // Save wallet address
-          localStorage.setItem('username', playerUsername);  
-            localStorage.setItem('TournamentId', tournamentId);         // Save tournament ID
+              // Save tournament ID
               
 
 
@@ -146,7 +148,7 @@ const TournamentLobby = () => {
     if (socket && walletAddress) {
       socket.emit('UNREGISTER_TOURNAMENT', { 
         tournamentId, 
-        walletAddress 
+        walletAddress: localStorage.getItem('wallet') 
       })
       console.log('Unregistering from tournament:', tournamentId)
     }
