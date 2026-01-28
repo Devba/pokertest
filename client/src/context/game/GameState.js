@@ -163,9 +163,11 @@ const GameState = ({ children }) => {
   }
 
   const standUp = () => {
+    //alert('In tournaments, you cannot leave the table while still active. You can only stand up if you are eliminated or have a zero stack.') 
+    
     currentTableRef &&
       currentTableRef.current &&
-      socket.emit(CS_STAND_UP, currentTableRef.current.id)
+      socket.emit(CS_STAND_UP, currentTableRef.current.id,origSockID)
     setSeatId(null)
   }
 

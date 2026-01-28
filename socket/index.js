@@ -670,20 +670,23 @@ if (!player) {
     broadcastToTable(table);
   });
 
-  socket.on(CS_STAND_UP, (tableId) => {
+  socket.on(CS_STAND_UP, (tableId,origSockID) => {
     const table = tables[tableId];
-    const player = players[socket.id];
+    const player = players[origSockID];
     const seat = Object.values(table.seats).find(
-      (seat) => seat && seat.player.socketId === socket.id,
+      (seat) => seat && seat.player.socketId === origSockID,
     );
 
     let message = '';
     if (seat) {
       updatePlayerBankroll(player, seat.stack);
-      message = `${player.name} left the table`;
+      message = `${player?.username} left the table`;
+    } else {
+      message = `A spectator left the table`;
+        return
     }
 
-    table.standPlayer(socket.id);
+    table.standPlayer(origSockID);
 
     broadcastToTable(table, message);
     if (table.activePlayers().length === 1) {

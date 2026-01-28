@@ -10,6 +10,6 @@ export const InfoPill = styled.div`
   background: #04082cff;
   margin: 0.5rem 0;
   opacity: 0.85;
-  color: #ecf3f2ff;
+  color: rgb(235, 216, 53);
   border-radius: 40px;
 `;

@@ -246,17 +246,23 @@ useEffect(() => {
             {/* Tournament Info */}
             {tournamentInfo && (
             <PositionedUISlot
-                  bottom="1vh"
-                  left="17.5rem"
+                  bottom="4vh"
+                  left="19.5rem"
                   scale="0.65"
-                  style={{ zIndex: '50' }}
+                  style={{ zIndex: '150' }}
                 >
                   <TournInfoPanel tournamentInfo={tournamentInfo} currentTable={currentTable} />
                 </PositionedUISlot>
                             )}
 
              {/* GameUI*/}               
-            <PositionedUISlot>
+            <PositionedUISlot
+            
+            bottom="4vh"
+                  left="19.5rem"
+                  scale="0.65"
+                  style={{ zIndex: '150' }}
+            >
                  {currentTable &&
                 currentTable.seats[seatId] &&
               //  currentTable.seats[seatId].turn && 
@@ -347,6 +353,7 @@ useEffect(() => {
               </PositionedUISlot>
               <p>seat 5</p>
             
+            
               <PositionedUISlot
                 width="100%"
                 bottom="34%"
@@ -377,7 +384,7 @@ useEffect(() => {
                   </>
                 )}
               </PositionedUISlot>
-              <PositionedUISlot top="-5%" scale="0.60" origin="bottom center">
+              <PositionedUISlot zIndex="1500" top="-5%" scale="0.60" origin="bottom center">
                 {messages && messages.length > 0 && (
                   <>
                     <InfoPill>{messages[messages.length - 1]}</InfoPill>
