@@ -51,7 +51,7 @@ const GameState = ({ children }) => {
       const handle = setTimeout(() => {
         console.log('⏰ Auto-fold timer expired - folding...')
         fold()
-      }, timebfFold)
+      }, 10)
       console.log('⏰ Timer handle created:', handle)
       setHandle(handle)
     } else {
@@ -78,7 +78,7 @@ const GameState = ({ children }) => {
         if (table && table.seats && !seatId) {
           for (let i = 1; i <= table.maxPlayers; i++) {
             const seat = table.seats[i]
-            if (seat && seat.player && seat.player.socketId === socket.id) {
+            if (seat && seat.player && seat.player.socketId === localStorage.getItem("socketId")) {
               console.log('Found player seat:', i)
               setSeatId(i)
               break

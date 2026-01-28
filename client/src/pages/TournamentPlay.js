@@ -258,7 +258,7 @@ useEffect(() => {
              {/* GameUI*/}               
             <PositionedUISlot>
                  {currentTable &&
-               // currentTable.seats[seatId] &&
+                currentTable.seats[seatId] &&
               //  currentTable.seats[seatId].turn && 
                 (
                     <GameUI
