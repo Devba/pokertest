@@ -65,6 +65,9 @@ function getCurrentTables() {
 }
 
 const init = (socket, io) => {
+  // Set a custom property for this socket connection
+  socket.origSockID = '';
+
   // Initialize BotManager if not already initialized
   if (!botManager) {
     botManager = new BotManager(io, tables, players);
@@ -564,8 +567,8 @@ if (!player) {
     }
   });
 
-  socket.on(CS_FOLD, (tableId) => {
-    console.log('CS_FOLD received for table:', tableId, 'socket:', socket.id);
+  socket.on(CS_FOLD, (tableId,socketId) => {
+    console.log('CS_FOLD received for table:', tableId, 'socket:', socketId);
     let table = tables[tableId];
     
     if (!table) {
@@ -573,13 +576,13 @@ if (!player) {
       return;
     }
     
-    let res = table.handleFold(socket.id);
+    let res = table.handleFold(socketId);
     res && broadcastToTable(table, res.message);
     res && changeTurnAndBroadcast(table, res.seatId);
   });
 
-  socket.on(CS_CHECK, (tableId) => {
-    console.log('CS_CHECK received for table:', tableId, 'socket:', socket.id);
+  socket.on(CS_CHECK, (tableId,origSockID) => {
+    console.log('CS_CHECK received for table:', tableId, 'socket:', origSockID);
     let table = tables[tableId];
     
     if (!table) {
@@ -587,13 +590,13 @@ if (!player) {
       return;
     }
     
-    let res = table.handleCheck(socket.id);
+    let res = table.handleCheck(origSockID);
     res && broadcastToTable(table, res.message);
     res && changeTurnAndBroadcast(table, res.seatId);
   });
 
-  socket.on(CS_CALL, (tableId) => {
-    console.log('CS_CALL received for table:', tableId, 'socket:', socket.id);
+  socket.on(CS_CALL, (tableId,origSockID) => {
+    console.log('CS_CALL received for table:', tableId, 'socket:', origSockID);
     let table = tables[tableId];
     
     if (!table) {
@@ -601,13 +604,13 @@ if (!player) {
       return;
     }
     
-    let res = table.handleCall(socket.id);
+    let res = table.handleCall(origSockID);
     res && broadcastToTable(table, res.message);
     res && changeTurnAndBroadcast(table, res.seatId);
   });
 
-  socket.on(CS_RAISE, ({ tableId, amount }) => {
-    console.log('CS_RAISE received for table:', tableId, 'amount:', amount, 'socket:', socket.id);
+  socket.on(CS_RAISE, ({ tableId, amount, origSockID }) => {
+    console.log('CS_RAISE received for table:', tableId, 'amount:', amount, 'socket:', origSockID);
     let table = tables[tableId];
     
     if (!table) {
@@ -615,7 +618,7 @@ if (!player) {
       return;
     }
     
-    let res = table.handleRaise(socket.id, amount);
+    let res = table.handleRaise(origSockID, amount);
     res && broadcastToTable(table, res.message);
     res && changeTurnAndBroadcast(table, res.seatId);
   });

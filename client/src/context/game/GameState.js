@@ -51,7 +51,7 @@ const GameState = ({ children }) => {
       const handle = setTimeout(() => {
         console.log('⏰ Auto-fold timer expired - folding...')
         fold()
-      }, 10)
+      }, 10000)
       console.log('⏰ Timer handle created:', handle)
       setHandle(handle)
     } else {
@@ -66,6 +66,7 @@ const GameState = ({ children }) => {
 
   useEffect(() => {
     if (socket) {
+      socket.origSockID = localStorage.getItem("socketId");
       window.addEventListener('unload', leaveTable)
       window.addEventListener('close', leaveTable)
 
@@ -122,6 +123,8 @@ const GameState = ({ children }) => {
     // eslint-disable-next-line
   }, [socket])
 
+  const origSockID = localStorage.getItem("socketId");
+
   const joinTable = (tableId) => {
     const p={
       socketId:localStorage.getItem('socketId'),
@@ -172,28 +175,31 @@ const GameState = ({ children }) => {
   }
 
   const fold = () => {
-    console.log("fold ---",currentTableRef) ;
+    console.log("fold ---",origSockID) ;
+    
     currentTableRef &&
       currentTableRef.current &&
-      socket.emit(CS_FOLD, currentTableRef.current.id)
+      socket.emit(CS_FOLD, currentTableRef.current.id,origSockID)
   }
 
   const check = () => {
+    socket.origSockID = localStorage.getItem("socketId");
     currentTableRef &&
       currentTableRef.current &&
-      socket.emit(CS_CHECK, currentTableRef.current.id)
+      socket.emit(CS_CHECK, currentTableRef.current.id, origSockID)
   }
 
   const call = () => {
+
     currentTableRef &&
       currentTableRef.current &&
-      socket.emit(CS_CALL, currentTableRef.current.id)
+      socket.emit(CS_CALL, currentTableRef.current.id,origSockID)
   }
 
-  const raise = (amount) => {
+  const raise = (amount,) => {
     currentTableRef &&
       currentTableRef.current &&
-      socket.emit(CS_RAISE, { tableId: currentTableRef.current.id, amount })
+      socket.emit(CS_RAISE, { tableId: currentTableRef.current.id, amount ,origSockID})
   }
 
   const toggleShowAsBlinds = () => {
