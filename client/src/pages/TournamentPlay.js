@@ -19,6 +19,7 @@ import background from '../assets/img/background.png'
 import Swal from 'sweetalert2'
 import './Play.scss'
 import { TournInfoPanel } from '../components/game/TourninfoPanel'
+import ToggleSwitch from '../components/alf/ToggleSittingINOUT'
 
 const TournamentPlay = () => {
   const navigate = useNavigate()
@@ -177,7 +178,26 @@ useEffect(() => {
     })
   }
 
+  const handleSitIn = () => {
+    if (socket && currentTable && seatId) {
+      socket.emit('SITTING_IN', { tableId: currentTable.id, seatId });
+    }
+  }
+
   const [infoTab, setInfoTab] = useState('general')
+
+  const [isSittingIn, setIsSittingIn] = React.useState(true); // or false, depending on initial state
+
+  const handleToggle = () => {
+    if (isSittingIn) {
+      // Emit stand up event
+     standUp ();  
+    } else {
+      // Emit sit in event
+      handleSitIn ();
+    }
+    setIsSittingIn(!isSittingIn);
+  };
 
   return (
     <>
@@ -197,6 +217,26 @@ useEffect(() => {
       >
         {currentTable && (
           <>
+
+
+            
+          {/*Toggle */}
+            <PositionedUISlot
+              bottom="2vh"
+              right="1.5rem"
+              scale="0.25"
+              style={{ zIndex: '50', display: 'flex', gap: '0.5rem' }}
+            >
+             <ToggleSwitch checked={isSittingIn} onChange={handleToggle} />
+              <span style={{ color: isSittingIn ? '#2ecc40' : '#888', marginLeft: 12 }}>
+                {isSittingIn ? 'Sitting In' : 'Standing Up'}
+              </span>
+            </PositionedUISlot>
+
+
+
+
+
           {/* Leave Button */}
             <PositionedUISlot
               bottom="2vh"
@@ -209,6 +249,9 @@ useEffect(() => {
               </Button>
               <Button small onClick={standUp} style={{ marginLeft: '0.5rem' }}>
                 Stand Up
+              </Button>
+              <Button small onClick={handleSitIn} style={{ marginLeft: '0.5rem' }}>
+                Sit In
               </Button>
             </PositionedUISlot>
 
