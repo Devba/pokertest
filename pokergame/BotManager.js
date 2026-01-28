@@ -302,26 +302,26 @@ class BotManager {
    */
   broadcastToTable(table, message = null, from = null) {
     // Remove circular reference before any processing
-    const cleanTable = this.cleanTableForBroadcast(table);
+    const { tournamentManager, ...cleanTable } = table;
     
+    // Broadcast to all players in the table
     for (let i = 0; i < cleanTable.players.length; i++) {
-      let socketId = cleanTable.players[i].socketId;
+      let player = cleanTable.players[i];
+      if (!player || !player.socketId) continue; // Defensive check
+
+      let socketId = player.socketId;
       let tableCopy = this.hideOpponentCards(cleanTable, socketId);
-      
-      // Only emit to real players (not bots)
-      if (!socketId.startsWith('bot_')) {
-        this.io.to(socketId).emit('SC_TABLE_UPDATED', {
-          table: tableCopy,
-          message,
-          from,
-        });
-      }
+      this.io.to(socketId).emit('SC_TABLE_UPDATED', {
+        table: tableCopy,
+        message,
+        from,
+      });
     }
     
-    // Also broadcast to room for spectators
+    // Also broadcast to room for spectators (they see all cards hidden except shown ones)
     const tableCopyForSpectators = this.hideOpponentCards(cleanTable, 'spectator');
     this.io.to(`table-${cleanTable.id}`).emit('SC_TABLE_UPDATED', {
-      table: tableCopyForSpectators ,
+      table: tableCopyForSpectators,
       message,
       from,
     });

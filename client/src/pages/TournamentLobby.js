@@ -117,7 +117,7 @@ const TournamentLobby = () => {
       socket.emit('REGISTER_TOURNAMENT', { 
         tournamentId, 
         walletAddress: userWallet,
-        username: playerUsername
+        username: playerUsername,socketId: localStorage.getItem('socketId')
       })
       console.log('Registering for tournament:', tournamentId, 'with wallet:', userWallet, 'username:', playerUsername)
       
@@ -145,14 +145,15 @@ const TournamentLobby = () => {
   }
 
   const handleUnregister = (tournamentId) => {
-    if (socket && walletAddress) {
-      socket.emit('UNREGISTER_TOURNAMENT', { 
-        tournamentId, 
-        walletAddress: localStorage.getItem('wallet') 
-      })
-      console.log('Unregistering from tournament:', tournamentId)
-    }
+  if (socket && walletAddress) {
+    socket.emit('UNREGISTER_TOURNAMENT', { 
+      tournamentId, 
+      walletAddress: localStorage.getItem('wallet'),
+      socketId: localStorage.getItem('socketId')
+    });
+    console.log('Unregistering from tournament:', tournamentId);
   }
+}; // <-- Add this closing brace and semicolo
 
   const handleDeleteTournament = async (tournamentId) => {
     const result = await Swal.fire({

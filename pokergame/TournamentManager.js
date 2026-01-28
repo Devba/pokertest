@@ -159,7 +159,7 @@ class TournamentManager {
     return { success: true, tournamentId: tournament.id, tournament: this.getTournamentInfo(tournamentId) };
   }
 
-  unregisterPlayer(tournamentId, walletAddress) {
+  unregisterPlayer(tournamentId, walletAddress, socketId) {
     const tournament = this.tournaments.get(tournamentId);
 
     if (!tournament) {
@@ -171,7 +171,7 @@ class TournamentManager {
     }
 
     const playerIndex = tournament.registeredPlayers.findIndex(
-      p => (p.id === walletAddress || p.walletAddress === walletAddress)
+      p => (p.socketId === socketId || p.walletAddress === walletAddress)
     );
 
     if (playerIndex === -1) {
@@ -185,6 +185,7 @@ class TournamentManager {
     this.broadcastTournamentUpdate(tournamentId);
 
     return { success: true };
+    
   }
 
   startTournament(tournamentId) {

@@ -92,21 +92,22 @@ const init = (socket, io) => {
     }
   });
   
-  socket.on('REGISTER_TOURNAMENT', ({ tournamentId, walletAddress, username }) => {
+  socket.on('REGISTER_TOURNAMENT', ({ tournamentId, walletAddress, username,socketId }) => {
     try {
-      //let player = players[socket.id]; //alf ,pasamos del socket 
+      let player = players[socketId]; //alf ,pasamos del socket 
       //let player= null;
-      let player=playersW[walletAddress]
+      let playerw=playersW[walletAddress]
       //let player = Object.values(playersW.find(p => p.walletAddress === walletAddress));
       
       // If player doesn't exist, create a temporary one for tournament registration
       if (!player) {
         const playerName = username || 'Player_' + Math.random().toString(36).substring(2, 9);
         player = new Player(
-          socket.id,
+          socketId , //socket.id,
           walletAddress,
           playerName,
-          config.INITIAL_CHIPS_AMOUNT
+          config.INITIAL_CHIPS_AMOUNT,
+          //socket.id
         );
         
 
@@ -123,9 +124,9 @@ const init = (socket, io) => {
     }
   });
 
-  socket.on('UNREGISTER_TOURNAMENT', ({ tournamentId, walletAddress }) => {
+  socket.on('UNREGISTER_TOURNAMENT', ({ tournamentId, walletAddress,socketId}) => {
     try {
-      const result = tournamentManager.unregisterPlayer(tournamentId, walletAddress);
+      const result = tournamentManager.unregisterPlayer(tournamentId, walletAddress,socketId);
       socket.emit('TOURNAMENT_UNREGISTERED', result);
     } catch (error) {
       console.error('Error unregistering from tournament:', error);
@@ -450,7 +451,9 @@ const init = (socket, io) => {
   socket.on(CS_JOIN_TABLE, (tableId) => {
     let table = tables[tableId];
     const player = players[socket.id];
-    console.log("Join table", tableId,  player)
+    const wplayer = Object.values(playersW).find(p => p.socketId === socket.id);
+
+    console.log("Join table", tableId,  wplayer)
     
     // Check if this is a tournament table
     if (!table && tableId.includes('-')) {
@@ -475,14 +478,14 @@ const init = (socket, io) => {
     }
     
     // Check if this is a spectator (don't seat them)
-    const isSpectator = player.id === 'spectator' || player.name.startsWith('Spectator_');
+    const isSpectator = wplayer?.id === 'spectator' || wplayer?.name.startsWith('Spectator_');
     
     // Join the Socket.io room for this table to receive broadcasts
     socket.join(`table-${tableId}`);
     console.log(`Socket ${socket.id} joined room: table-${tableId}`);
     
     if (!isSpectator && table.players.length < table.maxPlayers) {
-      table.addPlayer(player);
+      table.addPlayer(wplayer);
       sitDown(tableId, table.players.length, table.limit);
     } else {
       console.log('Spectator joined table:', tableId, '- not seating');
@@ -497,9 +500,9 @@ const init = (socket, io) => {
     if (
       tables[tableId].players &&
       tables[tableId].players.length > 0 &&
-      player
+      wplayer
     ) {
-      let message = `${player.name} joined the table.`;
+      let message = `${wplayer.name} joined the table.`;
       broadcastToTable(table, message);
     }
   });
@@ -507,6 +510,8 @@ const init = (socket, io) => {
   socket.on(CS_LEAVE_TABLE, (tableId) => {
     const table = tables[tableId];
     const player = players[socket.id];
+    const wplayer = Object.values(playersW).find(p => p.socketId === socket.id);
+                
     
     // Leave the Socket.io room
     socket.leave(`table-${tableId}`);
@@ -516,10 +521,28 @@ const init = (socket, io) => {
       (seat) => seat && seat.player.socketId === socket.id,
     );
 
-    console.log("leaving tableid====>", tableId, player)
+    console.log("leaving tableid====>", tableId, wplayer)
 
     if (seat && player) {
-      updatePlayerBankroll(player, seat.stack);
+      updatePlayerBankroll(wplayer, seat.stack);
+    } else {
+      console.log('Is a spectator ', wplayer);
+         //   const wplayer = Object.values(playersW).find(p => p.socketId === socket.id);
+        if (wplayer) {
+          for (const [wallet, wplayer] of Object.entries(playersW)) {
+            if (wplayer.socketId === socket.id) {
+              delete playersW[wallet];
+              delete players[socket.id];  
+              console.log('Removed spectator player from playersW and players:', wallet, socket.id);  
+
+
+              break;
+            }
+          }
+          return;
+        }
+    
+    
     }
 
     table.removePlayer(socket.id);
@@ -530,9 +553,9 @@ const init = (socket, io) => {
     if (
       tables[tableId].players &&
       tables[tableId].players.length > 0 &&
-      player
+      wplayer
     ) {
-      let message = `${player.name} left the table.`;
+      let message = `${wplayer.name} left the table.`;
       broadcastToTable(table, message);
     }
 
