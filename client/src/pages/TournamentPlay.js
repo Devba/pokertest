@@ -49,7 +49,7 @@ const TournamentPlay = () => {
 
   // Sync timeDelay slider with timebfFold (convert seconds to milliseconds)
   useEffect(() => {
-    setTimebfFold(timeDelay * 1000)
+    //setTimebfFold(timeDelay * 1000)
   }, [timeDelay, setTimebfFold])
 
   useEffect(() => {
@@ -258,8 +258,8 @@ useEffect(() => {
              {/* GameUI*/}               
             <PositionedUISlot>
                  {currentTable &&
-                currentTable.seats[seatId] &&
-                currentTable.seats[seatId].turn && 
+               // currentTable.seats[seatId] &&
+              //  currentTable.seats[seatId].turn && 
                 (
                     <GameUI
                     currentTable={currentTable}

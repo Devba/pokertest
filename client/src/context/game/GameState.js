@@ -123,16 +123,28 @@ const GameState = ({ children }) => {
   }, [socket])
 
   const joinTable = (tableId) => {
+    const p={
+      socketId:localStorage.getItem('socketId'),
+      walletAddress:localStorage.getItem('wallet'),
+      username:localStorage.getItem('userName'),
+      netwSid:socket.id
+    }
     console.log(CS_JOIN_TABLE, tableId)
-    socket.emit(CS_JOIN_TABLE, tableId)
+    socket.emit(CS_JOIN_TABLE, tableId,p)
   }
 
   const leaveTable = () => {
+    const p={
+      socketId:localStorage.getItem('socketId'),
+      walletAddress:localStorage.getItem('wallet'),
+      username:localStorage.getItem('userName'),
+      netwSid:socket.id
+    }
     standUp()
     currentTableRef &&
       currentTableRef.current &&
       currentTableRef.current.id &&
-      socket.emit(CS_LEAVE_TABLE, currentTableRef.current.id)
+      socket.emit(CS_LEAVE_TABLE, currentTableRef.current.id,p)
     navigate('/')
   }
 

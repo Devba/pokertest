@@ -107,11 +107,12 @@ const init = (socket, io) => {
           walletAddress,
           playerName,
           config.INITIAL_CHIPS_AMOUNT,
-          //socket.id
+          isBot=false,
+          actualsockID=socket.id
         );
         
 
-        players[socket.id] = player;
+        players[socketId] = player;
         playersW[walletAddress]=player; //alf
         console.log('Created temporary player for tournament registration:', playerName);
       }
@@ -448,12 +449,13 @@ const init = (socket, io) => {
       socket.broadcast.emit(SC_PLAYERS_UPDATED, getCurrentPlayers());
   });
 
-  socket.on(CS_JOIN_TABLE, (tableId) => {
+  socket.on(CS_JOIN_TABLE, (tableId,p) => {
     let table = tables[tableId];
-    const player = players[socket.id];
-    const wplayer = Object.values(playersW).find(p => p.socketId === socket.id);
+    const player = players[p.socketId];
 
-    console.log("Join table", tableId,  wplayer)
+    //const wplayer = Object.values(playersW).find(p => p.socketId === socket.id);
+
+    console.log("Join table", tableId,  player)
     
     // Check if this is a tournament table
     if (!table && tableId.includes('-')) {
@@ -478,15 +480,19 @@ const init = (socket, io) => {
     }
     
     // Check if this is a spectator (don't seat them)
-    const isSpectator = wplayer?.id === 'spectator' || wplayer?.name.startsWith('Spectator_');
+    const isSpectator = player?.id === 'spectator' || player?.name.startsWith('Spectator_');
     
     // Join the Socket.io room for this table to receive broadcasts
     socket.join(`table-${tableId}`);
-    console.log(`Socket ${socket.id} joined room: table-${tableId}`);
+    console.log(`Socket ${p.socketId} joined room: table-${tableId}`);
     
-    if (!isSpectator && table.players.length < table.maxPlayers) {
-      table.addPlayer(wplayer);
-      sitDown(tableId, table.players.length, table.limit);
+    if (!isSpectator &&
+        table.players.length < table.maxPlayers &&
+        player &&
+        !table.players.some(p => p && p.socketId === player.socketId)
+    ) {
+      table.addPlayer(player);
+      sitDown(tableId, table.players.length, table.limit,player);
     } else {
       console.log('Spectator joined table:', tableId, '- not seating');
       // Send initial table state to spectator
@@ -500,47 +506,41 @@ const init = (socket, io) => {
     if (
       tables[tableId].players &&
       tables[tableId].players.length > 0 &&
-      wplayer
+      player
     ) {
-      let message = `${wplayer.name} joined the table.`;
+      let message = `${player.name} joined the table.`;
       broadcastToTable(table, message);
     }
   });
 
-  socket.on(CS_LEAVE_TABLE, (tableId) => {
+  socket.on(CS_LEAVE_TABLE, (tableId,p) => {
     const table = tables[tableId];
-    const player = players[socket.id];
-    const wplayer = Object.values(playersW).find(p => p.socketId === socket.id);
+    const player = players[p.socketId];
+    //const wplayer = Object.values(playersW).find(p => p.socketId === socket.id);
                 
     
+if (!player) {
+      console.log('Player not found for leaving table(maybe viewer):', p.socketId);
+      return;
+    }
+
     // Leave the Socket.io room
     socket.leave(`table-${tableId}`);
-    console.log(`Socket ${socket.id} left room: table-${tableId}`);
+    console.log(`Socket ${p.socketId} left room: table-${tableId}`);
     
     const seat = Object.values(table.seats).find(
-      (seat) => seat && seat.player.socketId === socket.id,
+      (seat) => seat && seat.player.socketId === p.socketId,
     );
 
-    console.log("leaving tableid====>", tableId, wplayer)
+    console.log("leaving tableid====>", tableId, player)
 
     if (seat && player) {
-      updatePlayerBankroll(wplayer, seat.stack);
+      updatePlayerBankroll(player, seat.stack);
     } else {
-      console.log('Is a spectator ', wplayer);
+      console.log('Is a spectator ', player);
+       delete players[player.socketId];
          //   const wplayer = Object.values(playersW).find(p => p.socketId === socket.id);
-        if (wplayer) {
-          for (const [wallet, wplayer] of Object.entries(playersW)) {
-            if (wplayer.socketId === socket.id) {
-              delete playersW[wallet];
-              delete players[socket.id];  
-              console.log('Removed spectator player from playersW and players:', wallet, socket.id);  
-
-
-              break;
-            }
-          }
-          return;
-        }
+        
     
     
     }
@@ -553,9 +553,9 @@ const init = (socket, io) => {
     if (
       tables[tableId].players &&
       tables[tableId].players.length > 0 &&
-      wplayer
+      player
     ) {
-      let message = `${wplayer.name} left the table.`;
+      let message = `${player.name} left the table.`;
       broadcastToTable(table, message);
     }
 
@@ -641,14 +641,14 @@ const init = (socket, io) => {
   //     }
   //   }
   // });
-  const sitDown =  (tableId, seatId, amount) => {
+  const sitDown =  (tableId, seatId,amount, player) => {
     const table = tables[tableId];
-    const player = players[socket.id];
+   // const player = players[socket.id];
     if (player) {
       table.sitPlayer(player, seatId, amount);
       let message = `${player.name} sat down in Seat ${seatId}`;
 
-      updatePlayerBankroll(player, -amount);
+      //updatePlayerBankroll(player, -amount);
 
       broadcastToTable(table, message);
       if (table.activePlayers().length === 2) {
@@ -721,8 +721,9 @@ const init = (socket, io) => {
   });
 
   async function updatePlayerBankroll(player, amount) {
-    players[socket.id].bankroll += amount;
-    io.to(socket.id).emit(SC_PLAYERS_UPDATED, getCurrentPlayers());
+    console.log('Emptu - alf Updating bankroll for player:', player.name, 'Amount:', amount);
+   // players[socket.id].bankroll += amount;
+   // io.to(socket.id).emit(SC_PLAYERS_UPDATED, getCurrentPlayers());
   }
 
   function findSeatBySocketId(socketId) {
@@ -851,4 +852,3 @@ module.exports = {
   tables, 
   players 
 };
- 
