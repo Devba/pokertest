@@ -387,7 +387,8 @@ const TournamentLobby = () => {
                         <div>
                           <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Starting Chips</label>
                           <select id="starting-chips" class="swal2-input" style="width: 100%; margin: 0;">
-                            <option value="1000">1,000</option>
+                          <option value="50">50</option>  
+                          <option value="1000">1,000</option>
                             <option value="5000" selected>5,000</option>
                             <option value="10000">10,000</option>
                             <option value="20000">20,000</option>

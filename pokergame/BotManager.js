@@ -292,9 +292,17 @@ class BotManager {
         this.checkAndActForBot(table, tableId);
       }, 5000);
     } else if (table.activePlayers().length === 1) {
-      // Only one player left - broadcast final state
-      this.broadcastToTable(table, 'Waiting for more players');
-    }
+  // Only one player left - declare winner and finish tournament
+            const winnerSeat = table.activePlayers()[0];
+            const winnerName = winnerSeat.player?.name || 'Winner';
+            this.broadcastToTable(table, `${winnerName} wins the tournament!`);
+            this.tournamentManager.completeTournament(table.tournamentId, winnerSeat.player);
+
+            // Finish the tournament if possible
+            if (table.isTournament && this.tournamentManager && typeof this.tournamentManager.finishTournament === 'function') {
+              this.tournamentManager.finishTournament(table.tournamentId, winnerSeat.player);
+            }
+          }
   }
 
   /**

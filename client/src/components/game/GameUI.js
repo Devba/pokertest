@@ -9,6 +9,7 @@ const GameUIContainer = styled.div`
   padding: 1rem;
   max-width: 550px;
   margin: 0 auto;
+  
 `
 
 const QuickBetRow = styled.div`

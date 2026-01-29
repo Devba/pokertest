@@ -161,6 +161,14 @@ useEffect(() => {
     }
   }, [currentTable])
 
+useEffect(() => {
+  if (currentTable && seatId && currentTable.seats[seatId]) {
+    setIsSittingIn(!currentTable.seats[seatId].sittingOut);
+  }
+}, [currentTable, seatId]);
+
+
+
   const handleLeaveTournament = () => {
     Swal.fire({
       title: 'Leave Tournament?',
@@ -220,7 +228,7 @@ useEffect(() => {
 
 
             
-          {/*Toggle */}
+          {/*Toggle Standing*/}
             <PositionedUISlot
               bottom="2vh"
               right="1.5rem"
@@ -239,7 +247,7 @@ useEffect(() => {
 
           {/* Leave Button */}
             <PositionedUISlot
-              bottom="2vh"
+              top="2vh"
               left="1.5rem"
               scale="0.25"
               style={{ zIndex: '50', display: 'flex', gap: '0.5rem' }}
@@ -247,12 +255,7 @@ useEffect(() => {
               <Button small secondary onClick={handleLeaveTournament}>
                 Leave Tournament
               </Button>
-              <Button small onClick={standUp} style={{ marginLeft: '0.5rem' }}>
-                Stand Up
-              </Button>
-              <Button small onClick={handleSitIn} style={{ marginLeft: '0.5rem' }}>
-                Sit In
-              </Button>
+            
             </PositionedUISlot>
 
             {/* Time Delay Slider */}
@@ -289,7 +292,7 @@ useEffect(() => {
             {/* Tournament Info */}
             {tournamentInfo && (
             <PositionedUISlot
-                  bottom="4vh"
+                  bottom="10vh"
                   left="19.5rem"
                   scale="0.65"
                   style={{ zIndex: '150' }}
@@ -298,31 +301,7 @@ useEffect(() => {
                 </PositionedUISlot>
                             )}
 
-             {/* GameUI*/}               
-            <PositionedUISlot
-            
-            bottom="4vh"
-                  left="19.5rem"
-                  scale="0.65"
-                  style={{ zIndex: '150' }}
-            >
-                 {currentTable &&
-                currentTable.seats[seatId] &&
-              //  currentTable.seats[seatId].turn && 
-                (
-                    <GameUI
-                    currentTable={currentTable}
-                    seatId={seatId}
-                    bet={bet}
-                    setBet={setBet}
-                    raise={raise}
-                    standUp={standUp}
-                    fold={fold}
-                    check={check}
-                    call={call}
-                    />
-                )}
-              </PositionedUISlot>
+           
       
           </>
         )}
@@ -395,6 +374,32 @@ useEffect(() => {
                 />
               </PositionedUISlot>
               <p>seat 5</p>
+
+                {/* GameUI*/}               
+            <PositionedUISlot 
+            
+               top="5%"
+                left="0%"
+                scale="0.55"
+                origin="top left"
+            >
+                 {currentTable &&
+                currentTable.seats[seatId] &&
+              //  currentTable.seats[seatId].turn && 
+                (
+                    <GameUI
+                    currentTable={currentTable}
+                    seatId={seatId}
+                    bet={bet}
+                    setBet={setBet}
+                    raise={raise}
+                    standUp={standUp}
+                    fold={fold}
+                    check={check}
+                    call={call}
+                    />
+                )}
+              </PositionedUISlot>
             
             
               <PositionedUISlot
@@ -427,7 +432,7 @@ useEffect(() => {
                   </>
                 )}
               </PositionedUISlot>
-              <PositionedUISlot zIndex="1500" top="-5%" scale="0.60" origin="bottom center">
+              <PositionedUISlot zIndex="1500" top="-5%" scale="1.60" origin="bottom center">
                 {messages && messages.length > 0 && (
                   <>
                     <InfoPill>{messages[messages.length - 1]}</InfoPill>
@@ -443,7 +448,7 @@ useEffect(() => {
                   </>
                 )}
               </PositionedUISlot>
-              <PositionedUISlot top="12%" scale="0.60" origin="center center">
+              <PositionedUISlot top="12%" scale="3.60" origin="center center">
                 {currentTable.winMessages.length === 0 && (
                   <GameStateInfo currentTable={currentTable} />
                 )}
