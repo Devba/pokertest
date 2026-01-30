@@ -342,7 +342,7 @@ useEffect(() => {
               >
                 <p>2</p>
                 <Seat
-                  seatNumber={((seatId -4) % 6) + 1}
+                  seatNumber={seatId?((seatId -4) % 6) + 1 : 2}
                   currentTable={currentTable}
                   sitDown={sitDown}
                   folded={currentTable.seats[((seatId -4) % 6) + 1]?.folded}
@@ -355,7 +355,7 @@ useEffect(() => {
                 origin="top right"
               >
                 <Seat
-                  seatNumber={((seatId - 3) % 6) + 1}
+                  seatNumber={seatId?((seatId -3) % 6) + 1 : 3}
                   currentTable={currentTable}
                   sitDown={sitDown}
                   folded={currentTable.seats[((seatId - 3) % 6) + 1]?.folded}
@@ -369,7 +369,7 @@ useEffect(() => {
                 origin="top right"
               >
                 <Seat
-                  seatNumber={((seatId - 2) % 6) + 1}
+                  seatNumber={seatId?((seatId - 2) % 6) + 1 : 4}
                   currentTable={currentTable}
                   sitDown={sitDown}
                   folded={currentTable.seats[((seatId - 2) % 6) + 1]?.folded}
@@ -387,7 +387,7 @@ useEffect(() => {
                 position="absolute"
               >
                <Seat
-                    seatNumber={((seatId -1) % 6) + 1}
+                    seatNumber={seatId?((seatId -1) % 6) + 1 : 5}
                     currentTable={currentTable}
                     sitDown={sitDown}
                     folded={currentTable.seats[((seatId -1) % 6) + 1]?.folded}
@@ -410,7 +410,7 @@ useEffect(() => {
               zIndex="100">
               
                 <Seat
-                  seatNumber={((seatId  % 6) + 1)}
+                  seatNumber={seatId?((seatId   % 6) + 1) : 6}
                   currentTable={currentTable}
                   sitDown={sitDown}
                   folded={currentTable.seats[((seatId  % 6) + 1)]?.folded}

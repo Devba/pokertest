@@ -89,6 +89,27 @@ const init = (socket, io) => {
       const tournament = tournamentManager.createTournament(config);
       socket.emit('TOURNAMENT_CREATED', { success: true, tournament });
       console.log('Tournament created:', tournament.name, 'Total tournaments now:', tournamentManager.tournaments.size);
+
+      // --- Add bots if requested in config ---
+      if (config.addBots && config.botsCount > 0) {
+        let successCount = 0;
+        for (let i = 0; i < config.botsCount; i++) {
+          const bot = botManager.createBot();
+          const result = tournamentManager.registerPlayer(tournament.id, bot);
+          if (result.success) {
+            successCount++;
+            console.log(`🤖 Bot ${bot.name} registered for tournament ${tournament.id}`);
+          }
+        }
+        socket.emit('BOTS_ADDED', { 
+          success: true, 
+          count: successCount,
+          message: `Successfully added ${successCount} bot(s) to the tournament`
+        });
+        console.log(`Added ${successCount} bots to tournament ${tournament.id}`);
+      }
+      // --- End add bots logic ---
+
     } catch (error) {
       console.error('Error creating tournament:', error);
       socket.emit('TOURNAMENT_ERROR', { error: error.message });
