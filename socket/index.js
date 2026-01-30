@@ -107,6 +107,14 @@ const init = (socket, io) => {
           message: `Successfully added ${successCount} bot(s) to the tournament`
         });
         console.log(`Added ${successCount} bots to tournament ${tournament.id}`);
+
+
+      if (config.startTime==="immediate") {
+            tournamentManager.startTournament(tournament.id);
+            // Optionally, emit a socket event to notify clients
+            //io.emit('START_TOURNAMENT', { success: true, tournamentId: tournament.id, tournament });
+          }
+
       }
       // --- End add bots logic ---
 

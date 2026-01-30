@@ -26,7 +26,7 @@ const TournamentWaitingRoom = () => {
         setTournament(info)
         
         // If tournament started, redirect to play page
-        if (info.status === 'live') {
+        if (false && info.status === 'live') {
           navigate(`/tournament/${tournamentId}?mode=player`)
         }
       })
@@ -462,7 +462,10 @@ const TournamentWaitingRoom = () => {
           }}>
             {tournament.registeredPlayers && tournament.registeredPlayers.length > 0 ? (
               <div style={{ display: 'grid', gap: '0.5rem' }}>
-                {tournament.registeredPlayers.map((player, index) => (
+                {(tournament.status === 'live'
+                  ? [...tournament.registeredPlayers].sort((a, b) => (b.chips || 0) - (a.chips || 0))
+                  : tournament.registeredPlayers
+                ).map((player, index) => (
                   <div 
                     key={index}
                     style={{ 
@@ -488,6 +491,16 @@ const TournamentWaitingRoom = () => {
                         #{index + 1}
                       </span>
                       <span>{player.name}</span>
+                      {tournament.status === 'live' && (
+                        <span style={{ 
+                          fontSize: '0.95rem',
+                          color: '#f39c12',
+                          fontWeight: 'bold',
+                          marginLeft: '1rem'
+                        }}>
+                          {player.chips?.toLocaleString() || 0} chips
+                        </span>
+                      )}
                       {player.walletAddress === walletAddress && (
                         <span style={{ 
                           fontSize: '0.75rem',
