@@ -213,7 +213,7 @@ useEffect(() => {
 
   return (
     <>
-      <RotateDevicePrompt />
+     
       <Container
         fullHeight
         style={{
@@ -244,12 +244,6 @@ useEffect(() => {
                 {isSittingIn ? 'Sitting In' : 'Standing Up'}
               </span>
             </PositionedUISlot>}
-
-
-
-
-        
-
 
 
 
@@ -509,7 +503,7 @@ useEffect(() => {
             >
                  {currentTable &&
                 currentTable.seats[seatId] &&
-              //  currentTable.seats[seatId].turn && 
+                currentTable.seats[seatId].turn && 
                 (
                     <GameUI
                     currentTable={currentTable}
