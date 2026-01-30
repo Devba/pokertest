@@ -194,7 +194,7 @@ useEffect(() => {
 
   const [infoTab, setInfoTab] = useState('general')
 
-  const [isSittingIn, setIsSittingIn] = React.useState(true); // or false, depending on initial state
+  const [isSittingIn, setIsSittingIn] = React.useState(false); // or false, depending on initial state
 
   const handleToggle = () => {
     if (isSittingIn) {
@@ -229,7 +229,7 @@ useEffect(() => {
 
             
           {/*Toggle Standing*/}
-            <PositionedUISlot
+           {currentTable.seats[seatId] && <PositionedUISlot
               bottom="2vh"
               right="1.5rem"
               scale="0.25"
@@ -239,7 +239,7 @@ useEffect(() => {
               <span style={{ color: isSittingIn ? '#2ecc40' : '#888', marginLeft: 12 }}>
                 {isSittingIn ? 'Sitting In' : 'Standing Up'}
               </span>
-            </PositionedUISlot>
+            </PositionedUISlot>}
 
 
 
@@ -360,6 +360,7 @@ useEffect(() => {
                   folded={currentTable.seats[4]?.folded}
                 />
               </PositionedUISlot>
+              {true && 
               <PositionedUISlot
                 bottom="0%"
                 left="0%"
@@ -373,7 +374,27 @@ useEffect(() => {
                   folded={currentTable.seats[5]?.folded}
                 />
               </PositionedUISlot>
-              <p>seat 5</p>
+              
+              
+              }
+              
+              
+
+
+               {currentTable.seats[seatId] && <PositionedUISlot
+                bottom="-20%"
+                left="80%"
+                scale="0.15"
+                origin="bottom left"
+              >
+                <Seat
+                  seatNumber={seatId}
+                  currentTable={currentTable}
+                  sitDown={sitDown}
+                  folded={currentTable.seats[6]?.folded}
+                />
+              </PositionedUISlot>
+          }
 
                 {/* GameUI*/}               
             <PositionedUISlot 
