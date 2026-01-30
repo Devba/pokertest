@@ -7,7 +7,7 @@ const GameUIContainer = styled.div`
   flex-direction: column;
   gap: 1rem;
   padding: 1rem;
-  max-width: 550px;
+  max-width: 1050px;
   margin: 0 auto;
   
 `
@@ -214,6 +214,7 @@ console.log('Current Table State:', {
           </label>
         </div>
 
+
         {/* Quick Bet Buttons */}
         <QuickBetRow>
           <QuickBetButton onClick={() => handleQuickBet('min')}>
@@ -222,11 +223,11 @@ console.log('Current Table State:', {
           <QuickBetButton onClick={() => handleQuickBet('2x')}>
             2X
           </QuickBetButton>
-          <QuickBetButton onClick={() => handleQuickBet('pot')}>
+          <QuickBetButton onClick={() => handleQuickBet('pot -')}>
             Pot
           </QuickBetButton>
           <QuickBetButton onClick={() => handleQuickBet('max')}>
-            Máximo
+            Máximo -
           </QuickBetButton>
         </QuickBetRow>
 

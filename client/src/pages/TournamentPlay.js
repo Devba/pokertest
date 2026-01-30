@@ -52,6 +52,10 @@ const TournamentPlay = () => {
   useEffect(() => {
     //setTimebfFold(timeDelay * 1000)
   }, [timeDelay, setTimebfFold])
+   useEffect(() => {
+    //setTimebfFold(timeDelay * 1000)
+    console.log('seatId changed:', seatId);
+  }, [seatId])
 
   useEffect(() => {
     console.log('TournamentPlay mounted - tournamentId:', tournamentId, 'socket:', !!socket, 'walletAddress:', walletAddress);
@@ -116,7 +120,7 @@ useEffect(() => {
     socket.on('TOURNAMENT_UPDATE', (info) => {
       console.log('TOURNAMENT_UPDATE received:', info)
       console.log('Current tournamentId:', tournamentId, 'Update tournamentId:', info.id)
-      console.log('Comparison result:', info.id === parseInt(tournamentId))
+      //console.log('Comparison result:', info.id === parseInt(tournamentId))
       if (info.id === parseInt(tournamentId)) {
         console.log('Updating tournament info with:', info)
         setTournamentInfo(prev => {
@@ -244,6 +248,10 @@ useEffect(() => {
 
 
 
+        
+
+
+
 
           {/* Leave Button */}
             <PositionedUISlot
@@ -292,7 +300,7 @@ useEffect(() => {
             {/* Tournament Info */}
             {tournamentInfo && (
             <PositionedUISlot
-                  bottom="10vh"
+                  bottom="2vh"
                   left="19.5rem"
                   scale="0.65"
                   style={{ zIndex: '150' }}
@@ -314,118 +322,121 @@ useEffect(() => {
                 top="-5%"
                 left="0%"
                 scale="0.55"
-                origin="top left"
+                origin="top center"
               >
                 <p>1</p>
                 <Seat
-                  seatNumber={1}
+                  seatNumber={seatId?((seatId -5) % 6) + 1 : 1}
                   currentTable={currentTable}
                   sitDown={sitDown}
-                  folded={currentTable.seats[1]?.folded}
+                  folded={currentTable.seats[((seatId -5) % 6) + 1]?.folded}
+                />
+              </PositionedUISlot>
+
+
+                <PositionedUISlot
+                top="-42%"
+                left="25%"
+                scale="0.55"
+                origin="top center"
+              >
+                <p>2</p>
+                <Seat
+                  seatNumber={((seatId -4) % 6) + 1}
+                  currentTable={currentTable}
+                  sitDown={sitDown}
+                  folded={currentTable.seats[((seatId -4) % 6) + 1]?.folded}
                 />
               </PositionedUISlot>
               <PositionedUISlot
-                top="-5%"
-                right="5%"
+                top="-30%"
+                right="15vw"
                 scale="0.55"
                 origin="top right"
               >
                 <Seat
-                  seatNumber={2}
+                  seatNumber={((seatId - 3) % 6) + 1}
                   currentTable={currentTable}
                   sitDown={sitDown}
-                  folded={currentTable.seats[2]?.folded}
+                  folded={currentTable.seats[((seatId - 3) % 6) + 1]?.folded}
                 />
               </PositionedUISlot>
-              <PositionedUISlot
-                bottom="45%"
-                right="5%"
+
+                     <PositionedUISlot
+                top="40%"
+                right="5vw"
                 scale="0.55"
-                origin="bottom right"
+                origin="top right"
               >
                 <Seat
-                  seatNumber={3}
+                  seatNumber={((seatId - 2) % 6) + 1}
                   currentTable={currentTable}
                   sitDown={sitDown}
-                  folded={currentTable.seats[3]?.folded}
+                  folded={currentTable.seats[((seatId - 2) % 6) + 1]?.folded}
                 />
               </PositionedUISlot>
-              <PositionedUISlot bottom="-30%" right="40%" scale="0.55" origin="center center"
+
+              
+              <PositionedUISlot
+               bottom="-20%"
+                left="50%"
+                scale="0.15"
+                origin="bottom center"
+                zIndex="100"
+                info="este es es jugador"
+                position="absolute"
+              >
+               <Seat
+                    seatNumber={((seatId -1) % 6) + 1}
+                    currentTable={currentTable}
+                    sitDown={sitDown}
+                    folded={currentTable.seats[((seatId -1) % 6) + 1]?.folded}
+                    
+                  />
+                  </PositionedUISlot>
+          
+
+
+
+
+
+                <PositionedUISlot
+                 bottom="0%"
+                left="0%"
+                scale="0.15"
+                origin="bottom left"
+                  zIndex="100"
               
               zIndex="100">
+              
                 <Seat
-                  seatNumber={4}
+                  seatNumber={((seatId  % 6) + 1)}
                   currentTable={currentTable}
                   sitDown={sitDown}
-                  folded={currentTable.seats[4]?.folded}
+                  folded={currentTable.seats[((seatId  % 6) + 1)]?.folded}
                 />
               </PositionedUISlot>
-              {true && 
-              <PositionedUISlot
-                bottom="0%"
-                left="0%"
-                scale="0.15"
-                origin="bottom left"
-              >
-                <Seat
-                  seatNumber={5}
-                  currentTable={currentTable}
-                  sitDown={sitDown}
-                  folded={currentTable.seats[5]?.folded}
-                />
-              </PositionedUISlot>
+          
+
+
+                
               
               
-              }
+             
+
+              
               
               
 
 
-               {currentTable.seats[seatId] && <PositionedUISlot
-                bottom="-20%"
-                left="80%"
-                scale="0.15"
-                origin="bottom left"
-              >
-                <Seat
-                  seatNumber={seatId}
-                  currentTable={currentTable}
-                  sitDown={sitDown}
-                  folded={currentTable.seats[6]?.folded}
-                />
-              </PositionedUISlot>
-          }
+             
 
-                {/* GameUI*/}               
-            <PositionedUISlot 
             
-               top="5%"
-                left="0%"
-                scale="0.55"
-                origin="top left"
-            >
-                 {currentTable &&
-                currentTable.seats[seatId] &&
-              //  currentTable.seats[seatId].turn && 
-                (
-                    <GameUI
-                    currentTable={currentTable}
-                    seatId={seatId}
-                    bet={bet}
-                    setBet={setBet}
-                    raise={raise}
-                    standUp={standUp}
-                    fold={fold}
-                    check={check}
-                    call={call}
-                    />
-                )}
-              </PositionedUISlot>
             
             
               <PositionedUISlot
                 width="100%"
-                bottom="34%"
+                bottom="4%"
                 left="50%"
                 origin="center center"
                 scale="0.20"
@@ -453,7 +464,7 @@ useEffect(() => {
                   </>
                 )}
               </PositionedUISlot>
-              <PositionedUISlot zIndex="1500" top="-5%" scale="1.60" origin="bottom center">
+              <PositionedUISlot zIndex="1500" top="-15%" scale="1.60" origin="top center">
                 {messages && messages.length > 0 && (
                   <>
                     <InfoPill>{messages[messages.length - 1]}</InfoPill>
@@ -488,7 +499,32 @@ useEffect(() => {
           )}
         </PokerTableWrapper>
 
-
+{/* GameUI*/}               
+            <PositionedUISlot 
+            
+              bottom="10vh"
+                  left="19.5rem"
+                  scale="0.65"
+                  style={{ zIndex: '150' }}
+            >
+                 {currentTable &&
+                currentTable.seats[seatId] &&
+              //  currentTable.seats[seatId].turn && 
+                (
+                    <GameUI
+                    currentTable={currentTable}
+                    seatId={seatId}
+                    bet={bet}
+                    setBet={setBet}
+                    raise={raise}
+                    standUp={standUp}
+                    fold={fold}
+                    check={check}
+                    call={call}
+                    />
+                )}
+              </PositionedUISlot>
+          
       </Container>
     </>
   )

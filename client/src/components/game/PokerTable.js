@@ -9,6 +9,8 @@ const StyledPokerTable = styled.img`
   height: 45%;
   margin: 32px auto 0px;
   z-index: 2;
+   position: relative;
+  
 `;
 
 const PokerTable = () => <StyledPokerTable src={table} alt="Poker Table" />;

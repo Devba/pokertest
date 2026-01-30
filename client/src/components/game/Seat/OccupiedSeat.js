@@ -33,7 +33,7 @@ const StyledOccupiedSeat = styled(EmptySeat)`
     height: 130px;
     text-align: center;
     position: absolute;
-    z-index: 4;
+    z-index: 55;
 
     .timer-slot {
       position: relative;
@@ -56,7 +56,7 @@ const StyledOccupiedSeat = styled(EmptySeat)`
         margin-top: -60px;
         border-left-color: transparent;
         border-top-color: transparent;
-        z-index: 5;
+        z-index: 55;
         animation: timer-slide-lt 15s linear infinite, green-flash 1s ease-in-out infinite;
       }
       .timer-lt {

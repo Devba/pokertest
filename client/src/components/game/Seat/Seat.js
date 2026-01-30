@@ -34,7 +34,8 @@ export const Seat = ({ currentTable, seatNumber, sitDown, folded }) => {
   const minBuyIn = currentTable.minBet * 2 * 10
 
   useEffect(() => {
-    console.log("seat effect", currentTable.seats[seatNumber])
+    //console.log("Seat component mounted or updated  SN :" + seatNumber );
+    //console.log("seat effect", currentTable.seats[seatNumber])
     // eslint-disable-next-line
   }, [currentTable])
 
@@ -67,6 +68,7 @@ export const Seat = ({ currentTable, seatNumber, sitDown, folded }) => {
         textAlign: 'center',
         justifyContent: 'center',
         alignItems: 'center',
+        position: 'absolute'
       }}
     >
       {!seat ? (
