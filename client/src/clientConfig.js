@@ -5,7 +5,7 @@ const config = {
   socketURI:
     process.env.NODE_ENV === 'production'
       ? process.env.REACT_APP_SERVER_URI
-      : `http://${window.location.hostname}:7777/`,
+      : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://improved-eureka-7rq5j5rq5q3p5q9-7777.app.github.dev/`,
 };
 
 export default config;

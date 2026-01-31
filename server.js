@@ -1,7 +1,7 @@
 const path = require("path");
 const express = require("express");
 const config = require("./config");
-const connectDB = require('./config/db');
+//const connectDB = require('./config/db');
 const configureMiddleware = require("./middleware");
 const configureRoutes = require("./routes");
 const socketio = require("socket.io");
@@ -11,8 +11,9 @@ const gameSocket = require("./socket/index");
 let db;
 
  (async function () {
-   db = await connectDB();
+ //  db = await connectDB();
  })();
+
 
 // Init express app
 const app = express();
@@ -32,6 +33,7 @@ const server = app.listen(config.PORT, () => {
 
 //  Handle real-time poker game logic with socket.io
 const io = socketio(server);
+
 
 io.on("connect", (socket) => gameSocket.init(socket, io));
 
