@@ -281,14 +281,14 @@ const init = (socket, io) => {
     }
   });
 
-  socket.on('GET_TOURNAMENT_TABLE', ({ tournamentId, walletAddress }) => {
+  socket.on('GET_TOURNAMENT_TABLE', ({ tournamentId, walletAddress,mode }) => {
     console.log('GET_TOURNAMENT_TABLE received - tournamentId:', tournamentId, 'type:', typeof tournamentId, 'socketId:', socket.id, 'walletAddress:', walletAddress);
-    
+
+    let playerTable = null;
     // Convert tournamentId to number (comes as string from URL params)
     const tournamentIdNum = parseInt(tournamentId);
     console.log('TournamentManager exists:', !!tournamentManager, 'Tournaments in map:', tournamentManager ? tournamentManager.tournaments.size : 'N/A');
     console.log('Tournament IDs in map:', tournamentManager ? Array.from(tournamentManager.tournaments.keys()) : 'N/A');
-    
     try {
       const tournament = tournamentManager.tournaments.get(tournamentIdNum);
       if (!tournament) {
@@ -299,6 +299,8 @@ const init = (socket, io) => {
       
       console.log('Tournament found:', tournament.name, 'Status:', tournament.status, 'Tables:', tournament.tables.length);
       
+         
+     
       let player = players[socket.id];
       let playerW=playersW[walletAddress]; //alf
       console.log('Player found in socket:', player ? `${player.name} (${player.id})` : 'NOT FOUND');
@@ -310,7 +312,7 @@ const init = (socket, io) => {
       
       // Also check if player is already seated at a table
       let seatedPlayer = null;
-      let playerTable = null;
+     //et playerTable = null;
       
       for (const table of tournament.tables) {
         const seatsArray = Object.values(table.seats);
@@ -392,20 +394,38 @@ const init = (socket, io) => {
 
       // Emit the table assignment
       console.log('Emitting TOURNAMENT_TABLE_ASSIGNED for table:', playerTable.id);
-      const tournamentInfo = tournamentManager.getTournamentInfo(tournamentId);
-      socket.emit('TOURNAMENT_TABLE_ASSIGNED', {
-        tournamentId,
-        tableId: playerTable.id,
-        table: playerTable.getTournamentStatus(),
-        tournament: tournamentInfo
-      });
+        
+      emitTournamentTableAssigned(socket, tournamentManager, tournamentId, playerTable);
+      
+     /* const tournamentInfo = tournamentManager.getTournamentInfo(tournamentId);
+          socket.emit('TOURNAMENT_TABLE_ASSIGNED', {
+            tournamentId,
+            tableId: playerTable.id,
+            table: playerTable.getTournamentStatus(),
+            tournament: tournamentInfo
+          });
+          */
     } catch (error) {
       console.error('Error getting tournament table:', error);
       socket.emit('TOURNAMENT_ERROR', { error: error.message });
     }
+
   });
 
-  socket.on('ADD_BOTS_TO_TOURNAMENT', ({ tournamentId, botCount }) => {
+  // --- Helper function ---
+  function emitTournamentTableAssigned(socket, tournamentManager, tournamentId, playerTable) {
+    const tournamentInfo = tournamentManager.getTournamentInfo(tournamentId);
+    socket.emit('TOURNAMENT_TABLE_ASSIGNED', {
+      tournamentId,
+      tableId: playerTable.id,
+      table: playerTable.getTournamentStatus(),
+      tournament: tournamentInfo
+    });
+  }
+ 
+
+
+    socket.on('ADD_BOTS_TO_TOURNAMENT', ({ tournamentId, botCount }) => {
     try {
       const count = parseInt(botCount) || 1;
       let successCount = 0;

@@ -86,7 +86,7 @@ const TournamentPlay = () => {
       // If mode is 'player', use walletAddress; if 'spectator' or undefined, use 'spectator'
       const requestWallet = mode === 'player' ? walletAddress : 'spectator';
       //socket.emit('GET_TOURNAMENT_TABLE', { tournamentId, walletAddress: requestWallet })
-      socket.emit('GET_TOURNAMENT_TABLE', { tournamentId, walletAddress: localStorage.wallet || 'spectator' })
+      socket.emit('GET_TOURNAMENT_TABLE', { tournamentId, walletAddress: localStorage.wallet || 'spectator',mode:mode })  
       
     }
 
