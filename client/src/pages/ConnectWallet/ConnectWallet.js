@@ -63,7 +63,7 @@ const ConnectWallet = () => {
       if(socket !== null && socket.connected === true){
         socket.emit(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, username })
         console.log('MetaMask login:', { walletAddress, username, gameId })
-        navigate('/play')
+        navigate('/tournament-lobby')
       } else {
         setTimeout(() => {
           if(socket !== null && socket.connected === true){
@@ -141,7 +141,7 @@ const ConnectWallet = () => {
         setWalletAddress(walletAddress)
         socket.emit(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, username })
         console.log(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, username })
-        navigate('/play')
+        navigate('/tournament-lobby')
       }
     }
   }, [socket])

@@ -337,20 +337,10 @@ const TournamentLobby = () => {
 
   return (
     <Container fullHeight style={{ backgroundColor: '#1a1a2e', color: 'white' }}>
-      <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
-        {/* Header */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: '2rem'
-        }}>
-          <h1>Tournament Lobby</h1>
-          
-          {/* Buttons - Vertical on the right */}
+       {/* Buttons - Vertical on the right */}
           <div style={{ 
             position: 'fixed',
-            right: '15rem',
+            right: '5rem',
             top: '20%',
             transform: 'translateY(-50%)',
             display: 'flex', 
@@ -397,8 +387,39 @@ const TournamentLobby = () => {
             Create Tournament
           </Button>
           </div>
-        </div>
 
+      <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
+        {/* Header */}
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          marginBottom: '2rem'
+        }}>
+          <h1 style={{ marginBottom: '0.5rem' }}>Tournament Lobby</h1>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            background: 'rgba(44, 62, 80, 0.15)',
+            border: '1px solid #2c3e50',
+            borderRadius: '8px',
+            padding: '0.5rem 1.25rem',
+            fontSize: '1rem',
+            color: '#fff',
+            fontWeight: 500,
+            boxShadow: '0 2px 8px 0 rgba(44,62,80,0.07)',
+            marginBottom: '0.5rem',
+            maxWidth: '100%',
+            wordBreak: 'break-all'
+          }}>
+            <span style={{ color: '#aaa', fontWeight: 400 }}>Wallet:</span>
+            <span style={{ color: '#00b894', fontFamily: 'monospace', fontSize: '0.98em' }}>{walletAddress || 'N/A'}</span>
+            <span style={{ color: '#aaa', fontWeight: 400, marginLeft: '1.5rem' }}>Username:</span>
+            <span style={{ color: '#0984e3', fontWeight: 600 }}>{username || 'N/A'}</span>
+          </div>
+        </div>
+        
         {/* Filters */}
         <div style={{ 
           display: 'flex', 

@@ -1,0 +1,15 @@
+{
+  "forwardPorts": [3000, 5000],
+  "portsAttributes": {
+    "3000": {
+      "label": "React App",
+      "onAutoForward": "openBrowser",
+      "visibility": "public"
+    },
+    "5000": {
+      "label": "Poker Server",
+      "onAutoForward": "openBrowser",
+      "visibility": "public"
+    }
+  }
+}
