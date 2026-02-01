@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import Swal from 'sweetalert2'
 import globalContext from './../../context/global/globalContext'
 import LoadingScreen from '../../components/loading/LoadingScreen'
+import { showWelcome } from '../../components/alf/Welcome';
 
 import socketContext from '../../context/websocket/socketContext'
 import { CS_FETCH_LOBBY_INFO } from '../../pokergame/actions'
@@ -19,6 +20,8 @@ const ConnectWallet = () => {
   const [isLoading, setIsLoading] = useState(false)
   const useQuery = () => new URLSearchParams(useLocation().search);
   let query = useQuery()
+
+  
 
   // Generar wallet automática
   const generateRandomWallet = () => {
@@ -60,12 +63,24 @@ try {
       //const username = 'frommm' //`Player_${walletAddress.slice(2, 8)}`
       const gameId = '1'
 
+      setIsLoading(false)
+
       //setUserNamev2("alvaro")
       console.log ("userNamev2: alf metamask", userNamev2);
       setWalletAddress(walletAddress)
       
       // Esperar a que el socket se conecte antes de emitir
      if(socket !== null && socket.connected === true){
+      //alert("userv2" +localStorage.getItem("userNamev2"))
+      let unv2=localStorage.getItem("userNamev2");
+      if(!unv2 || unv2==="undefined"){
+      } else {
+        //alert("userv2 existe:"+unv2)
+        showWelcome(navigate);
+        //navigate('/tournament-lobby')
+        return
+      }
+     
 
       const username = await askUserName();
 
@@ -144,25 +159,30 @@ try {
       setTimeout(() => {
         if(socket !== null && socket.connected === true){
           socket.emit(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, username })
-          navigate('/play')
+          showWelcome(navigate);
         }
       }, 1000)
     }
   }
 
   useEffect(() => {
+    
     if(socket !== null && socket.connected === true){
       const walletAddress = query.get('walletAddress')
       const gameId = query.get('gameId')
       const username = query.get('username')
       console.log("userNamev2: alf useeffect", userNamev2);
       setUserNamev2(userNamev2)
+      handleMetaMaskLogin()
       if(walletAddress && gameId && username){
+       
         console.log(username)
         setWalletAddress(walletAddress)
         socket.emit(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, username })
         console.log(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, username })
-        navigate('/tournament-lobby')
+        alert("Welcome "+username);
+        
+        //navigate('/tournament-lobby')
       }
     }
   }, [socket])
@@ -180,7 +200,7 @@ try {
 
   return (
     <>
-      {isLoading ? (
+      {true && isLoading ? (
         <LoadingScreen />
       ) : (
         <div style={{

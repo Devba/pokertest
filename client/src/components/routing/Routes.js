@@ -16,6 +16,7 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<ConnectWallet />} />
       <Route path="/play" element={<Play />} />
+      <Route path="/welcome" element={<Play />} />
       <Route path="/tournament-lobby" element={<TournamentLobby />} />
       <Route path="/tournament/:tournamentId/waiting" element={<TournamentWaitingRoom />} />
       <Route path="/tournament/:tournamentId" element={<TournamentPlay />} />

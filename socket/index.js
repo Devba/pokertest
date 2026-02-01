@@ -105,7 +105,7 @@ const init = (socket, io) => {
         let successCount = 0;
         for (let i = 0; i < config.botsCount; i++) {
           const bot = botManager.createBot();
-          const result = tournamentManager.registerPlayer(tournament.id, bot);
+          const result = tournamentManager.registerPlayer(tournament.id, bot,bot);
           if (result.success) {
             successCount++;
             console.log(`🤖 Bot ${bot.name} registered for tournament ${tournament.id}`);
@@ -446,7 +446,7 @@ const init = (socket, io) => {
         const bot = botManager.createBot();
         
         // Register the bot in the tournament
-        const result = tournamentManager.registerPlayer(tournamentId, bot);
+        const result = tournamentManager.registerPlayer(tournamentId, bot,bot); //para el wplayer
         if (result.success) {
           successCount++;
           console.log(`🤖 Bot ${bot.name} registered for tournament ${tournamentId}`);

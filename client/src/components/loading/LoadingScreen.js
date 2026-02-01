@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import Loader from './Loader';
+
 import loadingImage from './../../assets/game/loading-background.jpg'
 
 const StyledLoadingScreen = styled.div`
@@ -17,9 +18,14 @@ const StyledLoadingScreen = styled.div`
 
 `;
 
+
+
+
+
 const LoadingScreen = () => (
   <StyledLoadingScreen>
     <Loader />
+    
   </StyledLoadingScreen>
 );
 
