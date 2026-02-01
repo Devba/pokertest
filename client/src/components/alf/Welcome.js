@@ -1,14 +1,15 @@
 import Swal from 'sweetalert2';
 import React, { useContext, useEffect, useState } from 'react'
-
+import { useNavigate } from 'react-router-dom'
 import globalContext from './../../context/global/globalContext'
-
+ 
 // Remove useContext calls from the top level; use them inside a component or hook as needed.
 // Example usage inside a component:
  //const { userNamev2, setWalletAddress, walletAdres } = useContext(globalContext);
 
 // Usage: call showWelcome(navigate) from a React component, passing the navigate function from useNavigate
 export const showWelcome = (navigate) => {
+  //const navigate = useNavigate()
   // Ensure Lordicon script is loaded
   if (!document.querySelector('script[src="https://cdn.lordicon.com/lordicon.js"]')) {
     const script = document.createElement('script');

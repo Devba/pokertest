@@ -9,6 +9,7 @@ import { showWelcome } from '../../components/alf/Welcome';
 import socketContext from '../../context/websocket/socketContext'
 import { CS_FETCH_LOBBY_INFO } from '../../pokergame/actions'
 import './ConnectWallet.scss'
+
 //import { set } from 'core-js/core/dict';
 
 const ConnectWallet = () => {
@@ -164,15 +165,21 @@ try {
   }
 
   useEffect(() => {
+
+    setIsLoading(true)
     
     if(socket !== null && socket.connected === true){
+      //setIsLoading(false)
       const walletAddress = localStorage.getItem("wallet")//query.get('walletAddress')
       const gameId = localStorage.getItem("gameId")//query.get('gameId')
       const userNamev2 = localStorage.getItem("userNamev2")// query.get('username')
       console.log("userNamev2: alf useeffect", userNamev2);
+      return ; // no hacemos nada x ahora 
       
       //handleMetaMaskLogin()
       if(walletAddress  && userNamev2){
+
+
        
         console.log(userNamev2)
         setWalletAddress(walletAddress)
@@ -219,12 +226,25 @@ try {
           if (tourBtn) tourBtn.onclick = () => { Swal.close(); navigate('/tournament-lobby'); };
         }
       });
+    } else {
+
+      showWelcome(navigate)
+      
+       
     }
   }, [isLoading, navigate]);
 
-  if (isLoading) return <LoadingScreen />;
-  return null;
+  return (
+    <>
+      {isLoading ? (
+        <LoadingScreen message="Connecting to wallet..." />
+      ) : null}
+    </>
+  );
+  
 }
+
+
 
 // Reusable function to prompt user for their name
 const askUserName = async () => {
