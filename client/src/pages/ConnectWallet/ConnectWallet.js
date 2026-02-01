@@ -9,6 +9,7 @@ import { showWelcome } from '../../components/alf/Welcome';
 import socketContext from '../../context/websocket/socketContext'
 import { CS_FETCH_LOBBY_INFO } from '../../pokergame/actions'
 import './ConnectWallet.scss'
+//import { set } from 'core-js/core/dict';
 
 const ConnectWallet = () => {
   const { setWalletAddress } = useContext(globalContext)
@@ -30,15 +31,7 @@ const ConnectWallet = () => {
     ).join('')
   }
 
-  // Generar username aleatorio
-  // const generateRandomUsername = () => {
-  //   const adjectives = ['Happy', 'Lucky', 'Clever', 'Brave', 'Swift', 'Bold']
-  //   const nouns = ['Player', 'Gambler', 'Poker', 'Dealer', 'Ace', 'King']
-  //   const adj = adjectives[Math.floor(Math.random() * adjectives.length)]
-  //   const noun = nouns[Math.floor(Math.random() * nouns.length)]
-  //   const num = Math.floor(Math.random() * 999)
-  //   return `${adj}${noun}${num}`
-  // }
+  
   
   // Conectar con MetaMask
   const handleMetaMaskLogin = async () => {
@@ -76,8 +69,9 @@ try {
       if(!unv2 || unv2==="undefined"){
       } else {
         //alert("userv2 existe:"+unv2)
-        showWelcome(navigate);
-        //navigate('/tournament-lobby')
+        //showWelcome(navigate);
+         if (window.Swal) window.Swal.close && window.Swal.close();
+        navigate('/tournament-lobby')
         return
       }
      
@@ -147,42 +141,48 @@ try {
     const username = result.value
     const gameId = '1' // ID del juego predeterminado
     
-    setIsLoading(true)
+    //setIsLoading(true)
     setWalletAddress(walletAddress)
+    setUserNamev2(username)
     
     // Esperar a que el socket se conecte antes de emitir
     if(socket !== null && socket.connected === true){
+      setIsLoading(false) 
       socket.emit(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, username })
       console.log('Auto-login:', { walletAddress, username, gameId })
-      navigate('/play')
+      navigate('/tournament-lobby')
     } else {
       setTimeout(() => {
         if(socket !== null && socket.connected === true){
           socket.emit(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, username })
-          showWelcome(navigate);
+          //showWelcome(navigate);
         }
       }, 1000)
     }
+
+
   }
 
   useEffect(() => {
     
     if(socket !== null && socket.connected === true){
-      const walletAddress = query.get('walletAddress')
-      const gameId = query.get('gameId')
-      const username = query.get('username')
+      const walletAddress = localStorage.getItem("wallet")//query.get('walletAddress')
+      const gameId = localStorage.getItem("gameId")//query.get('gameId')
+      const userNamev2 = localStorage.getItem("userNamev2")// query.get('username')
       console.log("userNamev2: alf useeffect", userNamev2);
-      setUserNamev2(userNamev2)
-      handleMetaMaskLogin()
-      if(walletAddress && gameId && username){
+      
+      //handleMetaMaskLogin()
+      if(walletAddress  && userNamev2){
        
-        console.log(username)
+        console.log(userNamev2)
         setWalletAddress(walletAddress)
-        socket.emit(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, username })
-        console.log(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, username })
-        alert("Welcome "+username);
+        setUserNamev2(userNamev2)
+        socket.emit(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, userNamev2 })
+        console.log(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, userNamev2 })
+        alert("Welcome "+userNamev2);
+        Swal.close();
         
-        //navigate('/tournament-lobby')
+        navigate('/tournament-lobby')
       }
     }
   }, [socket])
@@ -198,68 +198,32 @@ try {
     minWidth: '250px'
   }
 
-  return (
-    <>
-      {true && isLoading ? (
-        <LoadingScreen />
-      ) : (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          flexDirection: 'column',
-          gap: '20px'
-        }}>
-          <h1>Poker Game</h1>
-          
-          <button 
-            onClick={handleMetaMaskLogin}
-            style={{
-              ...buttonStyle,
-              backgroundColor: '#f6851b'
-            }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#e2761b'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#f6851b'}
-          >
-            🦊 Conectar con MetaMask
-          </button>
+  useEffect(() => {
+    if (!isLoading) {
+      Swal.fire({
+        title: 'Poker Game',
+        html: `
+          <button id="metamask-btn" style="padding:12px 24px;font-size:16px;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;min-width:250px;background:#f6851b;margin-bottom:10px;">🦊 Conectar con MetaMask</button><br/>
+          <div style="margin:10px 0;color:#666;font-size:14px;">o</div>
+          <button id="auto-btn" style="padding:12px 24px;font-size:16px;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;min-width:250px;background:#007bff;margin-bottom:10px;">Iniciar Juego Automáticamente</button><br/>
+          <button id="tournament-btn" style="padding:12px 24px;font-size:16px;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;min-width:250px;background:#28a745;">🏆 Tournament Lobby</button>
+        `,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        didOpen: () => {
+          const mmBtn = document.getElementById('metamask-btn');
+          const autoBtn = document.getElementById('auto-btn');
+          const tourBtn = document.getElementById('tournament-btn');
+          if (mmBtn) mmBtn.onclick = () => { Swal.close(); handleMetaMaskLogin(); };
+          if (autoBtn) autoBtn.onclick = () => { Swal.close(); handleAutoLogin(); };
+          if (tourBtn) tourBtn.onclick = () => { Swal.close(); navigate('/tournament-lobby'); };
+        }
+      });
+    }
+  }, [isLoading, navigate]);
 
-          <div style={{ 
-            margin: '10px 0', 
-            color: '#666',
-            fontSize: '14px' 
-          }}>
-            o
-          </div>
-          
-          <button 
-            onClick={handleAutoLogin}
-            style={{
-              ...buttonStyle,
-              backgroundColor: '#007bff'
-            }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#0056b3'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#007bff'}
-          >
-            Iniciar Juego Automáticamente
-          </button>
-
-          <button 
-            onClick={() => navigate('/tournament-lobby')}
-            style={{
-              ...buttonStyle,
-              backgroundColor: '#28a745'
-            }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
-          >
-            🏆 Tournament Lobby
-          </button>
-        </div>
-      )}
-    </>
-  )
+  if (isLoading) return <LoadingScreen />;
+  return null;
 }
 
 // Reusable function to prompt user for their name

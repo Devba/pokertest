@@ -45,8 +45,9 @@ let botManager = null;
 let tournamentManager = null;
 
 function getCurrentPlayers() {
-  return Object.values(players).map((player) => ({
-    socketId: player.socketId,
+  
+  return Object.values(getCurrentPlayersw).map((player) => ({
+    socketId: 'nada',//player.socketId,
     id: player.id,
     name: player.name,
   }));
@@ -139,26 +140,30 @@ const init = (socket, io) => {
       let player = players[socketId]; //alf ,pasamos del socket 
       //let player= null;
       let playerW=playersW[walletAddress]
-      playerW.name=username;
+    
       //let player = Object.values(playersW.find(p => p.walletAddress === walletAddress));
       
       // If player doesn't exist, create a temporary one for tournament registration
-      if (!player) {
+      if (!playerW) {
         const playerName = username || 'Player_' + Math.random().toString(36).substring(2, 9);
-        player = new Player(
+        playerW = new Player(
           socketId , //socket.id,
           walletAddress,
           playerName,
           config.INITIAL_CHIPS_AMOUNT,
           isBot=false,
           actualsockID=socket.id
-        );
+        )}
+         else {
+         playerW.name=username;
+
+        }
         
 
         players[socketId] = player;
         playersW[walletAddress]=playerW; //alf
        // console.log('Created temporary player for tournament registration:', playerName);
-      }
+      
       
       const result = tournamentManager.registerPlayer(tournamentId, player,playerW);
       socket.emit('TOURNAMENT_REGISTERED', result);

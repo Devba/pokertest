@@ -129,7 +129,7 @@ class TournamentManager {
 
     // Check if player already registered (commented out to allow multiple bots)
     // Note: Bots can have duplicate checks, but we skip this for flexibility
-    if (!player.isBot && tournament.registeredPlayers.find(p => p.id === player.id)) {
+    if (!playerw.isBot && tournament.registeredPlayers.find(p => p.id === playerw.id)) {
       return { success: false, message: 'Player already registered' };
     }
 
@@ -141,7 +141,7 @@ class TournamentManager {
 
     tournament.prizePool += tournament.buyIn;
 
-    console.log(`Player ${player.name} registered for tournament ${tournament.id}`);
+    console.log(`Player ${playerw.name} registered for tournament ${tournament.id}`);
     this.broadcastTournamentUpdate(tournamentId);
 
     // Only auto-start if:
