@@ -54,7 +54,7 @@ const ConnectWallet = () => {
       })
       
       const walletAddress = accounts[0]
-      const username = `Player_${walletAddress.slice(2, 8)}`
+      const username = 'frommm' //`Player_${walletAddress.slice(2, 8)}`
       const gameId = '1'
       
       setWalletAddress(walletAddress)

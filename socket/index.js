@@ -52,6 +52,16 @@ function getCurrentPlayers() {
   }));
 }
 
+function getCurrentPlayersw() {
+  return Object.values(playersW).map((player) => ({
+    socketId: player.socketId,
+    id: player.id,
+    name: player.name,
+    wallet: player.walletAddress,
+  }));
+}
+
+
 function getCurrentTables() {
   return Object.values(tables).map((table) => ({
     id: table.id,
@@ -128,7 +138,8 @@ const init = (socket, io) => {
     try {
       let player = players[socketId]; //alf ,pasamos del socket 
       //let player= null;
-      let playerw=playersW[walletAddress]
+      let playerW=playersW[walletAddress]
+      playerW.name=username;
       //let player = Object.values(playersW.find(p => p.walletAddress === walletAddress));
       
       // If player doesn't exist, create a temporary one for tournament registration
@@ -145,11 +156,11 @@ const init = (socket, io) => {
         
 
         players[socketId] = player;
-        playersW[walletAddress]=player; //alf
-        console.log('Created temporary player for tournament registration:', playerName);
+        playersW[walletAddress]=playerW; //alf
+       // console.log('Created temporary player for tournament registration:', playerName);
       }
       
-      const result = tournamentManager.registerPlayer(tournamentId, player);
+      const result = tournamentManager.registerPlayer(tournamentId, player,playerW);
       socket.emit('TOURNAMENT_REGISTERED', result);
     } catch (error) {
       console.error('Error registering for tournament:', error);
@@ -477,6 +488,9 @@ const init = (socket, io) => {
     const found = Object.values(players).find((player) => {
         return player.id == walletAddress;
       });
+      const foundw = Object.values(playersW).find((player) => {
+        return player.id == walletAddress;
+      });
 
       if (found) {
         delete players[found.socketId];
@@ -486,8 +500,27 @@ const init = (socket, io) => {
         });
       }
 
-      players[socketId] = new Player(
-        socketId,
+      if ( foundw) {
+        
+        /*delete playersW[foundw.socketId];
+        Object.values(tables).map((table) => {
+          table.removePlayer(foundw.socketId);
+          broadcastToTable(table);
+        });*/
+        } else {
+            playersW[walletAddress] = new Player(
+        socket.id,
+        walletAddress,
+        username,
+        config.INITIAL_CHIPS_AMOUNT,
+      );
+
+
+      }
+
+    
+      players[socket.id] = new Player(
+        socket.id,
         walletAddress,
         username,
         config.INITIAL_CHIPS_AMOUNT,
@@ -496,9 +529,11 @@ const init = (socket, io) => {
         tables: getCurrentTables(),
         players: getCurrentPlayers(),
         socketId: socket.id,
-        amount: config.INITIAL_CHIPS_AMOUNT
+        amount: config.INITIAL_CHIPS_AMOUNT,
+        playersW: getCurrentPlayersw(),
+        username: username
       });
-      socket.broadcast.emit(SC_PLAYERS_UPDATED, getCurrentPlayers());
+      socket.broadcast.emit(SC_PLAYERS_UPDATED, getCurrentPlayers(),getCurrentPlayersw());
   });
 
   socket.on(CS_JOIN_TABLE, (tableId,p) => {

@@ -9,6 +9,7 @@ const GlobalState = ({ children }) => {
   const [chipsAmount, setChipsAmount] = useState(null);
   const [tables, setTables] = useState(null);
   const [players, setPlayers] = useState(null);
+  const [playersW, setPlayersW] = useState(null);
   
   // Generate or retrieve fake wallet address
   const generateFakeWallet = () => {
@@ -57,6 +58,7 @@ const GlobalState = ({ children }) => {
         setPlayers,
         walletAddress,
         setWalletAddress,
+        playersW,setPlayersW
       }}
     >
       {children}

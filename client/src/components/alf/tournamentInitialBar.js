@@ -46,6 +46,13 @@ const TournamentInitialBar = ({
             </Button>
             {(selectedTournament.status === 'registering' || selectedTournament.status === 'upcoming') && (
               <>
+
+               <Button 
+                    small 
+                    onClick={() => navigate(`/tournament/${selectedTournament.id}?mode=player`)}
+                  >
+                    Join Table
+                  </Button>
                 <Button 
                   small 
                   onClick={() => onRegister(selectedTournament.id)}
@@ -97,8 +104,10 @@ const TournamentInitialBar = ({
                   onClick={() => navigate(`/tournament/${selectedTournament.id}?mode=spectator`)}
                 >
                   Watch
+
+
                 </Button>
-                {isUserRegistered(selectedTournament.id) ? (
+                {true  || isUserRegistered(selectedTournament.id) ? (
                   <Button 
                     small 
                     onClick={() => navigate(`/tournament/${selectedTournament.id}?mode=player`)}

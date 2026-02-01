@@ -18,6 +18,7 @@ const WebSocketProvider = ({ children }) => {
 
   const [socket, setSocket] = useState(null)
   const [socketId, setSocketId] = useState(null)
+  const {playersW, setPlayersW} = useContext(globalContext)
 
   useEffect(() => {
     // Only add 'beforeunload' (not 'beforeclose', which is not standard)
@@ -47,6 +48,7 @@ const WebSocketProvider = ({ children }) => {
     setSocketId(null)
     setPlayers(null)
     setTables(null)
+    setPlayersW (null)
   }
 
   function connect() {
@@ -66,17 +68,20 @@ const WebSocketProvider = ({ children }) => {
       setSocket(socket)
     })
 
-    socket.on(SC_RECEIVE_LOBBY_INFO, ({ tables, players, socketId, amount }) => {
+    socket.on(SC_RECEIVE_LOBBY_INFO, ({ tables, players, socketId, amount ,playersW}) => {
       console.log(SC_RECEIVE_LOBBY_INFO, tables, players, socketId)
       setSocketId(socketId)
       setChipsAmount(amount)
       setTables(tables)
       setPlayers(players)
+     
     })
     
-    socket.on(SC_PLAYERS_UPDATED, (players) => {
+    socket.on(SC_PLAYERS_UPDATED, (players,playersW) => {
       console.log(SC_PLAYERS_UPDATED, players)
       setPlayers(players)
+      console.log('playersW updated:', playersW)
+       setPlayersW(playersW)
     })
 
     socket.on(SC_TABLES_UPDATED, (tables) => {

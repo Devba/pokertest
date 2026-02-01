@@ -107,7 +107,7 @@ class TournamentManager {
     }, minutes * 60000);
   }
 
-  registerPlayer(tournamentId, player) {
+  registerPlayer(tournamentId, player,playerw) {
     const tournament = this.tournaments.get(tournamentId);
 
     if (!tournament) {

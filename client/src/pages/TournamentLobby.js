@@ -103,7 +103,7 @@ const TournamentLobby = () => {
     }
     
     // Generate random wallet if not present
-    let userWallet = localStorage.getItem('wallet');
+    let userWallet = walletAddress//localStorage.getItem('wallet');
     if (  !userWallet || userWallet.trim() === '') {
       userWallet = 'wallet_' + Math.random().toString(36).substring(2, 15);
 
@@ -190,7 +190,7 @@ const TournamentLobby = () => {
     if (!tournament || !tournament.registeredPlayers) return false
     // registeredPlayers can be a number (count) or array, handle both
     if (Array.isArray(tournament.registeredPlayers)) {
-      return tournament.registeredPlayers.some(p => p.walletAddress === walletAddress)
+      return tournament.registeredPlayers.some(p => p.id === walletAddress)
     }
     return false
   }

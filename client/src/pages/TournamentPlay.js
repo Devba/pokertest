@@ -86,7 +86,7 @@ const TournamentPlay = () => {
       // If mode is 'player', use walletAddress; if 'spectator' or undefined, use 'spectator'
       const requestWallet = mode === 'player' ? walletAddress : 'spectator';
       //socket.emit('GET_TOURNAMENT_TABLE', { tournamentId, walletAddress: requestWallet })
-      socket.emit('GET_TOURNAMENT_TABLE', { tournamentId, walletAddress: localStorage.wallet || 'spectator',mode:mode })  
+      socket.emit('GET_TOURNAMENT_TABLE', { tournamentId, walletAddress: walletAddress || 'spectator',mode:mode })  
       
     }
 
@@ -257,6 +257,7 @@ useEffect(() => {
               <Button small secondary onClick={handleLeaveTournament}>
                 Leave Tournament
               </Button>
+              <p>modo : {mode}</p>
             
             </PositionedUISlot>
 
@@ -504,6 +505,7 @@ useEffect(() => {
                  {currentTable &&
                 currentTable.seats[seatId] &&
                 currentTable.seats[seatId].turn && 
+                mode==='player' &&
                 (
                     <GameUI
                     currentTable={currentTable}
