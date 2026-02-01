@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { use, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Container from '../components/layout/Container'
 import Button from '../components/buttons/Button'
@@ -15,6 +15,7 @@ const TournamentLobby = () => {
   const navigate = useNavigate()
   const { socket } = useContext(socketContext)
   const { walletAddress, username } = useContext(globalContext)
+  const{userName,userNamev2}=useContext(globalContext)
   const [tournaments, setTournaments] = useState([])
   const [selectedTournament, setSelectedTournament] = useState(null)
   const [filter, setFilter] = useState('all') // all, upcoming, live, completed
@@ -22,6 +23,16 @@ const TournamentLobby = () => {
   // Fetch tournaments from server
   useEffect(() => {
     if (socket) {
+      // Show all localStorage properties as JSON in alert
+      const allLocalStorage = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        allLocalStorage[key] = localStorage.getItem(key);
+      }
+     // alert("socket connected in tournament lobby\n" + JSON.stringify(allLocalStorage, null, 2));
+      // alert("socket connected in tournament lobby\n" + localStorage.getItem("userNamev2"));
+     
+     
       // Request tournaments list
       socket.emit('GET_TOURNAMENTS');
 
@@ -71,7 +82,8 @@ const TournamentLobby = () => {
     console.log('handleRegister called with:', tournamentId, 'socket:', !!socket, 'walletAddress:', walletAddress);
     
     // Check if username is set, if not ask for it
-    let playerUsername = username;
+    //let playerUsername = username;
+      let playerUsername = localStorage.getItem('userNamev2');
     if (!playerUsername || playerUsername.trim() === '') {
       const { value: enteredUsername } = await Swal.fire({
         title: 'Enter Your Username',
@@ -416,7 +428,9 @@ const TournamentLobby = () => {
             <span style={{ color: '#aaa', fontWeight: 400 }}>Wallet:</span>
             <span style={{ color: '#00b894', fontFamily: 'monospace', fontSize: '0.98em' }}>{walletAddress || 'N/A'}</span>
             <span style={{ color: '#aaa', fontWeight: 400, marginLeft: '1.5rem' }}>Username:</span>
-            <span style={{ color: '#0984e3', fontWeight: 600 }}>{username || 'N/A'}</span>
+            <span style={{ color: '#0984e3', fontWeight: 600 }}>
+              {userNamev2 || localStorage.getItem("userNamev2")  || 'N/A'}
+            </span>
           </div>
         </div>
         

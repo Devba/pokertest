@@ -27,7 +27,7 @@ const TournamentPlay = () => {
   const [searchParams] = useSearchParams()
   const mode = searchParams.get('mode') // 'player' or 'spectator'
   const { socket } = useContext(socketContext)
-  const { walletAddress } = useContext(globalContext)
+  const { walletAddress,userNamev2 } = useContext(globalContext)
   const {
     messages,
     currentTable,
@@ -246,6 +246,19 @@ useEffect(() => {
             </PositionedUISlot>}
 
 
+          {/* User info */}
+            <PositionedUISlot
+              top="7vh"
+              left="1.5rem"
+              scale="0.25"
+              style={{ zIndex: '50', display: 'flex', gap: '0.5rem' }}
+            >
+             
+              <hr />
+              <p style={{ color: 'white' }}>modo : {mode} , userNamev2: {userNamev2|| localStorage.getItem("userNamev2")  }</p>
+            
+            </PositionedUISlot>
+
 
           {/* Leave Button */}
             <PositionedUISlot
@@ -257,7 +270,7 @@ useEffect(() => {
               <Button small secondary onClick={handleLeaveTournament}>
                 Leave Tournament
               </Button>
-              <p>modo : {mode}</p>
+              
             
             </PositionedUISlot>
 

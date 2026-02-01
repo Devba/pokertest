@@ -11,6 +11,9 @@ import './ConnectWallet.scss'
 
 const ConnectWallet = () => {
   const { setWalletAddress } = useContext(globalContext)
+  //const { setUserName } = useContext(globalContext)
+  const { setUserNamev2 } = useContext(globalContext)
+  const {userNamev2} = useContext(globalContext)
   const { socket } = useContext(socketContext)
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
@@ -45,7 +48,7 @@ const ConnectWallet = () => {
       return
     }
 
-    try {
+try {
       setIsLoading(true)
       
       // Solicitar acceso a la cuenta
@@ -54,25 +57,41 @@ const ConnectWallet = () => {
       })
       
       const walletAddress = accounts[0]
-      const username = 'frommm' //`Player_${walletAddress.slice(2, 8)}`
+      //const username = 'frommm' //`Player_${walletAddress.slice(2, 8)}`
       const gameId = '1'
-      
+
+      //setUserNamev2("alvaro")
+      console.log ("userNamev2: alf metamask", userNamev2);
       setWalletAddress(walletAddress)
       
       // Esperar a que el socket se conecte antes de emitir
-      if(socket !== null && socket.connected === true){
+     if(socket !== null && socket.connected === true){
+
+      const username = await askUserName();
+
+
+
+      
         socket.emit(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, username })
-        console.log('MetaMask login:', { walletAddress, username, gameId })
+        console.log('MetaMask login:', { walletAddress, userNamev2, gameId })
+        localStorage.setItem("wallet", walletAddress)
+        localStorage.setItem("Username", username)
+        setUserNamev2(username)
+
+        if(!localStorage.getItem("Username")){
+          
+          localStorage.setItem("Username", username)
         navigate('/tournament-lobby')
       } else {
         setTimeout(() => {
           if(socket !== null && socket.connected === true){
             socket.emit(CS_FETCH_LOBBY_INFO, { walletAddress, socketId: socket.id, gameId, username })
-            navigate('/play')
+            navigate('/tournament-lobby')
           }
         }, 1000)
         
       }
+    }
     } catch (error) {
       console.error('Error conectando con MetaMask:', error)
       Swal.fire({
@@ -136,6 +155,8 @@ const ConnectWallet = () => {
       const walletAddress = query.get('walletAddress')
       const gameId = query.get('gameId')
       const username = query.get('username')
+      console.log("userNamev2: alf useeffect", userNamev2);
+      setUserNamev2(userNamev2)
       if(walletAddress && gameId && username){
         console.log(username)
         setWalletAddress(walletAddress)
@@ -220,5 +241,31 @@ const ConnectWallet = () => {
     </>
   )
 }
+
+// Reusable function to prompt user for their name
+const askUserName = async () => {
+  const result = await Swal.fire({
+    title: 'Enter Your Name',
+    input: 'text',
+    inputLabel: 'Your username',
+    inputPlaceholder: 'Enter your username',
+    showCancelButton: true,
+    inputValidator: (value) => {
+      if (!value) {
+        return 'You need to enter a username!';
+      }
+      if (value.length < 3) {
+        return 'Username must be at least 3 characters long';
+      }
+      if (value.length > 20) {
+        return 'Username must be less than 20 characters';
+      }
+    }
+  });
+  if (!result.isConfirmed) {
+    return null;
+  }
+  return result.value;
+};
 
 export default ConnectWallet

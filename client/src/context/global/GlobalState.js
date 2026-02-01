@@ -4,16 +4,17 @@ import GlobalContext from './globalContext';
 const GlobalState = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [id, setId] = useState(null);
-  const [userName, setUserName] = useState(null);
+  const [userNamev2, setUserNamev2] = useState(null);
   const [email, setEmail] = useState(null);
   const [chipsAmount, setChipsAmount] = useState(null);
   const [tables, setTables] = useState(null);
   const [players, setPlayers] = useState(null);
   const [playersW, setPlayersW] = useState(null);
   
+  
   // Generate or retrieve fake wallet address
   const generateFakeWallet = () => {
-    return 'wall_' + Math.random().toString(36).substring(2, 15);
+    return 'wallalf_' + Math.random().toString(36).substring(2, 15);
   };
   
   const getOrCreateWallet = () => {
@@ -29,23 +30,36 @@ const GlobalState = ({ children }) => {
   
   // Set a fake username if not set
   useEffect(() => {
-    if (!userName) {
+    console.log("userNamev2: alf empty effect", userNamev2);
+
+    if (!userNamev2){
+
+    } else 
+   {
+    localStorage.setItem("userNamev2", userNamev2); 
+    
+   }
+
+
+
+    return
+    if (!userNamev2) {
       let storedName = localStorage.getItem('fakeUsername');
       if (!storedName) {
         storedName = 'Player_' + Math.random().toString(36).substring(2, 9);
         localStorage.setItem('fakeUsername', storedName);
       }
-      setUserName(storedName);
+      setUserNamev2(storedName);
     }
-  }, [userName]);
+  }, [userNamev2]);
 
   return (
     <GlobalContext.Provider
       value={{
         isLoading,
         setIsLoading,
-        userName,
-        setUserName,
+        userNamev2,
+        setUserNamev2,
         email,
         setEmail,
         chipsAmount,
