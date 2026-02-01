@@ -35,6 +35,8 @@ const GameState = ({ children }) => {
     currentTableRef.current = currentTable
 
     seatId &&
+      currentTable &&
+      currentTable.seats &&
       currentTable.seats[seatId] &&
       turn !== currentTable.seats[seatId].turn &&
       setTurn(currentTable.seats[seatId].turn)

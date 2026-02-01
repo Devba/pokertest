@@ -134,7 +134,7 @@ class TournamentManager {
     }
 
     tournament.registeredPlayers.push({
-      ...player,
+      ...playerw,
       registeredAt: new Date(),
       chips: tournament.startingChips
     });

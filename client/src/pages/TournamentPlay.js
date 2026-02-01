@@ -184,7 +184,7 @@ useEffect(() => {
       confirmButtonText: 'Yes, leave',
     }).then((result) => {
       if (result.isConfirmed) {
-        leaveTable()
+        //leaveTable()
         navigate('/tournament-lobby')
       }
     })
@@ -233,7 +233,8 @@ useEffect(() => {
 
             
           {/*Toggle Standing*/}
-           {currentTable.seats[seatId] && <PositionedUISlot
+           {currentTable.seats[seatId] && mode ==='player' && (
+            <PositionedUISlot
               bottom="2vh"
               right="1.5rem"
               scale="0.25"
@@ -243,7 +244,7 @@ useEffect(() => {
               <span style={{ color: isSittingIn ? '#2ecc40' : '#888', marginLeft: 12 }}>
                 {isSittingIn ? 'Sitting In' : 'Standing Up'}
               </span>
-            </PositionedUISlot>}
+            </PositionedUISlot>)}
 
 
           {/* User info */}
@@ -256,7 +257,7 @@ useEffect(() => {
              
               <hr />
               <p style={{ color: 'white' }}>modo : {mode} , userNamev2: {userNamev2|| localStorage.getItem("userNamev2")  }</p>
-            
+             <p style={{ color: 'white' }}>TID: {tournamentId}</p>
             </PositionedUISlot>
 
 
