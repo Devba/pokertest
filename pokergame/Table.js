@@ -95,8 +95,18 @@ class Table {
         return this.seats[i];
       }
     }
-    // throw new Error('seat not found!');
   }
+
+
+  findPlayerById(i) {
+    for (let i = 1; i <= this.maxPlayers; i++) {
+      if (this.seats[i] && this.seats[i].player.socketId === socketId) {
+        return this.seats[i];
+      }
+    }
+  }
+    // throw new Error('seat not found!');
+  
   unfoldedPlayers() {
     return Object.values(this.seats).filter(
       (seat) => seat != null && !seat.folded,

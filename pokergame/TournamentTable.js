@@ -193,18 +193,66 @@ class TournamentTable extends Table {
     throw new Error('Rebuys are not allowed in tournaments');
   }
 
-  // Override standPlayer to prevent leaving during tournament
-
-
-  // Allow players to leave and return later in tournaments
-  standPlayer(socketId) {
-    const seat = this.findPlayerBySocketId(socketId);
-    if (seat && seat.stack > 0) {
-      // Mark as sitting out, but do NOT eliminate or set stack to 0
-      seat.sittingOut = true;
-      // Optionally, store disconnect time or status for reconnection logic
+findPlayerById(i) {
+    for (let i = 1; i <= this.maxPlayers; i++) {
+      if (this.seats[i] && this.seats[i].player.socketId === socketId) {
+        return this.seats[i];
+      }
     }
-    // Do NOT call checkForEliminations here, as leaving is not elimination
+  }
+
+
+  // Override `standPlayer` with tournament-specific behavior
+  // - If player has chips: mark as sitting out (can return later)
+  // - If player has zero chips: mark eliminated and remove from seat
+  // - Fallback to base behavior when appropriate
+  standPlayer(socketId,sid) {
+    //const seat = this.findPlayerById(socketId);
+    const seat = this.seats[sid];
+    if (!seat) return;
+
+    // Player still has chips: mark as sitting out (not eliminated)
+    if (seat.stack > 0) {
+      seat.sittingOut = true;
+      return;
+    }
+
+    // No chips remaining: treat as elimination in tournament
+    if (seat.stack === 0 && !seat.eliminated) {
+      seat.eliminated = true;
+
+      this.eliminatedPlayers.push({
+        player: seat.player,
+        position: this.getTournamentPosition(),
+        eliminatedAt: new Date(),
+      });
+
+      const eliminationMessage = `${seat.player.name} eliminated in position ${this.getTournamentPosition()}`;
+      this.winMessages.push(eliminationMessage);
+
+      // Auto-clear the elimination message after 3 seconds
+      setTimeout(() => {
+        const idx = this.winMessages.indexOf(eliminationMessage);
+        if (idx > -1) this.winMessages.splice(idx, 1);
+      }, 3000);
+
+      // Remove eliminated player from seat
+      this.seats[seat.id] = null;
+
+      // If only one player left, end the tournament
+      if (this.activePlayers().length === 1) {
+        this.endTournament();
+      }
+
+      return;
+    }
+
+    // Fallback to base Table behavior for any other cases
+    try {
+      super.standPlayer(socketId,sid=seat.id );
+    } catch (e) {
+      // ignore if base class doesn't implement or errors
+    }
   }
 
   getTournamentStatus() {

@@ -68,7 +68,7 @@ const GameState = ({ children }) => {
 
   useEffect(() => {
     if (socket) {
-      socket.origSockID = localStorage.getItem("socketId");
+      //socket.origSockID = localStorage.getItem("socketId");
       window.addEventListener('unload', leaveTable)
       window.addEventListener('close', leaveTable)
 
@@ -81,7 +81,7 @@ const GameState = ({ children }) => {
         if (table && table.seats && !seatId) {
           for (let i = 1; i <= table.maxPlayers; i++) {
             const seat = table.seats[i]
-            if (seat && seat.player && seat.player.socketId === localStorage.getItem("socketId")) {
+            if (seat && seat.player && seat.player.id === localStorage.getItem("wallet")) {
               console.log('Found player seat:', i)
               setSeatId(i)
               break

@@ -764,7 +764,7 @@ if (!player) {
     broadcastToTable(table);
   });
 
-  socket.on(CS_STAND_UP, (tableId,origSockID) => {
+  socket.on(CS_STAND_UP, (tableId,origSockID,seatId) => {
     const table = tables[tableId];
     const player = players[origSockID];
     const seat= null;
