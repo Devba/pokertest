@@ -8,7 +8,7 @@ import globalContext from './../../context/global/globalContext'
  //const { userNamev2, setWalletAddress, walletAdres } = useContext(globalContext);
 
 // Usage: call showWelcome(navigate) from a React component, passing the navigate function from useNavigate
-export const showWelcome = (navigate) => {
+export const showWelcome = (navigate,setIsLoading) => {
   //const navigate = useNavigate()
   // Ensure Lordicon script is loaded
   if (!document.querySelector('script[src="https://cdn.lordicon.com/lordicon.js"]')) {
@@ -34,12 +34,25 @@ export const showWelcome = (navigate) => {
         <div style="margin-top:1em;font-size:1.2em;">Enjoy the Poker Lobby!</div>
         <div style="margin-top:0.5em;font-size:1em;color:#0984e3;">Username: <b>${username}</b></div>
         <div style="margin-top:0.2em;font-size:0.95em;color:#00b894;">Wallet: <b>${wallet}</b></div>
+        <button id="Changeuser" style="margin-top:1em;padding:0.5em 1em;border-radius:4px;border:1px solid #ccc;background:#fff;cursor:pointer;">Change User name</button>
       </div>
     `,
     showConfirmButton: false,
     timer: 5000,
     timerProgressBar: true,
     allowOutsideClick: false,
+    didOpen: (modal) => {
+      const msgBtn = modal.querySelector && modal.querySelector('#Changeuser');
+      if (msgBtn) {
+        msgBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // Show a SweetAlert message without closing the parent dialog
+           Swal.stopTimer()
+           setIsLoading(false);
+
+        });
+      }
+    },
     didClose: () => {
       if (navigate) navigate('/tournament-lobby');
     }

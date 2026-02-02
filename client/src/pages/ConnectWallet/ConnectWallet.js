@@ -10,6 +10,7 @@ import socketContext from '../../context/websocket/socketContext'
 import { CS_FETCH_LOBBY_INFO } from '../../pokergame/actions'
 import './ConnectWallet.scss'
 
+
 //import { set } from 'core-js/core/dict';
 
 const ConnectWallet = () => {
@@ -212,8 +213,13 @@ try {
         html: `
           <button id="metamask-btn" style="padding:12px 24px;font-size:16px;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;min-width:250px;background:#f6851b;margin-bottom:10px;">🦊 Conectar con MetaMask</button><br/>
           <div style="margin:10px 0;color:#666;font-size:14px;">o</div>
-          <button id="auto-btn" style="padding:12px 24px;font-size:16px;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;min-width:250px;background:#007bff;margin-bottom:10px;">Iniciar Juego Automáticamente</button><br/>
-          <button id="tournament-btn" style="padding:12px 24px;font-size:16px;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;min-width:250px;background:#28a745;">🏆 Tournament Lobby</button>
+          <button id="auto-btn" style="padding:12px 24px;font-size:16px;
+          color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;min-width:250px;
+          background:#007bff;margin-bottom:10px;">Cambiar nombre</button><br/>
+
+          <button id="tournament-btn" style="padding:12px 24px;font-size:16px;color:white;border:none;
+          border-radius:4px;cursor:pointer;font-weight:bold;min-width:250px;background:#28a745;">
+          🏆 Tournament Lobby</button>
         `,
         showConfirmButton: false,
         allowOutsideClick: false,
@@ -228,7 +234,7 @@ try {
       });
     } else {
 
-      showWelcome(navigate)
+      showWelcome(navigate,setIsLoading);
       
        
     }
