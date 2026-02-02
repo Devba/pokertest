@@ -125,11 +125,11 @@ const GameState = ({ children }) => {
     // eslint-disable-next-line
   }, [socket])
 
-  const origSockID = localStorage.getItem("socketId");
+  const origSockID = localStorage.getItem("wallet");
 
   const joinTable = (tableId) => {
     const p={
-      socketId:localStorage.getItem('socketId'),
+      socketId:localStorage.getItem('wallet'),
       walletAddress:localStorage.getItem('wallet'),
       username:localStorage.getItem('userName'),
       netwSid:socket.id
@@ -140,7 +140,7 @@ const GameState = ({ children }) => {
 
   const leaveTable = () => {
     const p={
-      //socketId:localStorage.getItem('socketId'),
+      socketId:localStorage.getItem('wallet'),
       walletAddress:localStorage.getItem('wallet'),
       username:localStorage.getItem('userNamev2'),
       netwSid:socket.id

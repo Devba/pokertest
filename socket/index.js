@@ -151,12 +151,13 @@ const init = (socket, io) => {
       if (!playerW) {
         const playerName = username || 'Player_' + Math.random().toString(36).substring(2, 9);
         playerW = new Player(
-          socketId , //socket.id,
-          walletAddress,
+          socketId=walletAddress , //socket.id,
+          walletAddress,// repetimos para mantener consistencia
           playerName,
           config.INITIAL_CHIPS_AMOUNT,
           isBot=false,
-          tournamentId=tournamentId
+          tournamentId=tournamentId,
+          wallet=walletAddress
           //actualsockID=socket.id
         )}
          else {
@@ -766,15 +767,16 @@ if (!player) {
 
   socket.on(CS_STAND_UP, (tableId,origSockID,seatId) => {
     const table = tables[tableId];
-    const player = players[origSockID];
-    const seat= null;
-
-    if (table){
+    const player = playersW[origSockID];
     
-    const seat = Object.values(table.seats).find(
-      (seat) => seat && seat.player.socketId === origSockID,
-    );
-  }
+
+    let seat = null;
+        if (table) {
+          seat = Object.values(table.seats || {}).find(
+            s => s?.player?.wallet === origSockID
+          );
+        }
+  
 
     let message = '';
     if (!seat) {

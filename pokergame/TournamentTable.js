@@ -207,8 +207,9 @@ findPlayerById(i) {
   // - If player has zero chips: mark eliminated and remove from seat
   // - Fallback to base behavior when appropriate
   standPlayer(socketId,sid) {
-    //const seat = this.findPlayerById(socketId);
-    const seat = this.seats[sid];
+    const seat = this.findPlayerBySocketId(socketId);
+  
+    //const seat = this.seats[sid];
     if (!seat) return;
 
     // Player still has chips: mark as sitting out (not eliminated)
