@@ -215,7 +215,7 @@ try {
           <div style="margin:10px 0;color:#666;font-size:14px;">o</div>
           <button id="auto-btn" style="padding:12px 24px;font-size:16px;
           color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;min-width:250px;
-          background:#007bff;margin-bottom:10px;">Cambiar nombre</button><br/>
+          background:#007bff;margin-bottom:10px;">Crear cuenta</button><br/>
 
           <button id="tournament-btn" style="padding:12px 24px;font-size:16px;color:white;border:none;
           border-radius:4px;cursor:pointer;font-weight:bold;min-width:250px;background:#28a745;">

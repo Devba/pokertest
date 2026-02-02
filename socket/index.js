@@ -549,7 +549,7 @@ const init = (socket, io) => {
 
   socket.on(CS_JOIN_TABLE, (tableId,p) => {
     let table = tables[tableId];
-    const player = players[p.socketId];
+    const player = playersW[p.socketId];
 
     //const wplayer = Object.values(playersW).find(p => p.socketId === socket.id);
 
