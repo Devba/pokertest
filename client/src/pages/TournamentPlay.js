@@ -184,8 +184,8 @@ useEffect(() => {
       confirmButtonText: 'Yes, leave',
     }).then((result) => {
       if (result.isConfirmed) {
-        //leaveTable()
-        navigate('/tournament-lobby')
+        leaveTable()
+        //navigate('/tournament-lobby')
       }
     })
   }

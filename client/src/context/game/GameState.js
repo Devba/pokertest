@@ -140,9 +140,9 @@ const GameState = ({ children }) => {
 
   const leaveTable = () => {
     const p={
-      socketId:localStorage.getItem('socketId'),
+      //socketId:localStorage.getItem('socketId'),
       walletAddress:localStorage.getItem('wallet'),
-      username:localStorage.getItem('userName'),
+      username:localStorage.getItem('userNamev2'),
       netwSid:socket.id
     }
     standUp()
@@ -150,7 +150,7 @@ const GameState = ({ children }) => {
       currentTableRef.current &&
       currentTableRef.current.id &&
       socket.emit(CS_LEAVE_TABLE, currentTableRef.current.id,p)
-    navigate('/')
+    navigate('/tournament-lobby')
   }
 
   const sitDown = (tableId, seatId, amount) => {

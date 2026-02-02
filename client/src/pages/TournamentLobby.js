@@ -318,6 +318,8 @@ const TournamentLobby = () => {
         socket.off('TOURNAMENT_ERROR')
         socket.off('BOTS_ADDED')
       }
+    } else {
+      console.log('Socket not connected, cannot listen for tournament events')
     }
   }, [socket, navigate])
 

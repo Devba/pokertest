@@ -137,10 +137,14 @@ const init = (socket, io) => {
   
   socket.on('REGISTER_TOURNAMENT', ({ tournamentId, walletAddress, username,socketId }) => {
     try {
-      let player = players[socketId]; //alf ,pasamos del socket 
+      //let player = players[socketId]; //alf ,pasamos del socket 
       //let player= null;
-      let playerW=playersW[walletAddress]
-    
+      
+
+      const playersInTournament = Object.values(playersW).filter(p => p.tournamentId == tournamentId);
+       let playerW=playersInTournament[walletAddress]
+      
+
       //let player = Object.values(playersW.find(p => p.walletAddress === walletAddress));
       
       // If player doesn't exist, create a temporary one for tournament registration
@@ -152,7 +156,8 @@ const init = (socket, io) => {
           playerName,
           config.INITIAL_CHIPS_AMOUNT,
           isBot=false,
-          actualsockID=socket.id
+          tournamentId=tournamentId
+          //actualsockID=socket.id
         )}
          else {
          playerW.name=username;
@@ -160,12 +165,12 @@ const init = (socket, io) => {
         }
         
 
-        players[socketId] = player;
+        //players[socketId] = player;
         playersW[walletAddress]=playerW; //alf
        // console.log('Created temporary player for tournament registration:', playerName);
       
       
-      const result = tournamentManager.registerPlayer(tournamentId, player,playerW);
+      const result = tournamentManager.registerPlayer(tournamentId, null,playerW);
       socket.emit('TOURNAMENT_REGISTERED', result);
     } catch (error) {
       console.error('Error registering for tournament:', error);
@@ -762,17 +767,25 @@ if (!player) {
   socket.on(CS_STAND_UP, (tableId,origSockID) => {
     const table = tables[tableId];
     const player = players[origSockID];
+    const seat= null;
+
+    if (table){
+    
     const seat = Object.values(table.seats).find(
       (seat) => seat && seat.player.socketId === origSockID,
     );
+  }
 
     let message = '';
-    if (seat) {
-      updatePlayerBankroll(player, seat.stack);
-      message = `${player?.username} left the table`;
-    } else {
-      message = `A spectator left the table`;
+    if (!seat) {
+        message = `A spectator left the table`;
         return
+      
+    } else {
+        updatePlayerBankroll(player, seat.stack);
+      message = `${player?.username} left the table`;
+
+    
     }
 
     table.standPlayer(origSockID);
