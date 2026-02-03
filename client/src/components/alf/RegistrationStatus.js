@@ -12,7 +12,8 @@ const RegistrationStatus = ({
   if (!tournament) return null
 
   const handleRegister = async () => {
-    let playerUsername = localStorage.getItem('username')
+   // let playerUsername = localStorage.getItem('username')
+    let playerUsername = localStorage.getItem('usernamev2')
     if (!playerUsername || playerUsername.trim() === '') {
       const { value: enteredUsername } = await Swal.fire({
         title: 'Enter Your Username',
