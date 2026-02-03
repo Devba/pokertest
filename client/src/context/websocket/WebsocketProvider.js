@@ -11,6 +11,7 @@ import {
 } from '../../pokergame/actions'
 import globalContext from '../global/globalContext'
 import config from '../../clientConfig'
+//console.log("WebSocketProvider config:", config);
 
 const WebSocketProvider = ({ children }) => {
   const { setTables, setPlayers, setChipsAmount } = useContext(globalContext)

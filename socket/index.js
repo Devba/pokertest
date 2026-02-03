@@ -613,7 +613,7 @@ const init = (socket, io) => {
 
   socket.on(CS_LEAVE_TABLE, (tableId,p) => {
     const table = tables[tableId];
-    const player = players[p.socketId];
+    const player = playersW[p.walletAddress];
     //const wplayer = Object.values(playersW).find(p => p.socketId === socket.id);
                 
     
@@ -636,7 +636,7 @@ if (!player) {
       updatePlayerBankroll(player, seat.stack);
     } else {
       console.log('Is a spectator ', player);
-       delete players[player.socketId];
+       delete playersW[player.socketId];
          //   const wplayer = Object.values(playersW).find(p => p.socketId === socket.id);
         
     

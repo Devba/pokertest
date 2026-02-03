@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Play from '../../pages/Play';
+//import Play from '../../pages/Play';
 import NotFoundPage from '../../pages/NotFoundPage';
 import ConnectWallet from '../../pages/ConnectWallet';
 import TournamentLobby from '../../pages/TournamentLobby';
@@ -14,9 +14,9 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<ConnectWallet />} />
-      <Route path="/play" element={<Play />} />
-      <Route path="/welcome" element={<Play />} />
+       <Route path="/" element={<ConnectWallet />} /> 
+      {/* <Route path="/play" element={<Play />} /> */}
+      {/* <Route path="/welcome" element={<Play />} /> */}
       <Route path="/tournament-lobby" element={<TournamentLobby />} />
       <Route path="/tournament/:tournamentId/waiting" element={<TournamentWaitingRoom />} />
       <Route path="/tournament/:tournamentId" element={<TournamentPlay />} />

@@ -20,6 +20,17 @@ const TournamentLobby = () => {
   const [selectedTournament, setSelectedTournament] = useState(null)
   const [filter, setFilter] = useState('all') // all, upcoming, live, completed
 
+  const [blink, setBlink] = useState(false);
+
+useEffect(() => {
+  if (!socket) {
+    const interval = setInterval(() => setBlink(prev => !prev), 500);
+    return () => clearInterval(interval);
+  } else {
+    setBlink(false);
+  }
+}, [socket]);
+
   // Fetch tournaments from server
   useEffect(() => {
     if (socket) {
@@ -259,7 +270,7 @@ const TournamentLobby = () => {
           }).then((swalResult) => {
             if (swalResult.isConfirmed && tournamentId) {
               // Navigate to tournament play
-              navigate(`/tournament/${tournamentId}`)
+              navigate(`/tournament/${tournamentId}?mode=player`);
             }
           })
         }
@@ -351,25 +362,67 @@ const TournamentLobby = () => {
 
   return (
     <Container fullHeight style={{ backgroundColor: '#1a1a2e', color: 'white' }}>
-       {/* Buttons - Vertical on the right */}
+      <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
+        {/* Header */}
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '2rem',
+          width: '100%'
+        }}>
+
+          
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <h1
+              style={{
+                marginBottom: '0.5rem',
+                animation: !socket ? 'blinker 1s linear infinite' : 'none',
+                color: !socket && blink ? '#e74c3c' : undefined
+              }}
+            >
+              Tournament Lobby
+            </h1>
+            <style>
+              {`
+                @keyframes blinker {
+                  50% { opacity: 0; }
+                }
+              `}
+            </style>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              background: 'rgba(44, 62, 80, 0.15)',
+              border: '1px solid #2c3e50',
+              borderRadius: '8px',
+              padding: '0.5rem 1.25rem',
+              fontSize: '1rem',
+              color: '#fff',
+              fontWeight: 500,
+              boxShadow: '0 2px 8px 0 rgba(44,62,80,0.07)',
+              marginBottom: '0.5rem',
+              maxWidth: '100%',
+              wordBreak: 'break-all'
+            }}>
+              <span style={{ color: '#aaa', fontWeight: 400 }}>Wallet:</span>
+              <span style={{ color: '#00b894', fontFamily: 'monospace', fontSize: '0.98em' }}>{walletAddress || 'N/A'}</span>
+              <span style={{ color: '#aaa', fontWeight: 400, marginLeft: '1.5rem' }}>Username:</span>
+              <span style={{ color: '#0984e3', fontWeight: 600 }}>
+                {userNamev2 || localStorage.getItem("userNamev2")  || 'N/A'}
+              </span>
+            </div>
+          </div>
           <div style={{ 
-            position: 'fixed',
-            right: '5rem',
-            top: '20%',
-            transform: 'translateY(-50%)',
-            display: 'flex', 
+            display: 'flex',
             flexDirection: 'column',
             gap: '1rem',
-            zIndex: 100
+            alignItems: 'flex-end',
+            minWidth: '180px'
           }}>
-
-            <Button 
-              small 
-              secondary
-              onClick={() => navigate('/play')}
-            >
-              Play Cash Game
-            </Button>
+            
             <Button 
               small 
               secondary 
@@ -377,62 +430,24 @@ const TournamentLobby = () => {
             >
               Back to Main
             </Button>
-          <Button 
-            small 
-            onClick={async () => {
-              const result = await showCreateTournamentForm(walletAddress);
-              if (result.isConfirmed && socket) {
-                socket.emit('CREATE_TOURNAMENT', result.value);
-
-                // Show success message
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Tournament Created!',
-                  text: `${result.value.name} has been created successfully.`,
-                  timer: 3000
-                });
-
-                
-
-                console.log('Tournament created:', result.value);
-              }
-            }}
-          >
-            Create Tournament
-          </Button>
-          </div>
-
-      <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
-        {/* Header */}
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          marginBottom: '2rem'
-        }}>
-          <h1 style={{ marginBottom: '0.5rem' }}>Tournament Lobby</h1>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            background: 'rgba(44, 62, 80, 0.15)',
-            border: '1px solid #2c3e50',
-            borderRadius: '8px',
-            padding: '0.5rem 1.25rem',
-            fontSize: '1rem',
-            color: '#fff',
-            fontWeight: 500,
-            boxShadow: '0 2px 8px 0 rgba(44,62,80,0.07)',
-            marginBottom: '0.5rem',
-            maxWidth: '100%',
-            wordBreak: 'break-all'
-          }}>
-            <span style={{ color: '#aaa', fontWeight: 400 }}>Wallet:</span>
-            <span style={{ color: '#00b894', fontFamily: 'monospace', fontSize: '0.98em' }}>{walletAddress || 'N/A'}</span>
-            <span style={{ color: '#aaa', fontWeight: 400, marginLeft: '1.5rem' }}>Username:</span>
-            <span style={{ color: '#0984e3', fontWeight: 600 }}>
-              {userNamev2 || localStorage.getItem("userNamev2")  || 'N/A'}
-            </span>
+            <Button 
+              small 
+              onClick={async () => {
+                const result = await showCreateTournamentForm(walletAddress);
+                if (result.isConfirmed && socket) {
+                  socket.emit('CREATE_TOURNAMENT', result.value);
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Tournament Created!',
+                    text: `${result.value.name} has been created successfully.`,
+                    timer: 3000
+                  });
+                  console.log('Tournament created:', result.value);
+                }
+              }}
+            >
+              Create Tournament
+            </Button>
           </div>
         </div>
         

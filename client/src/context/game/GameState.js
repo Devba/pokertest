@@ -16,6 +16,7 @@ import {
 } from '../../pokergame/actions'
 import socketContext from '../websocket/socketContext'
 import GameContext from './gameContext'
+//import { json } from 'express'
 
 const GameState = ({ children }) => {
   const { socket } = useContext(socketContext)
@@ -120,7 +121,8 @@ const GameState = ({ children }) => {
       })
     }
     if(socket){
-      return () => leaveTable()
+      console.log("waitng for soxket")
+      //return () => leaveTable()
     } 
     // eslint-disable-next-line
   }, [socket])
@@ -139,12 +141,20 @@ const GameState = ({ children }) => {
   }
 
   const leaveTable = () => {
+
+
+     navigate('/tournament-lobby')
+     console.log(" dejando mesa  wallet : " ,localStorage.getItem('wallet'),);
+    standUp()
+    return
+    
     const p={
       socketId:localStorage.getItem('wallet'),
       walletAddress:localStorage.getItem('wallet'),
       username:localStorage.getItem('userNamev2'),
       netwSid:socket.id
     }
+    console.log(" dejando mesa" ,JSON.stringify(p));
     standUp()
     currentTableRef &&
       currentTableRef.current &&
