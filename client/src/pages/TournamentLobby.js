@@ -22,7 +22,34 @@ const TournamentLobby = () => {
 
   const [blink, setBlink] = useState(false);
 
+
 useEffect(() => {
+  if (!socket) return;
+  const handleDisconnect = () => {
+    // Handle disconnect (e.g., show alert, set state, etc.)
+    console.warn('Socket disconnected');
+    // Optionally update state here
+  };
+  const handleError = (err) => {
+    console.error('Socket error:', err);
+    // Optionally update state here
+     const interval = setInterval(() => setBlink(prev => !prev), 500);
+    return () => clearInterval(interval);
+  };
+  socket.on('disconnect', handleDisconnect);
+  socket.on('connect_error', handleError);
+  socket.on('reconnect_failed', handleError);
+  return () => {
+    socket.off('disconnect', handleDisconnect);
+    socket.off('connect_error', handleError);
+    socket.off('reconnect_failed', handleError);
+  };
+}, [socket]);
+
+
+
+useEffect(() => {
+  return
   if (!socket) {
     const interval = setInterval(() => setBlink(prev => !prev), 500);
     return () => clearInterval(interval);
@@ -34,6 +61,7 @@ useEffect(() => {
   // Fetch tournaments from server
   useEffect(() => {
     if (socket) {
+       setBlink(false);
       // Show all localStorage properties as JSON in alert
       const allLocalStorage = {};
       for (let i = 0; i < localStorage.length; i++) {
@@ -362,7 +390,7 @@ useEffect(() => {
 
   return (
     <Container fullHeight style={{ backgroundColor: '#1a1a2e', color: 'white' }}>
-      <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
+      <div style={{ padding: '0 2rem 2rem 2rem', maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
         {/* Header */}
         <div style={{ 
           display: 'flex', 

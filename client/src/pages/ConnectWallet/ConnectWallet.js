@@ -193,6 +193,10 @@ try {
         navigate('/tournament-lobby')
       }
     }
+    
+    if (!socket || socket.connected !== true) {
+     
+      }
   }, [socket])
 
   const buttonStyle = {

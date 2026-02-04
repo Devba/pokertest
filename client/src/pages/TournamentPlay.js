@@ -41,12 +41,14 @@ const TournamentPlay = () => {
     call,
     raise,
     timebfFold,
-    setTimebfFold
-  } = useContext(gameContext)
+    setTimebfFold,
+    alfTPmode,
+    } = useContext(gameContext)
 
   const [bet, setBet] = useState(0)
   const [tournamentInfo, setTournamentInfo] = useState(null)
   const [timeDelay, setTimeDelay] = useState(10000)
+  const [alfMode, setAlfMode] = useState(alfTPmode || 'standard') // 'standard' or 'alf'
 
   // Sync timeDelay slider with timebfFold (convert seconds to milliseconds)
   useEffect(() => {

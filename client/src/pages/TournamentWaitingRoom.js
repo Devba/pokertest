@@ -149,6 +149,7 @@ const TournamentWaitingRoom = () => {
     navigate('/tournament-lobby')
   }
 
+  const [showDebug, setShowDebug] = useState(false);
   if (!tournament) {
     return (
       <Container fullHeight style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -174,10 +175,7 @@ const TournamentWaitingRoom = () => {
       }}>
         {/* Header: Tournament name and status */}
         <h1>alfs</h1>
-        {/* DEBUG: Show value of 'p' if available */}
-        <pre style={{color: 'yellow', background: '#222', padding: '0.5rem', borderRadius: '4px', fontSize: '0.9rem'}}>
-          {typeof tournament.registeredPlayers !== 'undefined' ? JSON.stringify(tournament.registeredPlayers, null, 2) : 'pRPis undefined'}
-        </pre>
+       
         <div style={{ 
           display: 'flex', 
           alignItems: 'center',
@@ -457,6 +455,20 @@ const TournamentWaitingRoom = () => {
             )}
           </div>
         </div>
+
+
+      {/* DEBUG: Show value of 'p' if available */}
+              <div style={{ marginBottom: '1rem' }}>
+                <Button small secondary onClick={() => setShowDebug(v => !v)}>
+                  {showDebug ? 'Hide RegisteredPlayers Debug' : 'Show RegisteredPlayers Debug'}
+                </Button>
+                {showDebug && (
+                  <pre style={{color: 'yellow', background: '#222', padding: '0.5rem', borderRadius: '4px', fontSize: '0.9rem'}}>
+                    {typeof tournament.registeredPlayers !== 'undefined' ? JSON.stringify(tournament.registeredPlayers, null, 2) : 'pRPis undefined'}
+                  </pre>
+                )}
+              </div>
+
       </div>
     </Container>
   )

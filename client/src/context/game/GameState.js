@@ -146,7 +146,7 @@ const GameState = ({ children }) => {
      navigate('/tournament-lobby')
      console.log(" dejando mesa  wallet : " ,localStorage.getItem('wallet'),);
     standUp()
-     fold()
+     fold() //le añaso el fold por si acaso
     return
     
     const p={
