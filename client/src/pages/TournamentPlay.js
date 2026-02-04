@@ -43,8 +43,8 @@ const TournamentPlay = () => {
     raise,
     timebfFold,
     setTimebfFold,
-   // alfTPmode,
-    //seatAlfMode
+    alfTPmode,
+    seatAlfMode
     } = useContext(gameContext)
 
   const [bet, setBet] = useState(0)
