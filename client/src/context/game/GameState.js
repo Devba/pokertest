@@ -181,7 +181,7 @@ const GameState = ({ children }) => {
     currentTableRef &&
       currentTableRef.current &&
       socket.emit(CS_STAND_UP, currentTableRef.current.id,origSockID)
-    setSeatId(null)
+    setSeatId(8) //lo cambio para que no coincida con ningun asiento
   }
 
   const addMessage = (message) => {
