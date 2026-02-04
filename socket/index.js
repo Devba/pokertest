@@ -295,7 +295,11 @@ const init = (socket, io) => {
         })),
         prizePool: tournament.prizePool,
         structure: tournament.structure,
-        blindStructure: tournament.blindStructure
+        blindStructure: tournament.blindStructure,
+        tables: tournament.tables.map(table => ({
+          id: table.id,
+          seats: table.seats
+        }))
       });
     } catch (error) {
       console.error('Error getting tournament info:', error);

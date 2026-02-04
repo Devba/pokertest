@@ -8,6 +8,8 @@ import Swal from 'sweetalert2'
 import './TournamentLobby.scss'
 import RegistrationStatus from '../components/alf/RegistrationStatus'
 import gameContext from '../context/game/gameContext'
+import WRPlayersTablePanel from '../components/alf/WR/WRPlayersTablePanel'
+import WRRegisteredPlayers from '../components/alf/WR/WRRegisteredPlayers'
 
 const TournamentWaitingRoom = () => {
   const navigate = useNavigate()
@@ -27,7 +29,7 @@ const TournamentWaitingRoom = () => {
 
   useEffect(() => {
     if (socket && tournamentId) {
-      // Request tournament info
+      // Request tournament info  - TOURNAMENT_INFO
       socket.emit('GET_TOURNAMENT_INFO', { tournamentId: parseInt(tournamentId) })
 
       // Listen for tournament updates
@@ -159,6 +161,7 @@ const TournamentWaitingRoom = () => {
   }
 
   const [showDebug, setShowDebug] = useState(false);
+  const [showTablesPanel, setShowTablesPanel] = useState(false);
   if (!tournament) {
     return (
       <Container fullHeight style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -380,90 +383,7 @@ const TournamentWaitingRoom = () => {
         )}
 
      
-        {/* Registered Players */}
-        <div>
-          <h3 style={{ marginBottom: '1rem' }}>
-            Registered Players ({tournament.registeredPlayers?.length || 0})
-          </h3>
-          <div style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '8px',
-            padding: '1rem',
-            maxHeight: '300px',
-            overflowY: 'auto'
-          }}>
-            {tournament.registeredPlayers && tournament.registeredPlayers.length > 0 ? (
-              <div style={{ display: 'grid', gap: '0.5rem' }}>
-                {(tournament.status === 'live'
-                  ? [...tournament.registeredPlayers].sort((a, b) => (b.chips || 0) - (a.chips || 0))
-                  : tournament.registeredPlayers
-                ).map((player, index) => (
-                  <div 
-                    key={index}
-                    style={{ 
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '0.75rem',
-                      backgroundColor: player.walletAddress === walletAddress 
-                        ? 'rgba(39, 174, 96, 0.1)' 
-                        : 'rgba(255, 255, 255, 0.03)',
-                      borderRadius: '4px',
-                      border: player.walletAddress === walletAddress 
-                        ? '1px solid rgba(39, 174, 96, 0.3)' 
-                        : '1px solid transparent'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ 
-                        color: '#aaa', 
-                        fontSize: '0.875rem',
-                        minWidth: '30px'
-                      }}>
-                        #{index + 1}
-                      </span>
-                      <span>{player.name}</span>
-                      {tournament.status === 'live' && (
-                        <span style={{ 
-                          fontSize: '0.95rem',
-                          color: '#f39c12',
-                          fontWeight: 'bold',
-                          marginLeft: '1rem'
-                        }}>
-                          {player.chips?.toLocaleString() || 0} chips
-                        </span>
-                      )}
-                      {player.walletAddress === walletAddress && (
-                        <span style={{ 
-                          fontSize: '0.75rem',
-                          color: '#27ae60',
-                          fontWeight: 'bold'
-                        }}>
-                          (You)
-                        </span>
-                      )}
-                    </div>
-                    {player.isBot && (
-                      <span style={{ 
-                        fontSize: '0.75rem',
-                        padding: '0.25rem 0.5rem',
-                        backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                        color: '#3498db',
-                        borderRadius: '4px'
-                      }}>
-                        BOT
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', color: '#aaa', padding: '2rem' }}>
-                No players registered yet
-              </div>
-            )}
-          </div>
-        </div>
+        <WRRegisteredPlayers players={tournament.registeredPlayers} status={tournament.status} walletAddress={walletAddress} />
 
 
       {/* DEBUG: Show value of 'p' if available */}
@@ -477,6 +397,18 @@ const TournamentWaitingRoom = () => {
                   </pre>
                 )}
               </div>
+
+                {/* Tables debug / players panel (hideable) */}
+                <div style={{ marginBottom: '1rem' }}>
+                  <Button small onClick={() => setShowTablesPanel(v => !v)}>
+                    {showTablesPanel ? 'Hide Table Seats' : 'Show Table Seats'}
+                  </Button>
+                  {showTablesPanel && (
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <WRPlayersTablePanel table={tournament.tables && tournament.tables[0]} walletAddress={walletAddress} />
+                    </div>
+                  )}
+                </div>
 
       </div>
     </Container>
