@@ -21,6 +21,7 @@ import './Play.scss'
 import { TournInfoPanel } from '../components/game/TourninfoPanel'
 import ToggleSwitch from '../components/alf/ToggleSittingINOUT'
 
+
 const TournamentPlay = () => {
   const navigate = useNavigate()
   const { tournamentId } = useParams()
@@ -42,14 +43,15 @@ const TournamentPlay = () => {
     raise,
     timebfFold,
     setTimebfFold,
-    alfTPmode,
+   // alfTPmode,
+    //seatAlfMode
     } = useContext(gameContext)
 
   const [bet, setBet] = useState(0)
   const [tournamentInfo, setTournamentInfo] = useState(null)
   const [timeDelay, setTimeDelay] = useState(10000)
-  const [alfMode, setAlfMode] = useState(alfTPmode || 'standard') // 'standard' or 'alf'
-
+  //const [alfMode, setAlfMode] = useState( 'standard') // 'standard' or 'alf'
+  
   // Sync timeDelay slider with timebfFold (convert seconds to milliseconds)
   useEffect(() => {
     //setTimebfFold(timeDelay * 1000)
@@ -204,11 +206,13 @@ useEffect(() => {
 
   const handleToggle = () => {
     if (isSittingIn) {
+     // seatAlfMode("standup")
       // Emit stand up event
      standUp ();  
     } else {
       // Emit sit in event
       handleSitIn ();
+    //  seatAlfMode("sitting in ")
     }
     setIsSittingIn(!isSittingIn);
   };

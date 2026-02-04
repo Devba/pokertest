@@ -7,6 +7,7 @@ import globalContext from '../context/global/globalContext'
 import Swal from 'sweetalert2'
 import './TournamentLobby.scss'
 import RegistrationStatus from '../components/alf/RegistrationStatus'
+import gameContext from '../context/game/gameContext'
 
 const TournamentWaitingRoom = () => {
   const navigate = useNavigate()
@@ -15,6 +16,14 @@ const TournamentWaitingRoom = () => {
   const { walletAddress } = useContext(globalContext)
   const [tournament, setTournament] = useState(null)
   const [countdown, setCountdown] = useState(null)
+  const { alfTPmode, setAlfMode } = useContext(gameContext)
+
+/* useEffect(() => {
+  alert("TournamentWaitingRoom mounted, alfTPmode:", {alfTPmode});
+  //setAlfMode('waitingroom');
+}, [alfTPmode, setAlfMode]);*/
+
+  // Fetch tournament info on mount and listen for updates
 
   useEffect(() => {
     if (socket && tournamentId) {
