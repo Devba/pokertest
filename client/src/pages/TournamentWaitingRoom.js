@@ -10,6 +10,8 @@ import RegistrationStatus from '../components/alf/RegistrationStatus'
 import gameContext from '../context/game/gameContext'
 import WRPlayersTablePanel from '../components/alf/WR/WRPlayersTablePanel'
 import WRRegisteredPlayers from '../components/alf/WR/WRRegisteredPlayers'
+import TournamentInfoGrid from '../components/alf/WR/WRTournamentInfoGrid'
+import WRActionButtons from '../components/alf/WR/WRActionButtons'
 
 const TournamentWaitingRoom = () => {
   const navigate = useNavigate()
@@ -49,7 +51,8 @@ const TournamentWaitingRoom = () => {
           setTournament(info)
           
           // If tournament started, redirect to play page
-          if (info.status === 'live') {
+          //por ahora lo anulamos
+          if (false && info.status === 'live') {
             Swal.fire({
               title: 'Tournament Starting!',
               text: 'The tournament is about to begin',
@@ -178,7 +181,8 @@ const TournamentWaitingRoom = () => {
   return (
     <Container fullHeight style={{ padding: '2rem', backgroundColor: '#0a0e27' }}>
       <div style={{ 
-        maxWidth: '900px', 
+        width: '75%',
+        maxWidth: '1200px',
         margin: '0 auto',
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
         borderRadius: '12px',
@@ -208,151 +212,15 @@ const TournamentWaitingRoom = () => {
             {tournament.status === 'registering' ? 'Registration Open' : tournament.status.toUpperCase()}
           </div>
         </div>
-        {/* Action Buttons Row */}
-        <div style={{
-          display: 'flex',
-          gap: '0.5rem',
-          marginBottom: '2rem',
-          flexWrap: 'wrap',
-        }}>
-          {tournament.status === 'registering' && (
-            <>
-              <Button 
-                small
-                onClick={async () => {
-                  const { value: botCount } = await Swal.fire({
-                    title: 'Add Bots',
-                    input: 'number',
-                    inputLabel: 'How many bots to add?',
-                    inputValue: 2,
-                    inputAttributes: {
-                      min: 1,
-                      max: 10,
-                      step: 1
-                    },
-                    showCancelButton: true,
-                    confirmButtonText: 'Add Bots'
-                  })
-                  
-                  if (botCount && socket) {
-                    socket.emit('ADD_BOTS_TO_TOURNAMENT', {
-                      tournamentId: parseInt(tournamentId),
-                      botCount: parseInt(botCount)
-                    })
-                    
-                    Swal.fire({
-                      title: 'Adding Bots...',
-                      text: 'Please wait',
-                      allowOutsideClick: false,
-                      didOpen: () => {
-                        Swal.showLoading()
-                      }
-                    })
-                  }
-                }}
-              >
-                Add Bots
-              </Button>
-              <Button 
-                small
-                onClick={() => {
-                  if (socket) {
-                    socket.emit('START_TOURNAMENT', { tournamentId: parseInt(tournamentId) })
-                    Swal.fire({
-                      title: 'Starting Tournament...',
-                      text: 'The tournament is being started',
-                      timer: 2000,
-                      showConfirmButton: false
-                    })
-                  }
-                }}
-              >
-                Start Now
-              </Button>
-              <Button 
-                small
-                secondary
-                onClick={async () => {
-                  const result = await Swal.fire({
-                    title: 'Delete Tournament?',
-                    text: 'This action cannot be undone!',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel'
-                  })
+        <WRActionButtons
+          tournamentStatus={tournament.status}
+          socket={socket}
+          tournamentId={tournamentId}
+          handleLeave={handleLeave}
+          navigate={navigate}
+        />
 
-                  if (result.isConfirmed && socket) {
-                    socket.emit('DELETE_TOURNAMENT', { tournamentId: parseInt(tournamentId) })
-                    
-                    Swal.fire({
-                      title: 'Deleting...',
-                      text: 'Please wait',
-                      allowOutsideClick: false,
-                      didOpen: () => {
-                        Swal.showLoading()
-                      }
-                    })
-                  }
-                }}
-                style={{ backgroundColor: '#d33', borderColor: '#d33' }}
-              >
-                Delete
-              </Button>
-            </>
-          )}
-          <Button secondary onClick={handleLeave}>
-            Leave
-          </Button>
-        </div>
-
-        {/* Tournament Info Grid */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '1.5rem',
-          marginBottom: '2rem'
-        }}>
-          <div style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            padding: '1rem',
-            borderRadius: '8px'
-          }}>
-            <div style={{ fontSize: '0.875rem', color: '#aaa', marginBottom: '0.5rem' }}>Buy-in</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>${tournament.buyIn || 0}</div>
-          </div>
-          
-          <div style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            padding: '1rem',
-            borderRadius: '8px'
-          }}>
-            <div style={{ fontSize: '0.875rem', color: '#aaa', marginBottom: '0.5rem' }}>Prize Pool</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#27ae60' }}>${tournament.prizePool || 0}</div>
-          </div>
-
-          <div style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            padding: '1rem',
-            borderRadius: '8px'
-          }}>
-            <div style={{ fontSize: '0.875rem', color: '#aaa', marginBottom: '0.5rem' }}>Players</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-              {tournament.registeredPlayers?.length || 0} / {tournament.maxPlayers}
-            </div>
-          </div>
-
-          <div style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            padding: '1rem',
-            borderRadius: '8px'
-          }}>
-            <div style={{ fontSize: '0.875rem', color: '#aaa', marginBottom: '0.5rem' }}>Starting Chips</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{tournament.startingChips?.toLocaleString() || 0}</div>
-          </div>
-        </div>
+        <TournamentInfoGrid tournament={tournament} />
 
            {/* Registration Status */}
         <RegistrationStatus

@@ -11,6 +11,8 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
   // localSeats tracks the most recent seat data (keeps UI responsive to high-frequency updates)
   const [localSeats, setLocalSeats] = useState(seats)
   const prevSeatsRef = useRef(seats)
+  // keep the previous seats snapshot (one-before-current) for showing deltas
+  const prevSeatValuesRef = useRef({})
 
   // track which seat keys have recently changed (for glow animation)
   const [changedSeats, setChangedSeats] = useState([])
@@ -44,18 +46,32 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
       })
     }
 
+    // store previous snapshot so the UI can compute diffs (one-before-current)
+    prevSeatValuesRef.current = prev
     prevSeatsRef.current = newSeats
     setLocalSeats(newSeats)
   }
 
   // Sync localSeats when parent `table.seats` prop changes
   useEffect(() => {
-    applySeatUpdate(seats)
+    // Avoid triggering updates if seat stacks/chips haven't actually changed
+    const prev = prevSeatsRef.current || {}
+    const prevKeys = Object.keys(prev)
+    const newKeys = Object.keys(seats || {})
+    const same = prevKeys.length === newKeys.length && prevKeys.every((k) => {
+      const p = prev[k] || {}
+      const n = (seats || {})[k] || {}
+      const pVal = Number(p.stack ?? p.chips ?? 0)
+      const nVal = Number(n.stack ?? n.chips ?? 0)
+      return pVal === nVal
+    })
+
+    if (!same) applySeatUpdate(seats)
   }, [seats])
 
   // Listen for SC_TABLE_UPDATED events and update localSeats when the same table is updated
   useEffect(() => {
-    if (!socket || !table || !table.id) return
+    if (!socket || !table?.id) return
     const handler = ({ table: updatedTable }) => {
       if (!updatedTable) return
       if (updatedTable.id === table.id) {
@@ -64,7 +80,7 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
     }
     socket.on(SC_TABLE_UPDATED, handler)
     return () => socket.off(SC_TABLE_UPDATED, handler)
-  }, [socket, table && table.id])
+  }, [socket, table?.id])
 
   // Convert seats object into an array and sort by stack/chips descending (numeric)
   const seatEntries = useMemo(() => Object.keys(localSeats).map((k) => ({ sKey: k, seat: localSeats[k] }))
@@ -99,6 +115,13 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
             const glowStyle = changed ? { animation: `glowAnim ${ANIM_DURATION}ms ease`, color: '#fff900' } : {}
             const stackVal = seat.stack ?? seat.chips
             const stackDisplay = (stackVal === undefined || stackVal === null) ? '—' : Number(stackVal).toFixed(2)
+            // compute previous stack (from the snapshot stored in applySeatUpdate)
+            const prevSeat = (prevSeatValuesRef.current || {})[sKey] || {}
+            const prevValRaw = prevSeat.stack ?? prevSeat.chips
+            const prevValNum = (prevValRaw === undefined || prevValRaw === null) ? null : Number(prevValRaw)
+            const currValNum = (stackVal === undefined || stackVal === null) ? null : Number(stackVal)
+            const diffNum = (currValNum === null || prevValNum === null) ? null : (currValNum - prevValNum)
+            const showDiff = diffNum !== null && diffNum !== 0
             return (
               <div key={sKey} style={{
                 display: 'flex',
@@ -118,7 +141,14 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', color: '#ccc' }}>
-                  <div style={{ fontWeight: '600' }}>{stackDisplay}</div>
+                  <div style={{ fontWeight: '600', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', alignItems: 'center' }}>
+                    <span>{stackDisplay}</span>
+                    {showDiff && (
+                      <span style={{ fontSize: '0.85rem', color: diffNum > 0 ? '#5dd67a' : '#ff6b6b' }}>
+                        {diffNum > 0 ? '+' : ''}{diffNum.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ fontSize: '0.85rem', color: '#aaa' }}>{seat.sittingOut ? 'Sitting Out' : 'Sitting In'}</div>
                 </div>
               </div>
