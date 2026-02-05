@@ -12,6 +12,8 @@ import WRPlayersTablePanel from '../components/alf/WR/WRPlayersTablePanel'
 import WRRegisteredPlayers from '../components/alf/WR/WRRegisteredPlayers'
 import TournamentInfoGrid from '../components/alf/WR/WRTournamentInfoGrid'
 import WRActionButtons from '../components/alf/WR/WRActionButtons'
+import WRConnectionIndicator from '../components/alf/WR/WRConnectionIndicator'
+import ZipPanel from '../components/alf/WR/ZipPanel'
 
 const TournamentWaitingRoom = () => {
   const navigate = useNavigate()
@@ -184,13 +186,14 @@ const TournamentWaitingRoom = () => {
         width: '75%',
         maxWidth: '1200px',
         margin: '0 auto',
+        position: 'relative',
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
         borderRadius: '12px',
         padding: '2rem',
         color: 'white'
       }}>
         {/* Header: Tournament name and status */}
-        <h1>alfs</h1>
+        
        
         <div style={{ 
           display: 'flex', 
@@ -211,6 +214,11 @@ const TournamentWaitingRoom = () => {
           }}>
             {tournament.status === 'registering' ? 'Registration Open' : tournament.status.toUpperCase()}
           </div>
+        </div>
+
+        {/* top-right connection indicator */}
+        <div style={{ position: 'absolute', top: 16, right: 20 }}>
+          <WRConnectionIndicator socket={socket} />
         </div>
         <WRActionButtons
           tournamentStatus={tournament.status}
@@ -251,7 +259,9 @@ const TournamentWaitingRoom = () => {
         )}
 
          <div style={{ marginTop: '0.75rem' }}>
-                      <WRPlayersTablePanel table={tournament.tables && tournament.tables[0]} walletAddress={walletAddress} />
+                      <ZipPanel title="Table Seats" defaultCollapsed={false}>
+                        <WRPlayersTablePanel table={tournament.tables && tournament.tables[0]} walletAddress={walletAddress} />
+                      </ZipPanel>
                     </div>
                   )}
 
