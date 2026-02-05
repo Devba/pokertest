@@ -1,4 +1,4 @@
-import React, { useMemo, useContext, useEffect, useState } from 'react'
+import React, { useMemo, useContext, useEffect, useState, useRef } from 'react'
 import PropTypes from 'prop-types'
 import socketContext from '../../../context/websocket/socketContext'
 import { SC_TABLE_UPDATED } from '../../../pokergame/actions'
@@ -10,10 +10,47 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
 
   // localSeats tracks the most recent seat data (keeps UI responsive to high-frequency updates)
   const [localSeats, setLocalSeats] = useState(seats)
+  const prevSeatsRef = useRef(seats)
+
+  // track which seat keys have recently changed (for glow animation)
+  const [changedSeats, setChangedSeats] = useState([])
+  const ANIM_DURATION = 10000 // 10 seconds
+
+  // helper to apply seat updates and detect changed stacks
+  const applySeatUpdate = (newSeats = {}) => {
+    const prev = prevSeatsRef.current || {}
+    const changed = []
+    const keys = Array.from(new Set([...Object.keys(prev), ...Object.keys(newSeats)]))
+    keys.forEach((k) => {
+      const p = prev[k] || {}
+      const n = newSeats[k] || {}
+      const pVal = Number(p.stack ?? p.chips ?? 0)
+      const nVal = Number(n.stack ?? n.chips ?? 0)
+      if (pVal !== nVal) changed.push(k)
+    })
+
+    if (changed.length > 0) {
+      setChangedSeats((prevArr) => {
+        const set = new Set(prevArr)
+        changed.forEach(k => set.add(k))
+        return Array.from(set)
+      })
+
+      // remove highlight after animation duration
+      changed.forEach((k) => {
+        setTimeout(() => {
+          setChangedSeats((prevArr) => prevArr.filter(x => x !== k))
+        }, ANIM_DURATION)
+      })
+    }
+
+    prevSeatsRef.current = newSeats
+    setLocalSeats(newSeats)
+  }
 
   // Sync localSeats when parent `table.seats` prop changes
   useEffect(() => {
-    setLocalSeats(seats)
+    applySeatUpdate(seats)
   }, [seats])
 
   // Listen for SC_TABLE_UPDATED events and update localSeats when the same table is updated
@@ -22,7 +59,7 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
     const handler = ({ table: updatedTable }) => {
       if (!updatedTable) return
       if (updatedTable.id === table.id) {
-        setLocalSeats(updatedTable.seats || {})
+        applySeatUpdate(updatedTable.seats || {})
       }
     }
     socket.on(SC_TABLE_UPDATED, handler)
@@ -43,6 +80,8 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
 
   return (
     <div>
+      {/* Inject keyframes for glow animation once */}
+      <style>{`@keyframes glowAnim { 0%{ text-shadow:none; color:#44848; } 90%{ text-shadow:none; color:#44848 } 100%{ color:#fff900; text-shadow:0 0 7px #fff900,0 0 70px #fff123; } }`}</style>
       <div style={{
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
         borderRadius: '8px',
@@ -56,6 +95,10 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
             )
             const player = seat.player || {}
             const isYou = player.walletAddress && walletAddress && player.walletAddress === walletAddress
+            const changed = changedSeats.includes(String(sKey))
+            const glowStyle = changed ? { animation: `glowAnim ${ANIM_DURATION}ms ease`, color: '#fff900' } : {}
+            const stackVal = seat.stack ?? seat.chips
+            const stackDisplay = (stackVal === undefined || stackVal === null) ? '—' : Number(stackVal).toFixed(2)
             return (
               <div key={sKey} style={{
                 display: 'flex',
@@ -64,7 +107,8 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
                 padding: '0.75rem',
                 backgroundColor: isYou ? 'rgba(39, 174, 96, 0.1)' : 'rgba(255,255,255,0.03)',
                 borderRadius: '4px',
-                border: isYou ? '1px solid rgba(39,174,96,0.3)' : '1px solid transparent'
+                border: isYou ? '1px solid rgba(39,174,96,0.3)' : '1px solid transparent',
+                ...glowStyle
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ color: '#aaa', fontSize: '0.875rem', minWidth: '36px' }}>#{sKey}</span>
@@ -74,7 +118,7 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', color: '#ccc' }}>
-                  <div style={{ fontWeight: '600' }}>{seat.stack ?? seat.chips ?? '—'}</div>
+                  <div style={{ fontWeight: '600' }}>{stackDisplay}</div>
                   <div style={{ fontSize: '0.85rem', color: '#aaa' }}>{seat.sittingOut ? 'Sitting Out' : 'Sitting In'}</div>
                 </div>
               </div>
