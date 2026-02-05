@@ -99,6 +99,16 @@ const TournamentList = ({
 
           {/* Action Button */}
           <div style={{ display: 'flex', gap: '8px' }}>
+            <Button
+              small
+              secondary
+              onClick={e => {
+                e.stopPropagation();
+                navigate(`/tournament/${tournament.id}/waiting`);
+              }}
+            >
+               Room
+            </Button>
             {(tournament.status === 'registering' || tournament.status === 'upcoming') && (
               <Button 
                 small 
@@ -107,7 +117,7 @@ const TournamentList = ({
                   navigate(`/tournament/${tournament.id}/waiting`);
                 }}
               >
-                View Tournament
+                View Tournament {tournament.id}
               </Button>
             )}
             {tournament.status === 'live' && (

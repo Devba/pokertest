@@ -7,7 +7,7 @@ const TournamentInfoGrid = ({ tournament = {} }) => {
   return (
     <div style={{ 
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(20px, 1fr))',
       gap: '1.5rem',
       marginBottom: '2rem'
     }}>

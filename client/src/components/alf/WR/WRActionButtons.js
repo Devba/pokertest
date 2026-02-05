@@ -87,6 +87,16 @@ const WRActionButtons = ({ tournamentStatus, socket, tournamentId, handleLeave, 
       <Button secondary onClick={handleLeave}>
         Leave
       </Button>
+      {tournamentStatus === 'live' && (
+        <Button onClick={() => navigate(`/tournament/${tournamentId}?mode=spectator`)}>
+          Watch
+        </Button>
+      )}
+      {tournamentStatus === 'live' && (
+        <Button onClick={() => navigate(`/tournament/${tournamentId}?mode=player`)}>
+          Play
+        </Button>
+      )}
     </div>
   )
 }
