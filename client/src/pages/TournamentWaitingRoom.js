@@ -382,11 +382,16 @@ const TournamentWaitingRoom = () => {
           </div>
         )}
 
+         <div style={{ marginTop: '0.75rem' }}>
+                      <WRPlayersTablePanel table={tournament.tables && tournament.tables[0]} walletAddress={walletAddress} />
+                    </div>
+                  )}
+
      
-        <WRRegisteredPlayers players={tournament.registeredPlayers} status={tournament.status} walletAddress={walletAddress} />
+        {/* <WRRegisteredPlayers players={tournament.registeredPlayers} status={tournament.status} walletAddress={walletAddress} /> */}
 
 
-      {/* DEBUG: Show value of 'p' if available */}
+      {/* DEBUG: Show value of 'p' if available 
               <div style={{ marginBottom: '1rem' }}>
                 <Button small secondary onClick={() => setShowDebug(v => !v)}>
                   {showDebug ? 'Hide RegisteredPlayers Debug' : 'Show RegisteredPlayers Debug'}
@@ -398,7 +403,7 @@ const TournamentWaitingRoom = () => {
                 )}
               </div>
 
-                {/* Tables debug / players panel (hideable) */}
+                {/* Tables debug / players panel (hideable) 
                 <div style={{ marginBottom: '1rem' }}>
                   <Button small onClick={() => setShowTablesPanel(v => !v)}>
                     {showTablesPanel ? 'Hide Table Seats' : 'Show Table Seats'}
@@ -408,7 +413,7 @@ const TournamentWaitingRoom = () => {
                       <WRPlayersTablePanel table={tournament.tables && tournament.tables[0]} walletAddress={walletAddress} />
                     </div>
                   )}
-                </div>
+                </div>*/}
 
       </div>
     </Container>

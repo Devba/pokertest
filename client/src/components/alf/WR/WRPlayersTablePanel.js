@@ -1,20 +1,45 @@
-import React from 'react'
+import React, { useMemo, useContext, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
+import socketContext from '../../../context/websocket/socketContext'
+import { SC_TABLE_UPDATED } from '../../../pokergame/actions'
 
 const WRPlayersTablePanel = ({ table, walletAddress }) => {
+  // Ensure hooks run in the same order: derive `seats` even if `table` is null
+  const seats = table?.seats || {}
+  const { socket } = useContext(socketContext)
+
+  // localSeats tracks the most recent seat data (keeps UI responsive to high-frequency updates)
+  const [localSeats, setLocalSeats] = useState(seats)
+
+  // Sync localSeats when parent `table.seats` prop changes
+  useEffect(() => {
+    setLocalSeats(seats)
+  }, [seats])
+
+  // Listen for SC_TABLE_UPDATED events and update localSeats when the same table is updated
+  useEffect(() => {
+    if (!socket || !table || !table.id) return
+    const handler = ({ table: updatedTable }) => {
+      if (!updatedTable) return
+      if (updatedTable.id === table.id) {
+        setLocalSeats(updatedTable.seats || {})
+      }
+    }
+    socket.on(SC_TABLE_UPDATED, handler)
+    return () => socket.off(SC_TABLE_UPDATED, handler)
+  }, [socket, table && table.id])
+
+  // Convert seats object into an array and sort by stack/chips descending (numeric)
+  const seatEntries = useMemo(() => Object.keys(localSeats).map((k) => ({ sKey: k, seat: localSeats[k] }))
+    .sort((a, b) => {
+      const aVal = Number(a.seat ? (a.seat.stack ?? a.seat.chips ?? 0) : 0)
+      const bVal = Number(b.seat ? (b.seat.stack ?? b.seat.chips ?? 0) : 0)
+      return bVal - aVal
+    }), [localSeats])
+
   if (!table) {
     return <div style={{ color: '#888' }}>No table data available</div>
   }
-
-  const seats = table.seats || {}
-
-  // Convert seats object into an array and sort by stack/chips descending
-  const seatEntries = Object.keys(seats).map((k) => ({ sKey: k, seat: seats[k] }))
-    .sort((a, b) => {
-      const aVal = a.seat ? (a.seat.stack ?? a.seat.chips ?? 0) : 0
-      const bVal = b.seat ? (b.seat.stack ?? b.seat.chips ?? 0) : 0
-      return bVal - aVal
-    })
 
   return (
     <div>
@@ -66,4 +91,9 @@ WRPlayersTablePanel.propTypes = {
   walletAddress: PropTypes.string
 }
 
-export default WRPlayersTablePanel
+WRPlayersTablePanel.defaultProps = {
+  table: {},
+  walletAddress: ''
+}
+
+export default React.memo(WRPlayersTablePanel)
