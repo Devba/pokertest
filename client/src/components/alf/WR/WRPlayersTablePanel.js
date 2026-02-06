@@ -83,7 +83,9 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
   }, [socket, table?.id])
 
   // Convert seats object into an array and sort by stack/chips descending (numeric)
-  const seatEntries = useMemo(() => Object.keys(localSeats).map((k) => ({ sKey: k, seat: localSeats[k] }))
+  const seatEntries = useMemo(() => Object.keys(localSeats)
+    .map((k) => ({ sKey: k, seat: localSeats[k] }))
+    .filter(({ seat }) => !!seat)
     .sort((a, b) => {
       const aVal = Number(a.seat ? (a.seat.stack ?? a.seat.chips ?? 0) : 0)
       const bVal = Number(b.seat ? (b.seat.stack ?? b.seat.chips ?? 0) : 0)
@@ -93,6 +95,8 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
   if (!table) {
     return <div style={{ color: '#888' }}>No table data available</div>
   }
+
+  const noPlayers = seatEntries.length === 0
 
   return (
     <div>
@@ -104,11 +108,11 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
         padding: '0.75rem'
       }}>
         <div style={{ marginBottom: '0.5rem', color: '#aaa' }}>Table ID: {table.id}</div>
-        <div style={{ display: 'grid', gap: '0.5rem' }}>
+        {noPlayers ? (
+          <div style={{ color: '#777', padding: '0.5rem' }}>No seated players</div>
+        ) : (
+          <div style={{ display: 'grid', gap: '0.5rem' }}>
           {seatEntries.map(({ sKey, seat }) => {
-            if (!seat) return (
-              <div key={sKey} style={{ color: '#777', padding: '0.5rem' }}>Seat {sKey}: empty</div>
-            )
             const player = seat.player || {}
             const isYou = player.walletAddress && walletAddress && player.walletAddress === walletAddress
             const changed = changedSeats.includes(String(sKey))
@@ -155,7 +159,8 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
               </div>
             )
           })}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )

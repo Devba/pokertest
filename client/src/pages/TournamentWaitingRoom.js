@@ -16,6 +16,7 @@ import WRConnectionIndicator from '../components/alf/WR/WRConnectionIndicator'
 import ZipPanel from '../components/alf/WR/ZipPanel'
 import WRTableHistory from '../components/alf/WR/WRTableHistory'
 import WRStartHandStacks from '../components/alf/WR/WRStartHandStacks'
+import { CS_TABLE_SUBSCRIBE, CS_TABLE_UNSUBSCRIBE } from '../pokergame/actions'
 
 const TournamentWaitingRoom = () => {
   const navigate = useNavigate()
@@ -25,6 +26,9 @@ const TournamentWaitingRoom = () => {
   const [tournament, setTournament] = useState(null)
   const [countdown, setCountdown] = useState(null)
   const { alfTPmode, setAlfMode } = useContext(gameContext)
+  const [showDebug, setShowDebug] = useState(false)
+  const [showTablesPanel, setShowTablesPanel] = useState(false)
+  const primaryTableId = tournament?.tables?.[0]?.id || null
 
 /* useEffect(() => {
   alert("TournamentWaitingRoom mounted, alfTPmode:", {alfTPmode});
@@ -163,12 +167,25 @@ const TournamentWaitingRoom = () => {
     }
   }, [socket, navigate])
 
+
+
+  useEffect(() => {
+    if (!socket || !primaryTableId) return undefined
+
+    socket.emit(CS_TABLE_SUBSCRIBE, { tableId: primaryTableId })
+
+    return () => {
+      socket.emit(CS_TABLE_UNSUBSCRIBE, { tableId: primaryTableId })
+    }
+  }, [socket, primaryTableId])
+
+
+
+
   const handleLeave = () => {
     navigate('/tournament-lobby')
   }
 
-  const [showDebug, setShowDebug] = useState(false);
-  const [showTablesPanel, setShowTablesPanel] = useState(false);
   if (!tournament) {
     return (
       <Container fullHeight style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -215,6 +232,8 @@ const TournamentWaitingRoom = () => {
             letterSpacing: '0.03em'
           }}>
             {tournament.status === 'registering' ? 'Registration Open' : tournament.status.toUpperCase()}
+  
+  
           </div>
         </div>
 

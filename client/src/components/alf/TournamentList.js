@@ -55,7 +55,15 @@ const TournamentList = ({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ color: '#aaa' }}>{tournament.name} — hidden</div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <Button small secondary onClick={(e) => toggleHidden(tournament.id, e)}>Show</Button>
+                  <Button
+                    small
+                    secondary
+                    onClick={(e) => toggleHidden(tournament.id, e)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '86px' }}
+                  >
+                    <span>Show</span>
+                    <span style={{ fontSize: '1rem', lineHeight: 1 }}>▸</span>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -133,7 +141,17 @@ const TournamentList = ({
                 { tournament.status === 'live' && (
                   <Button small secondary onClick={(e) => { e.stopPropagation(); navigate(`/tournament/${tournament.id}?mode=spectator`) }}>Watch</Button>
                 ) }
-                <Button small secondary onClick={(e) => { e.stopPropagation(); toggleHidden(tournament.id, e) }}>{'Hide'}</Button>
+                <Button
+                  small
+                  secondary
+                  onClick={(e) => { e.stopPropagation(); toggleHidden(tournament.id, e) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '86px' }}
+                >
+                  <span>{hiddenSet.has(tournament.id) ? 'Show' : 'Hide'}</span>
+                  <span style={{ fontSize: '1rem', lineHeight: 1 }}>
+                    {hiddenSet.has(tournament.id) ? '▸' : '▾'}
+                  </span>
+                </Button>
               </div>
             </div>
           </div>

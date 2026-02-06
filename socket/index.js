@@ -24,6 +24,8 @@ const {
   SITTING_IN,
   CS_DISCONNECT,
   SC_TABLE_UPDATED,
+  CS_TABLE_SUBSCRIBE,
+  CS_TABLE_UNSUBSCRIBE,
   WINNER,
   CS_LOBBY_CONNECT,
   CS_LOBBY_DISCONNECT,
@@ -617,6 +619,37 @@ const init = (socket, io) => {
       let message = `${player.name} joined the table.`;
       broadcastToTable(table, message);
     }
+  });
+
+  socket.on(CS_TABLE_SUBSCRIBE, ({ tableId }) => {
+    if (!tableId) return;
+    let targetTable = tables[tableId];
+    if (!targetTable && tournamentManager) {
+      for (const t of tournamentManager.tournaments.values()) {
+        const found = t.tables?.find(tbl => tbl.id === tableId);
+        if (found) {
+          targetTable = found;
+          break;
+        }
+      }
+    }
+    if (!targetTable) {
+      console.warn('CS_TABLE_SUBSCRIBE: table not found', tableId);
+      return;
+    }
+    socket.join(`table-${tableId}`);
+    const { tournamentManager: _tm, ...cleanTable } = targetTable;
+    const tableCopyForSpectators = hideOpponentCards(cleanTable, 'spectator');
+    socket.emit(SC_TABLE_UPDATED, {
+      table: tableCopyForSpectators,
+      message: null,
+      from: null,
+    });
+  });
+
+  socket.on(CS_TABLE_UNSUBSCRIBE, ({ tableId }) => {
+    if (!tableId) return;
+    socket.leave(`table-${tableId}`);
   });
 
   socket.on(CS_LEAVE_TABLE, (tableId,p) => {
