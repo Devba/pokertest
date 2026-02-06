@@ -31,6 +31,13 @@ const formatAmount = (value) => Number(value || 0).toLocaleString(undefined, {
   maximumFractionDigits: 2
 })
 
+const formatBigBlindValue = (value) => {
+  if (!Number.isFinite(value)) return null
+  if (Math.abs(value) >= 100) return value.toFixed(0)
+  if (Math.abs(value) >= 10) return value.toFixed(1)
+  return value.toFixed(2)
+}
+
 const playerLabel = (seat) => {
   if (!seat?.player) return 'Empty'
   return seat.player.username || seat.player.name || seat.player.id || 'Player'
@@ -103,6 +110,12 @@ const WRStartHandStacks = ({ table }) => {
       })
     })
 
+
+      const bbPerSnapshot = chronologicalSnapshots.map((snapshot) => {
+        const bbValue = snapshot && typeof snapshot.bigBlind === 'number' ? snapshot.bigBlind : null
+        return bbValue && bbValue > 0 ? bbValue : null
+      })
+      const usesBigBlindScale = bbPerSnapshot.some((bb) => bb)
     const relevantSeatIds = Array.from(seatIds).filter((seatId) =>
       chronologicalSnapshots.some((snapshot) => {
         const seat = (snapshot.stacks || []).find((s) => s?.seatId === seatId)
@@ -124,9 +137,14 @@ const WRStartHandStacks = ({ table }) => {
 
       return {
         label: `Seat ${seatId}${seatLabel ? ` · ${seatLabel}` : ''}`,
-        data: chronologicalSnapshots.map((snapshot) => {
+        data: chronologicalSnapshots.map((snapshot, snapIdx) => {
           const seat = (snapshot.stacks || []).find((s) => s?.seatId === seatId)
-          return seat ? Number(seat.stack || 0) : null
+          if (!seat) return null
+          const bbValue = bbPerSnapshot[snapIdx]
+          if (bbValue) {
+            return Number((seat.stack / bbValue).toFixed(2))
+          }
+          return Number(seat.stack || 0)
         }),
         borderColor: color,
         backgroundColor: color,
@@ -135,10 +153,12 @@ const WRStartHandStacks = ({ table }) => {
         borderWidth: 2,
         pointRadius: 2,
         pointHoverRadius: 4,
+        bbPerPoint: bbPerSnapshot,
+        usesBigBlindScale,
       }
     })
 
-    return { labels, datasets }
+    return { labels, datasets, usesBigBlindScale }
   }, [chronologicalSnapshots])
 
   const chartOptions = useMemo(
@@ -158,6 +178,12 @@ const WRStartHandStacks = ({ table }) => {
           callbacks: {
             label: (context) => {
               if (typeof context.parsed.y !== 'number') return context.dataset.label
+              const dataset = context.dataset || {}
+              const bbValue = dataset.bbPerPoint?.[context.dataIndex]
+              if (bbValue) {
+                const chips = context.parsed.y * bbValue
+                return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} BB ($${formatAmount(chips)})`
+              }
               return `${context.dataset.label}: $${formatAmount(context.parsed.y)}`
             }
           }
@@ -171,13 +197,19 @@ const WRStartHandStacks = ({ table }) => {
         y: {
           ticks: {
             color: '#bbb',
-            callback: (value) => `$${formatAmount(value)}`
+            callback: (value) => {
+              if (chartData?.usesBigBlindScale) {
+                const formatted = formatBigBlindValue(Number(value))
+                return formatted != null ? `${formatted} BB` : ''
+              }
+              return `$${formatAmount(value)}`
+            }
           },
           grid: { color: 'rgba(255, 255, 255, 0.05)' }
         }
       }
     }),
-    []
+    [chartData]
   )
 
   useEffect(() => {
@@ -251,6 +283,9 @@ const WRStartHandStacks = ({ table }) => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
             {snapshots.map((snapshot, idx) => {
               const timeLabel = snapshot.ts ? new Date(snapshot.ts).toLocaleTimeString() : ''
+              const bigBlindLabel = typeof snapshot.bigBlind === 'number'
+                ? `$${formatAmount(snapshot.bigBlind)}`
+                : null
               return (
                 <div key={`${snapshot.hand || idx}-${snapshot.ts || idx}`} style={{
                   border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -263,30 +298,51 @@ const WRStartHandStacks = ({ table }) => {
                     justifyContent: 'space-between',
                     fontSize: '0.8rem',
                     color: '#9cb3ff',
-                    marginBottom: '0.35rem'
+                    marginBottom: '0.35rem',
+                    flexWrap: 'wrap',
+                    gap: '0.35rem'
                   }}>
                     <span>Hand {snapshot.hand || '—'}</span>
-                    <span>{timeLabel}</span>
+                    {bigBlindLabel && (
+                      <span style={{ color: '#ffd166' }}>BB {bigBlindLabel}</span>
+                    )}
+                    <span style={{ color: '#b7c6ff' }}>{timeLabel}</span>
                   </div>
                   <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
                     gap: '0.35rem'
                   }}>
-                    {(snapshot.stacks || []).map((seat, seatIdx) => (
-                      <div key={`${snapshot.hand || idx}-seat-${seat?.seatId || seatIdx}`} style={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                        borderRadius: 4,
-                        padding: '0.4rem'
-                      }}>
-                        <div style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: '0.15rem' }}>
-                          Seat {seat?.seatId || seatIdx + 1} · {playerLabel(seat)}
+                    {(snapshot.stacks || []).map((seat, seatIdx) => {
+                      const seatStack = Number(seat?.stack || 0)
+                      const bbValue = snapshot && typeof snapshot.bigBlind === 'number' && snapshot.bigBlind > 0
+                        ? snapshot.bigBlind
+                        : null
+                      const stackInBB = bbValue ? seatStack / bbValue : null
+                      const bbDisplay = stackInBB != null ? formatBigBlindValue(stackInBB) : null
+                      return (
+                        <div key={`${snapshot.hand || idx}-seat-${seat?.seatId || seatIdx}`} style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                          borderRadius: 4,
+                          padding: '0.4rem'
+                        }}>
+                          <div style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: '0.15rem' }}>
+                            Seat {seat?.seatId || seatIdx + 1} · {playerLabel(seat)}
+                          </div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fefefe' }}>
+                            {bbDisplay != null ? (
+                              <span>
+                                {bbDisplay} BB <span style={{ color: '#7af5c9', fontSize: '0.8rem' }}>
+                                  (${formatAmount(seatStack)})
+                                </span>
+                              </span>
+                            ) : (
+                              <>${formatAmount(seatStack)}</>
+                            )}
+                          </div>
                         </div>
-                        <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fefefe' }}>
-                          ${formatAmount(seat?.stack)}
-                        </div>
-                      </div>
-                    ))} 
+                      )
+                    })} 
                   </div>
                 </div>
               )

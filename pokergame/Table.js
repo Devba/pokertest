@@ -292,9 +292,11 @@ class Table {
   }
 
   captureStartHandStacks() {
+    const bigBlindValue = this.getSnapshotBigBlindValue();
     const snapshot = {
       ts: Date.now(),
       hand: this.handSequence,
+      bigBlind: bigBlindValue,
       stacks: this.buildSeatStackSnapshot(),
     };
     this.handStackSnapshots.push(snapshot);
@@ -303,6 +305,17 @@ class Table {
         -MAX_HAND_STACK_SNAPSHOTS,
       );
     }
+  }
+
+  getSnapshotBigBlindValue() {
+    if (typeof this.getCurrentBlinds === 'function') {
+      const blinds = this.getCurrentBlinds();
+      if (blinds && typeof blinds.bigBlind === 'number') {
+        return +blinds.bigBlind.toFixed(2);
+      }
+    }
+    const computed = this.minBet ? this.minBet * 2 : 0;
+    return +computed.toFixed(2);
   }
 
   buildSeatStackSnapshot() {
