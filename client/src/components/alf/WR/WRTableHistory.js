@@ -54,7 +54,7 @@ const WRTableHistory = ({ table }) => {
 
   return (
     <div style={{ marginTop: '1rem', backgroundColor: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: 8 }}>
-      <div style={{ marginBottom: '0.5rem', color: '#ccc', fontWeight: 600 }}>Table History</div>
+      <div style={{ marginBottom: '0.5rem', color: '#ccc', fontWeight: 600 }}>Current hand</div>
       <div style={{ display: 'grid', gap: '0.5rem' }}>
         {history.map((entry, idx) => {
           const time = entry.ts ? new Date(entry.ts).toLocaleTimeString() : ''

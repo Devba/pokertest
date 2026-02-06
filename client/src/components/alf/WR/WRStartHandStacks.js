@@ -41,20 +41,38 @@ const WRStartHandStacks = ({ table }) => {
   const tableId = table?.id
   const chartRef = useRef(null)
   const chartInstanceRef = useRef(null)
+  const latestHandRef = useRef(null)
   const [localSnapshots, setLocalSnapshots] = useState(() =>
     Array.isArray(table?.handStackSnapshots) ? table.handStackSnapshots : []
   )
+  const [showSnapshotList, setShowSnapshotList] = useState(false)
 
   useEffect(() => {
-    setLocalSnapshots(Array.isArray(table?.handStackSnapshots) ? table.handStackSnapshots : [])
+    const initialSnapshots = Array.isArray(table?.handStackSnapshots)
+      ? table.handStackSnapshots
+      : []
+    setLocalSnapshots(initialSnapshots)
+    const lastHand = initialSnapshots.length
+      ? initialSnapshots[initialSnapshots.length - 1].hand || initialSnapshots.length
+      : null
+    latestHandRef.current = lastHand
   }, [tableId, table?.handStackSnapshots])
 
   useEffect(() => {
     if (!socket || !tableId) return undefined
 
     const handler = ({ table: updatedTable }) => {
-      if (updatedTable && updatedTable.id === tableId && Array.isArray(updatedTable.handStackSnapshots)) {
-        setLocalSnapshots(updatedTable.handStackSnapshots.slice())
+      if (!updatedTable || updatedTable.id !== tableId) return
+      if (!Array.isArray(updatedTable.handStackSnapshots)) return
+
+      const incomingSnapshots = updatedTable.handStackSnapshots
+      const latestIncoming = incomingSnapshots.length
+        ? incomingSnapshots[incomingSnapshots.length - 1].hand || incomingSnapshots.length
+        : null
+
+      if (latestIncoming && latestIncoming !== latestHandRef.current) {
+        latestHandRef.current = latestIncoming
+        setLocalSnapshots(incomingSnapshots.slice())
       }
     }
 
@@ -203,49 +221,78 @@ const WRStartHandStacks = ({ table }) => {
           </div>
         )}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {snapshots.map((snapshot, idx) => {
-          const timeLabel = snapshot.ts ? new Date(snapshot.ts).toLocaleTimeString() : ''
-          return (
-            <div key={`${snapshot.hand || idx}-${snapshot.ts || idx}`} style={{
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: 6,
-              padding: '0.5rem',
-              backgroundColor: 'rgba(255, 255, 255, 0.02)'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontSize: '0.8rem',
-                color: '#9cb3ff',
-                marginBottom: '0.35rem'
-              }}>
-                <span>Hand {snapshot.hand || '—'}</span>
-                <span>{timeLabel}</span>
-              </div>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                gap: '0.35rem'
-              }}>
-                {(snapshot.stacks || []).map((seat, seatIdx) => (
-                  <div key={`${snapshot.hand || idx}-seat-${seat?.seatId || seatIdx}`} style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                    borderRadius: 4,
-                    padding: '0.4rem'
+      <div style={{
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        borderRadius: 8,
+        padding: '0.5rem',
+        backgroundColor: 'rgba(255, 255, 255, 0.01)'
+      }}>
+        <button
+          type="button"
+          onClick={() => setShowSnapshotList((prev) => !prev)}
+          style={{
+            width: '100%',
+            background: 'transparent',
+            border: 'none',
+            color: '#e4e7ff',
+            fontSize: '0.9rem',
+            fontWeight: 600,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            cursor: 'pointer',
+            padding: '0.35rem 0.25rem'
+          }}
+        >
+          <span>Snapshot Details</span>
+          <span style={{ fontSize: '1.05rem' }}>{showSnapshotList ? '▾' : '▸'}</span>
+        </button>
+        {showSnapshotList && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+            {snapshots.map((snapshot, idx) => {
+              const timeLabel = snapshot.ts ? new Date(snapshot.ts).toLocaleTimeString() : ''
+              return (
+                <div key={`${snapshot.hand || idx}-${snapshot.ts || idx}`} style={{
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: 6,
+                  padding: '0.5rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.02)'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '0.8rem',
+                    color: '#9cb3ff',
+                    marginBottom: '0.35rem'
                   }}>
-                    <div style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: '0.15rem' }}>
-                      Seat {seat?.seatId || seatIdx + 1} · {playerLabel(seat)}
-                    </div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fefefe' }}>
-                      ${formatAmount(seat?.stack)}
-                    </div>
+                    <span>Hand {snapshot.hand || '—'}</span>
+                    <span>{timeLabel}</span>
                   </div>
-                ))}
-              </div>
-            </div>
-          )
-        })}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                    gap: '0.35rem'
+                  }}>
+                    {(snapshot.stacks || []).map((seat, seatIdx) => (
+                      <div key={`${snapshot.hand || idx}-seat-${seat?.seatId || seatIdx}`} style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                        borderRadius: 4,
+                        padding: '0.4rem'
+                      }}>
+                        <div style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: '0.15rem' }}>
+                          Seat {seat?.seatId || seatIdx + 1} · {playerLabel(seat)}
+                        </div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fefefe' }}>
+                          ${formatAmount(seat?.stack)}
+                        </div>
+                      </div>
+                    ))} 
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )

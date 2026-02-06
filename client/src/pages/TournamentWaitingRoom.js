@@ -261,18 +261,21 @@ const TournamentWaitingRoom = () => {
         )}
 
          <div style={{ marginTop: '0.75rem' }}>
-                      <ZipPanel title="Table Seats" defaultCollapsed={false}>
-                        <WRPlayersTablePanel table={tournament.tables && tournament.tables[0]} walletAddress={walletAddress} />
-                      </ZipPanel>
-                      {/* Table history shown under seats panel */}
-                      <div style={{ marginTop: '0.5rem' }}>
-                        <WRTableHistory table={tournament.tables && tournament.tables[0]} />
-                      </div>
+
                       <div style={{ marginTop: '0.5rem' }}>
                         <WRStartHandStacks table={tournament.tables && tournament.tables[0]} />
                       </div>
+                      <ZipPanel title="Table Seats" defaultCollapsed={false}>
+                        <WRPlayersTablePanel table={tournament.tables && tournament.tables[0]} walletAddress={walletAddress} />
+                      </ZipPanel>
+                    
+                     
+                      
+                       <div style={{ marginTop: '0.5rem' }}>
+                        <WRTableHistory table={tournament.tables && tournament.tables[0]} />
+                      </div>
                     </div>
-                  )}
+                
 
      
         {/* <WRRegisteredPlayers players={tournament.registeredPlayers} status={tournament.status} walletAddress={walletAddress} /> */}
