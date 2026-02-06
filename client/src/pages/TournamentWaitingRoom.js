@@ -28,6 +28,7 @@ const TournamentWaitingRoom = () => {
   const { alfTPmode, setAlfMode } = useContext(gameContext)
   const [showDebug, setShowDebug] = useState(false)
   const [showTablesPanel, setShowTablesPanel] = useState(false)
+  const [activeTableTab, setActiveTableTab] = useState('seats')
   const primaryTableId = tournament?.tables?.[0]?.id || null
 
 /* useEffect(() => {
@@ -199,6 +200,11 @@ const TournamentWaitingRoom = () => {
   const isUserRegistered = tournament.registeredPlayers?.some(p => p.id === walletAddress || 
     p.walletAddress === walletAddress)
 
+  const tableTabs = [
+    { key: 'seats', label: 'Players live Ranking' },
+    { key: 'history', label: 'Current hand' }
+  ]
+
   return (
     <Container fullHeight style={{ padding: '2rem', backgroundColor: '#0a0e27' }}>
       <div style={{ 
@@ -280,20 +286,59 @@ const TournamentWaitingRoom = () => {
         )}
 
          <div style={{ marginTop: '0.75rem' }}>
+            <div style={{ marginTop: '0.5rem' }}>
+              <WRStartHandStacks table={tournament.tables && tournament.tables[0]} />
+            </div>
 
-                      <div style={{ marginTop: '0.5rem' }}>
-                        <WRStartHandStacks table={tournament.tables && tournament.tables[0]} />
-                      </div>
-                      <ZipPanel title="Table Seats" defaultCollapsed={false}>
-                        <WRPlayersTablePanel table={tournament.tables && tournament.tables[0]} walletAddress={walletAddress} />
-                      </ZipPanel>
-                    
-                     
-                      
-                       <div style={{ marginTop: '0.5rem' }}>
-                        <WRTableHistory table={tournament.tables && tournament.tables[0]} />
-                      </div>
-                    </div>
+            <div style={{
+              marginTop: '1rem',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '8px',
+              padding: '0.5rem'
+            }}>
+              <ul style={{
+                display: 'flex',
+                listStyle: 'none',
+                margin: '0 0 0.5rem',
+                padding: 0,
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                {tableTabs.map(({ key, label }) => {
+                  const isActive = activeTableTab === key
+                  return (
+                    <li
+                      key={key}
+                      onClick={() => setActiveTableTab(key)}
+                      style={{
+                        flex: 1,
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        padding: '0.5rem 0.75rem',
+                        color: isActive ? '#fff900' : '#ccc',
+                        borderBottom: isActive ? '2px solid #fff900' : '2px solid transparent',
+                        fontWeight: isActive ? 600 : 400,
+                        transition: 'color 0.2s ease, border-color 0.2s ease'
+                      }}
+                    >
+                      {label}
+                    </li>
+                  )
+                })}
+              </ul>
+
+              <div style={{ marginTop: '0.75rem' }}>
+                {activeTableTab === 'seats' ? (
+                  <ZipPanel title="Table Seats" defaultCollapsed={false}>
+                    <WRPlayersTablePanel table={tournament.tables && tournament.tables[0]} walletAddress={walletAddress} />
+                  </ZipPanel>
+                ) : (
+                  <div style={{ padding: '0.25rem 0.25rem 0.75rem' }}>
+                    <WRTableHistory table={tournament.tables && tournament.tables[0]} />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
                 
 
      
