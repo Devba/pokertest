@@ -5,6 +5,8 @@ const Seat = require('./Seat');
 const Deck = require('./Deck');
 const SidePot = require('./SidePot');
 
+const MAX_HAND_STACK_SNAPSHOTS = 30;
+
 class Table {
   constructor(id, name, limit, maxPlayers = 5) {
     this.id = id;
@@ -29,6 +31,8 @@ class Table {
     this.wentToShowdown = false;
     this.sidePots = [];
     this.history = [];
+    this.handStackSnapshots = [];
+    this.handSequence = 0;
   }
 
   initSeats(maxPlayers) {
@@ -152,6 +156,8 @@ class Table {
 
     if (this.activePlayers().length > 1) {
       this.button = this.nextActivePlayer(this.button, 1);
+      this.handSequence += 1;
+      this.captureStartHandStacks();
       this.setTurn();
       this.dealPreflop();
       // get the preflop stacks
@@ -283,6 +289,38 @@ class Table {
       turn: this.turn,
       winMessages: this.winMessages.slice(),
     });
+  }
+
+  captureStartHandStacks() {
+    const snapshot = {
+      ts: Date.now(),
+      hand: this.handSequence,
+      stacks: this.buildSeatStackSnapshot(),
+    };
+    this.handStackSnapshots.push(snapshot);
+    if (this.handStackSnapshots.length > MAX_HAND_STACK_SNAPSHOTS) {
+      this.handStackSnapshots = this.handStackSnapshots.slice(
+        -MAX_HAND_STACK_SNAPSHOTS,
+      );
+    }
+  }
+
+  buildSeatStackSnapshot() {
+    const snapshot = [];
+    for (let i = 1; i <= this.maxPlayers; i++) {
+      const seat = this.seats[i];
+      snapshot.push({
+        seatId: i,
+        stack: seat ? +seat.stack.toFixed(2) : 0,
+        player: seat
+          ? {
+              id: seat.player.id,
+              username: seat.player.name,
+            }
+          : null,
+      });
+    }
+    return snapshot;
   }
   cleanSeatsForHistory() {
     const cleanSeats = JSON.parse(JSON.stringify(this.seats));

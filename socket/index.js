@@ -299,7 +299,10 @@ const init = (socket, io) => {
         tables: tournament.tables.map(table => ({
           id: table.id,
           seats: table.seats,
-          history: Array.isArray(table.history) ? table.history.slice(-20) : []
+          history: Array.isArray(table.history) ? table.history.slice(-20) : [],
+          handStackSnapshots: Array.isArray(table.handStackSnapshots)
+            ? table.handStackSnapshots.slice(-10)
+            : []
         }))
       });
     } catch (error) {

@@ -15,6 +15,7 @@ import WRActionButtons from '../components/alf/WR/WRActionButtons'
 import WRConnectionIndicator from '../components/alf/WR/WRConnectionIndicator'
 import ZipPanel from '../components/alf/WR/ZipPanel'
 import WRTableHistory from '../components/alf/WR/WRTableHistory'
+import WRStartHandStacks from '../components/alf/WR/WRStartHandStacks'
 
 const TournamentWaitingRoom = () => {
   const navigate = useNavigate()
@@ -266,6 +267,9 @@ const TournamentWaitingRoom = () => {
                       {/* Table history shown under seats panel */}
                       <div style={{ marginTop: '0.5rem' }}>
                         <WRTableHistory table={tournament.tables && tournament.tables[0]} />
+                      </div>
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <WRStartHandStacks table={tournament.tables && tournament.tables[0]} />
                       </div>
                     </div>
                   )}
