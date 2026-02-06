@@ -298,7 +298,8 @@ const init = (socket, io) => {
         blindStructure: tournament.blindStructure,
         tables: tournament.tables.map(table => ({
           id: table.id,
-          seats: table.seats
+          seats: table.seats,
+          history: Array.isArray(table.history) ? table.history.slice(-20) : []
         }))
       });
     } catch (error) {

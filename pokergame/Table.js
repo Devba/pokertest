@@ -273,6 +273,7 @@ class Table {
   }
   updateHistory() {
     this.history.push({
+      ts: Date.now(),
       pot: +this.pot.toFixed(2),
       mainPot: +this.mainPot.toFixed(2),
       sidePots: this.sidePots.slice(),
