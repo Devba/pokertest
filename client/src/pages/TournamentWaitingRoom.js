@@ -14,6 +14,7 @@ import TournamentInfoGrid from '../components/alf/WR/WRTournamentInfoGrid'
 import WRActionButtons from '../components/alf/WR/WRActionButtons'
 import WRConnectionIndicator from '../components/alf/WR/WRConnectionIndicator'
 import ZipPanel from '../components/alf/WR/ZipPanel'
+import WRTableHistory from '../components/alf/WR/WRTableHistory'
 
 const TournamentWaitingRoom = () => {
   const navigate = useNavigate()
@@ -50,7 +51,7 @@ const TournamentWaitingRoom = () => {
       socket.on('TOURNAMENT_UPDATE', (info) => {
         console.log('Tournament update:', info)
         if (info.id === parseInt(tournamentId)) {
-         // setTournament(info)
+         // setTournament(info) , lo borramos pq hace fallar la tabla de jugadores al recibir actualizaciones frecuentes (stack updates) y el componente no puede seguir el ritmo, lo que genera errores. En su lugar, confiamos en los eventos específicos de actualización (ej: BOTS_ADDED) para mostrar cambios relevantes, y evitamos actualizar el estado con cada cambio menor.
           
           // If tournament started, redirect to play page
           //por ahora lo anulamos
@@ -262,6 +263,10 @@ const TournamentWaitingRoom = () => {
                       <ZipPanel title="Table Seats" defaultCollapsed={false}>
                         <WRPlayersTablePanel table={tournament.tables && tournament.tables[0]} walletAddress={walletAddress} />
                       </ZipPanel>
+                      {/* Table history shown under seats panel */}
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <WRTableHistory table={tournament.tables && tournament.tables[0]} />
+                      </div>
                     </div>
                   )}
 

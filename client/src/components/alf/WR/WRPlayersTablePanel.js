@@ -114,7 +114,8 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
             const changed = changedSeats.includes(String(sKey))
             const glowStyle = changed ? { animation: `glowAnim ${ANIM_DURATION}ms ease`, color: '#fff900' } : {}
             const stackVal = seat.stack ?? seat.chips
-            const stackDisplay = (stackVal === undefined || stackVal === null) ? '—' : Number(stackVal).toFixed(2)
+            const formatNumber = (v) => Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            const stackDisplay = (stackVal === undefined || stackVal === null) ? '—' : formatNumber(stackVal)
             // compute previous stack (from the snapshot stored in applySeatUpdate)
             const prevSeat = (prevSeatValuesRef.current || {})[sKey] || {}
             const prevValRaw = prevSeat.stack ?? prevSeat.chips
@@ -138,16 +139,18 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
                   <div>
                     <div>{player.name || player.username || player.id || 'unknown'}</div>
                     <div style={{ color: '#888', fontSize: '0.85rem' }}>{player.walletAddress || ''}</div>
-                    {showDiff && (
-                      <div style={{ fontSize: '0.85rem', color: diffNum > 0 ? '#5dd67a' : '#ff6b6b', marginTop: '2px' }}>
-                        {diffNum > 0 ? '+' : ''}{diffNum.toFixed(2)}
-                      </div>
-                    )}
+                            {showDiff && (
+                              <div style={{ fontSize: '0.85rem', color: diffNum > 0 ? '#5dd67a' : '#ff6b6b', marginTop: '2px' }}>
+                                {diffNum > 0 ? '+' : ''}{formatNumber(diffNum)}
+                              </div>
+                            )}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', color: '#ccc' }}>
                   <div style={{ fontWeight: '600' }}>{stackDisplay}</div>
-                  <div style={{ fontSize: '0.85rem', color: '#aaa' }}>{seat.sittingOut ? 'Sitting Out' : 'Sitting In'}</div>
+                  {(seat.sittingOut === true || seat.sittingOut === false) && (
+                    <div style={{ fontSize: '0.85rem', color: '#aaa' }}>{seat.sittingOut ? 'Sitting Out' : 'Sitting In'}</div>
+                  )}
                 </div>
               </div>
             )
