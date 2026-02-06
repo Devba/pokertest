@@ -9,6 +9,7 @@ import './TournamentLobby.scss'
 import { showCreateTournamentForm } from '../components/alf/CreateTourn';
 import TournamentInitialBar from '../components/alf/tournamentInitialBar';
 import TournamentList from '../components/alf/TournamentList';
+import FondoMatrix from '../components/alf/matrix/fondo'
 
 
 const TournamentLobby = () => {
@@ -391,6 +392,8 @@ useEffect(() => {
   return (
     <Container fullHeight style={{ backgroundColor: '#1a1a2e', color: 'white' }}>
       <div style={{ padding: '0 2rem 2rem 2rem', maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
+        <FondoMatrix style={{ zIndex: 0, opacity: 0.12 }} />
+        <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Header */}
         <div style={{ 
           display: 'flex', 
@@ -528,7 +531,7 @@ useEffect(() => {
         )}
 
         {/* Selected Tournament Details Panel */}
-       
+         
           {selectedTournament && (
             <TournamentInitialBar
               selectedTournament={selectedTournament}
@@ -582,6 +585,7 @@ useEffect(() => {
             />
           )}
 
+        </div>
       </div>
     </Container>
   )

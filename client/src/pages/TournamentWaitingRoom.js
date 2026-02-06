@@ -50,7 +50,7 @@ const TournamentWaitingRoom = () => {
       socket.on('TOURNAMENT_UPDATE', (info) => {
         console.log('Tournament update:', info)
         if (info.id === parseInt(tournamentId)) {
-          setTournament(info)
+         // setTournament(info)
           
           // If tournament started, redirect to play page
           //por ahora lo anulamos
