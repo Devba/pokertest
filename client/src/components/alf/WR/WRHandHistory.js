@@ -43,8 +43,11 @@ const WRHandHistory = ({ table }) => {
         setLocalHistory(updatedTable.history.slice(-MAX_HISTORY))
       }
       if (message) {
+        const normalizedMessage = (message || '').trim().toLowerCase()
+        const isNewHandMessage = normalizedMessage.includes('new hand')
         setTableMessages((prev) => {
-          const next = [...prev, {
+          const base = isNewHandMessage ? [] : prev
+          const next = [...base, {
             ts: timestamp || Date.now(),
             text: message,
             from: from || 'Dealer'
@@ -90,6 +93,7 @@ const WRHandHistory = ({ table }) => {
       <div style={{ marginBottom: '0.5rem', color: '#ccc', fontWeight: 600 }}>Current hand</div>
       <div style={{ display: 'grid', gap: '0.5rem' }}>
         {combinedEntries.map((entry, idx) => {
+          const rowKey = `${entry.key || entry.type}-${idx}`
           if (entry.type === 'hand') {
             const hand = entry.data
             const time = hand.ts ? new Date(hand.ts).toLocaleTimeString() : ''
@@ -98,7 +102,7 @@ const WRHandHistory = ({ table }) => {
             const message = hand.winMessages?.length ? hand.winMessages[hand.winMessages.length - 1] : ''
 
             return (
-              <div key={entry.key || `${hand.ts || idx}-hand`} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', color: '#ddd', alignItems: 'center' }}>
+              <div key={rowKey} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', color: '#ddd', alignItems: 'center' }}>
                 <div style={{ color: '#aaa', fontSize: '0.8rem', minWidth: '70px' }}>{time}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.85rem', color: '#f1f1f1' }}>{stage} · Pot {formatAmount(hand.pot)}</div>
@@ -114,7 +118,7 @@ const WRHandHistory = ({ table }) => {
           const msg = entry.data
           const time = msg.ts ? new Date(msg.ts).toLocaleTimeString() : ''
           return (
-            <div key={entry.key || `${msg.ts || idx}-msg`} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', color: '#ddd', alignItems: 'center' }}>
+            <div key={rowKey} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', color: '#ddd', alignItems: 'center' }}>
               <div style={{ color: '#aaa', fontSize: '0.8rem', minWidth: '70px' }}>{time}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '0.85rem', color: '#5dd67a' }}>{msg.from || 'Dealer'}</div>
