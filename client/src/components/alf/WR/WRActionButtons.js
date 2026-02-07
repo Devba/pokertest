@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import Button from '../../buttons/Button'
 import Swal from 'sweetalert2'
 
-const WRActionButtons = ({ tournamentStatus, socket, tournamentId, handleLeave, navigate }) => {
+const WRActionButtons = ({ tournamentStatus, registrationOpen, socket, tournamentId, handleLeave, navigate }) => {
   return (
     <div style={{
       display: 'flex',
@@ -92,7 +92,7 @@ const WRActionButtons = ({ tournamentStatus, socket, tournamentId, handleLeave, 
           Watch
         </Button>
       )}
-      {tournamentStatus === 'live' && (
+      {false && tournamentStatus === 'live' && registrationOpen && (
         <Button onClick={() => navigate(`/tournament/${tournamentId}?mode=player`)}>
           Play
         </Button>
@@ -103,10 +103,15 @@ const WRActionButtons = ({ tournamentStatus, socket, tournamentId, handleLeave, 
 
 WRActionButtons.propTypes = {
   tournamentStatus: PropTypes.string,
+  registrationOpen: PropTypes.bool,
   socket: PropTypes.object,
   tournamentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   handleLeave: PropTypes.func,
   navigate: PropTypes.func
+}
+
+WRActionButtons.defaultProps = {
+  registrationOpen: false
 }
 
 export default WRActionButtons

@@ -14,7 +14,7 @@ import TournamentInfoGrid from '../components/alf/WR/WRTournamentInfoGrid'
 import WRActionButtons from '../components/alf/WR/WRActionButtons'
 import WRConnectionIndicator from '../components/alf/WR/WRConnectionIndicator'
 import ZipPanel from '../components/alf/WR/ZipPanel'
-import WRTableHistory from '../components/alf/WR/WRTableHistory'
+import WRHandHistory from '../components/alf/WR/WRHandHistory'
 import WRStartHandStacks from '../components/alf/WR/WRStartHandStacks'
 import { CS_TABLE_SUBSCRIBE, CS_TABLE_UNSUBSCRIBE } from '../pokergame/actions'
 
@@ -199,6 +199,8 @@ const TournamentWaitingRoom = () => {
 
   const isUserRegistered = tournament.registeredPlayers?.some(p => p.id === walletAddress || 
     p.walletAddress === walletAddress)
+  const registrationStillOpen = tournament.status === 'registering' ||
+    (tournament.registrationEndsAt && new Date(tournament.registrationEndsAt) > new Date())
 
   const tableTabs = [
     { key: 'seats', label: 'Players live Ranking' },
@@ -249,6 +251,7 @@ const TournamentWaitingRoom = () => {
         </div>
         <WRActionButtons
           tournamentStatus={tournament.status}
+          registrationOpen={registrationStillOpen}
           socket={socket}
           tournamentId={tournamentId}
           handleLeave={handleLeave}
@@ -333,7 +336,7 @@ const TournamentWaitingRoom = () => {
                   </ZipPanel>
                 ) : (
                   <div style={{ padding: '0.25rem 0.25rem 0.75rem' }}>
-                    <WRTableHistory table={tournament.tables && tournament.tables[0]} />
+                    <WRHandHistory table={tournament.tables && tournament.tables[0]} />
                   </div>
                 )}
               </div>

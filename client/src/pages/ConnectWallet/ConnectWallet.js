@@ -11,7 +11,7 @@ import { CS_FETCH_LOBBY_INFO } from '../../pokergame/actions'
 import './ConnectWallet.scss'
 
 
-//import { set } from 'core-js/core/dict';
+
 
 const ConnectWallet = () => {
   const { setWalletAddress } = useContext(globalContext)
