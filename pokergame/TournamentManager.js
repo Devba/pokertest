@@ -27,7 +27,7 @@ class TournamentManager {
       registeredPlayers: [],
       tables: [],
       eliminatedPlayers: [],
-      prizePool: 0,
+      prizePool: config.prizePool || 0,
       structure: 'No Limit Hold\'em',
       createdAt: new Date(),
       startTime: this.calculateStartTime(config.startTime),

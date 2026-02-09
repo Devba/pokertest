@@ -12,11 +12,15 @@ export async function showCreateTournamentForm(walletAddress) {
             <input id="tournament-name" class="swal2-input" type="text" placeholder="My Tournament" style="width: 100%; margin: 0;" />
           </div>
           <div>
-            <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Buy-in Amount ($)</label>
-            <input id="buy-in" class="swal2-input" type="number" placeholder="0" min="0" style="width: 100%; margin: 0;" />
+            <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Prize Pool ($)</label>
+            <input id="prize-pool" class="swal2-input" type="number" placeholder="0" min="0" style="width: 100%; margin: 0;" />
           </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div>
+            <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Buy-in Amount ($)</label>
+            <input id="buy-in" class="swal2-input" type="number" placeholder="0" min="0" style="width: 100%; margin: 0;" />
+          </div>
           <div>
             <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Max Players</label>
             <select id="max-players" class="swal2-input" style="width: 100%; margin: 0;">
@@ -58,30 +62,32 @@ export async function showCreateTournamentForm(walletAddress) {
             </select>
           </div>
         </div>
-        <div style="margin-bottom: 1rem;">
-          <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Starting Blind Level</label>
-          <select id="starting-blind-level" class="swal2-input" style="width: 100%; margin: 0;">
-            <option value="1" selected>Level 1</option>
-            <option value="2">Level 2</option>
-            <option value="3">Level 3</option>
-            <option value="4">Level 4</option>
-            <option value="5">Level 5</option>
-            <option value="6">Level 6</option>
-            <option value="7">Level 7</option>
-            <option value="8">Level 8</option>
-            <option value="9">Level 9</option>
-            <option value="10">Level 10</option>
-          </select>
-        </div>
-        <div style="margin-bottom: 1rem;">
-          <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Start Time</label>
-          <select id="start-time" class="swal2-input" style="width: 100%; margin: 0;">
-            <option value="immediate" selected>Start Immediately</option>
-            <option value="5">In 5 minutes</option>
-            <option value="15">In 15 minutes</option>
-            <option value="30">In 30 minutes</option>
-            <option value="60">In 1 hour</option>
-          </select>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div>
+            <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Starting Blind Level</label>
+            <select id="starting-blind-level" class="swal2-input" style="width: 100%; margin: 0;">
+              <option value="1" selected>Level 1</option>
+              <option value="2">Level 2</option>
+              <option value="3">Level 3</option>
+              <option value="4">Level 4</option>
+              <option value="5">Level 5</option>
+              <option value="6">Level 6</option>
+              <option value="7">Level 7</option>
+              <option value="8">Level 8</option>
+              <option value="9">Level 9</option>
+              <option value="10">Level 10</option>
+            </select>
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Start Time</label>
+            <select id="start-time" class="swal2-input" style="width: 100%; margin: 0;">
+              <option value="immediate" selected>Start Immediately</option>
+              <option value="5">In 5 minutes</option>
+              <option value="15">In 15 minutes</option>
+              <option value="30">In 30 minutes</option>
+              <option value="60">In 1 hour</option>
+            </select>
+          </div>
         </div>
         <div style="margin-bottom: 1rem;">
           <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">
@@ -116,6 +122,7 @@ export async function showCreateTournamentForm(walletAddress) {
     },
     preConfirm: () => {
       const name = document.getElementById('tournament-name').value;
+      const prizePool = document.getElementById('prize-pool').value;
       const buyIn = document.getElementById('buy-in').value;
       const maxPlayers = document.getElementById('max-players').value;
       const startingChips = document.getElementById('starting-chips').value;
@@ -133,6 +140,7 @@ export async function showCreateTournamentForm(walletAddress) {
 
       return {
         name,
+        prizePool: parseFloat(prizePool) || 0,
         buyIn: parseFloat(buyIn) || 0,
         maxPlayers: parseInt(maxPlayers),
         startingChips: parseInt(startingChips),
