@@ -298,7 +298,7 @@ class BotManager {
             this.broadcastToTable(table, `${winnerName} wins the tournament!`);
             this.tournamentManager.completeTournament(table.tournamentId, winnerSeat.player);
 
-            // Finish the tournament if possible
+            // Finish the tournament if possible , no existe el método finishTournament en TournamentManager pero se puede implementar para marcar el torneo como terminado y distribuir premios
             if (table.isTournament && this.tournamentManager && typeof this.tournamentManager.finishTournament === 'function') {
               this.tournamentManager.finishTournament(table.tournamentId, winnerSeat.player);
             }

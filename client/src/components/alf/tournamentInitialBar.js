@@ -51,7 +51,7 @@ const TournamentInitialBar = ({
                     small 
                     onClick={() => navigate(`/tournament/${selectedTournament.id}?mode=player`)}
                   >
-                    Join Table
+                    Join Table as player
                   </Button>
                 <Button 
                   small 
@@ -112,7 +112,7 @@ const TournamentInitialBar = ({
                     small 
                     onClick={() => navigate(`/tournament/${selectedTournament.id}?mode=player`)}
                   >
-                    Join Table
+                    Join Table as player
                   </Button>
                 ) : (
                   <Button 

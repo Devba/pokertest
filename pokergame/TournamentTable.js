@@ -323,6 +323,12 @@ findPlayerById(i) {
       };
     }
   }
+
+  activePlayers() {
+    return Object.values(this.seats).filter(
+      (seat) => seat != null //&& !seat.sittingOut,
+    );
+  }
 }
 
 module.exports = TournamentTable;

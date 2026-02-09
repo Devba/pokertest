@@ -295,7 +295,7 @@ useEffect(() => {
             icon: 'success',
             title: 'Tournament Starting!',
             text: 'The tournament is now starting. Click OK to join your table.',
-            confirmButtonText: 'Join Table'
+            confirmButtonText: 'Join Table as player'
           }).then((swalResult) => {
             if (swalResult.isConfirmed && tournamentId) {
               // Navigate to tournament play
