@@ -88,22 +88,21 @@ class TournamentTable extends Table {
       this.collectAntes(currentBlinds.ante);
     }
 
-    // Post blinds
-    this.seats[this.smallBlind].placeBlind(currentBlinds.smallBlind);
-    this.seats[this.bigBlind].placeBlind(currentBlinds.bigBlind);
+    // Post blinds - use actual amounts in case player has less than blind amount
+    const actualSmallBlind = this.seats[this.smallBlind].placeBlind(currentBlinds.smallBlind);
+    const actualBigBlind = this.seats[this.bigBlind].placeBlind(currentBlinds.bigBlind);
 
-    this.pot += currentBlinds.smallBlind + currentBlinds.bigBlind;
-    this.callAmount = currentBlinds.bigBlind;
-    this.minRaise = currentBlinds.bigBlind * 2;
+    this.pot += actualSmallBlind + actualBigBlind;
+    this.callAmount = actualBigBlind;
+    this.minRaise = actualBigBlind * 2;
   }
 
   collectAntes(anteAmount) {
     for (let i = 1; i <= this.maxPlayers; i++) {
       const seat = this.seats[i];
       if (seat && !seat.sittingOut) {
-        const ante = Math.min(anteAmount, seat.stack);
-        seat.placeAnte(ante);
-        this.pot += ante;
+        const actualAnte = seat.placeAnte(anteAmount);
+        this.pot += actualAnte;
       }
     }
   }

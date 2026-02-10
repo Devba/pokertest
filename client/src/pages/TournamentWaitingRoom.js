@@ -16,6 +16,7 @@ import WRConnectionIndicator from '../components/alf/WR/WRConnectionIndicator'
 import ZipPanel from '../components/alf/WR/ZipPanel'
 import WRHandHistory from '../components/alf/WR/WRHandHistory'
 import WRStartHandStacks from '../components/alf/WR/WRStartHandStacks'
+import WRPayouts from '../components/alf/WR/WRPayouts'
 import { CS_TABLE_SUBSCRIBE, CS_TABLE_UNSUBSCRIBE } from '../pokergame/actions'
 
 const TournamentWaitingRoom = () => {
@@ -347,6 +348,8 @@ const TournamentWaitingRoom = () => {
      
         {/* <WRRegisteredPlayers players={tournament.registeredPlayers} status={tournament.status} walletAddress={walletAddress} /> */}
 
+        {/* Payouts Panel */}
+        <WRPayouts tournament={tournament} walletAddress={walletAddress} />
 
       {/* DEBUG: Show value of 'p' if available 
               <div style={{ marginBottom: '1rem' }}>

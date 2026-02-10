@@ -363,9 +363,9 @@ class TournamentManager {
     const prizePool = tournament.prizePool;
     const payouts = {};
 
-    if (totalPlayers <= 10) {
+    if (totalPlayers <= 2) {
       payouts[1] = prizePool;
-    } else if (totalPlayers <= 50) {
+    } else if (totalPlayers <= 5) {
       payouts[1] = prizePool * 0.50;
       payouts[2] = prizePool * 0.30;
       payouts[3] = prizePool * 0.20;

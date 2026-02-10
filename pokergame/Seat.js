@@ -38,13 +38,17 @@ class Seat {
     this.lastAction = CS_RAISE;
   }
   placeBlind(amount) {
-    this.bet = amount;
-    this.stack -= amount;
+    const actualAmount = Math.min(amount, this.stack);
+    this.bet = actualAmount;
+    this.stack -= actualAmount;
+    return actualAmount;
   }
 
   placeAnte(amount) {
-    this.bet += amount;
-    this.stack -= amount;
+    const actualAmount = Math.min(amount, this.stack);
+    this.bet += actualAmount;
+    this.stack -= actualAmount;
+    return actualAmount;
   }
 
   callRaise(amount) {

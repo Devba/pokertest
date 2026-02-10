@@ -139,15 +139,17 @@ const WRPlayersTablePanel = ({ table, walletAddress }) => {
                 ...glowStyle
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ color: '#aaa', fontSize: '0.875rem', minWidth: '36px' }}>#{sKey}</span>
+                  <span style={{ color: '#aaa', fontSize: '0.975rem', minWidth: '36px' }}>#{sKey}</span>
                   <div>
-                    <div>{player.name || player.username || player.id || 'unknown'}</div>
-                    <div style={{ color: '#888', fontSize: '0.85rem' }}>{player.walletAddress || ''}</div>
-                            {showDiff && (
-                              <div style={{ fontSize: '0.85rem', color: diffNum > 0 ? '#5dd67a' : '#ff6b6b', marginTop: '2px' }}>
-                                {diffNum > 0 ? '+' : ''}{formatNumber(diffNum)}
-                              </div>
-                            )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span>{player.name || player.username || player.id || 'unknown'}</span>
+                      {showDiff && (
+                        <span style={{ fontSize: '0.95rem', color: diffNum > 0 ? '#5dd67a' : '#ff6b6b' }}>
+                          {diffNum > 0 ? '+' : ''}{formatNumber(diffNum)}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ color: '#020101', fontSize: '0.85rem' }}>{player.walletAddress || ''}</div>
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', color: '#ccc' }}>

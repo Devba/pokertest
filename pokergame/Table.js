@@ -192,12 +192,12 @@ class Table {
       ? this.nextActivePlayer(this.button, 1)
       : this.nextActivePlayer(this.button, 2);
 
-    this.seats[this.smallBlind].placeBlind(this.minBet);
-    this.seats[this.bigBlind].placeBlind(this.minBet * 2);
+    const actualSmallBlind = this.seats[this.smallBlind].placeBlind(this.minBet);
+    const actualBigBlind = this.seats[this.bigBlind].placeBlind(this.minBet * 2);
 
-    this.pot += this.minBet * 3;
-    this.callAmount = this.minBet * 2;
-    this.minRaise = this.minBet * 4;
+    this.pot += actualSmallBlind + actualBigBlind;
+    this.callAmount = actualBigBlind;
+    this.minRaise = actualBigBlind * 2;
   }
   clearSeats() {
     for (let i of Object.keys(this.seats)) {
