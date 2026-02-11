@@ -1,7 +1,36 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useContext, useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
+import socketContext from '../../../context/websocket/socketContext'
+import { SC_TABLE_UPDATED } from '../../../pokergame/actions'
 
 const WRPayouts = ({ tournament, walletAddress }) => {
+  const { socket } = useContext(socketContext)
+  const [tableSnapshots, setTableSnapshots] = useState({})
+
+  // Listen for table updates to get fresh handStackSnapshots
+  useEffect(() => {
+    if (!socket || !tournament?.tables) return
+
+    const handler = ({ table: updatedTable }) => {
+      if (!updatedTable || !updatedTable.id) return
+      
+      // Check if this table belongs to our tournament
+      const belongsToTournament = tournament.tables.some(t => t.id === updatedTable.id)
+      if (!belongsToTournament) return
+
+      // Update local tracking of handStackSnapshots for this table
+      if (Array.isArray(updatedTable.handStackSnapshots)) {
+        setTableSnapshots(prev => ({
+          ...prev,
+          [updatedTable.id]: updatedTable.handStackSnapshots
+        }))
+      }
+    }
+
+    socket.on(SC_TABLE_UPDATED, handler)
+    return () => socket.off(SC_TABLE_UPDATED, handler)
+  }, [socket, tournament?.tables])
+
   const payoutData = useMemo(() => {
     if (!tournament) return { payouts: {}, players: [] }
 
@@ -35,63 +64,138 @@ const WRPayouts = ({ tournament, walletAddress }) => {
       payouts[9] = prizePool * 0.03
     }
 
-    // Collect all players with their current standings
-    const players = []
-    
-    // Get active players from tables
+    // Use handStackSnapshots to build player standings
+    const allSnapshots = []
+
+    // Collect all handStackSnapshots from all tables (merge tournament data with live updates)
     if (tournament.tables && tournament.tables.length > 0) {
       tournament.tables.forEach(table => {
-        if (table.seats) {
-          Object.values(table.seats).forEach(seat => {
-            if (seat && seat.player) {
-              players.push({
-                name: seat.player.name,
-                walletAddress: seat.player.walletAddress,
-                chips: seat.stack || 0,
-                status: 'active',
-                eliminated: false
-              })
-            }
-          })
+        // Use live snapshots from socket if available, otherwise use what's in tournament data
+        const snapshots = tableSnapshots[table.id] || table.handStackSnapshots
+        
+        if (Array.isArray(snapshots) && snapshots.length > 0) {
+          allSnapshots.push(...snapshots.map(snapshot => ({
+            ...snapshot,
+            tableId: table.id
+          })))
         }
       })
     }
 
-    // Add eliminated players
-    if (tournament.eliminatedPlayers && tournament.eliminatedPlayers.length > 0) {
-      tournament.eliminatedPlayers.forEach(ep => {
+    // Sort snapshots by hand number to process chronologically
+    allSnapshots.sort((a, b) => (a.hand || 0) - (b.hand || 0))
+
+    // Track all players seen across all snapshots
+    const playerHistory = new Map() // playerId -> player data
+    const lastHandNumber = allSnapshots.length > 0 ? allSnapshots[allSnapshots.length - 1].hand : 0
+
+    // Process each snapshot in chronological order
+    allSnapshots.forEach(snapshot => {
+      const currentHand = snapshot.hand || 0
+      
+      if (Array.isArray(snapshot.stacks)) {
+        snapshot.stacks.forEach(seatData => {
+          if (seatData && seatData.player) {
+            const playerId = seatData.player.id || seatData.player.username
+            const playerName = seatData.player.username || seatData.player.name || seatData.player.id
+            const stack = Number(seatData.stack || 0)
+
+            if (!playerHistory.has(playerId)) {
+              playerHistory.set(playerId, {
+                id: playerId,
+                name: playerName,
+                chips: stack,
+                lastSeenHand: currentHand,
+                eliminated: false,
+                eliminatedAtHand: null
+              })
+            }
+
+            // Update player's data
+            const playerData = playerHistory.get(playerId)
+            playerData.chips = stack
+            playerData.lastSeenHand = currentHand
+
+            // Check if player got eliminated (stack went to 0)
+            if (stack === 0 && !playerData.eliminated) {
+              playerData.eliminated = true
+              playerData.eliminatedAtHand = currentHand
+              playerData.chips = 0
+            }
+          }
+        })
+      }
+    })
+
+    // After processing all snapshots, check for players who stopped appearing
+    playerHistory.forEach((playerData) => {
+      // If player was not seen in the most recent hand(s) and not already marked eliminated
+      if (!playerData.eliminated && playerData.lastSeenHand < lastHandNumber) {
+        // Player disappeared from snapshots - they were eliminated
+        playerData.eliminated = true
+        playerData.eliminatedAtHand = playerData.lastSeenHand
+        playerData.chips = 0
+      }
+      
+      // Ensure eliminated players always show 0 chips
+      if (playerData.eliminated) {
+        playerData.chips = 0
+      }
+    })
+
+    // Build final player list from playerHistory
+    const players = []
+    playerHistory.forEach((playerData) => {
+      // Try to find player in registered players to get walletAddress
+      const registeredPlayer = tournament.registeredPlayers?.find(
+        rp => rp.id === playerData.id || rp.name === playerData.name || rp.username === playerData.name
+      )
+
+      players.push({
+        id: playerData.id,
+        name: playerData.name,
+        walletAddress: registeredPlayer?.walletAddress || null,
+        chips: playerData.chips,
+        status: playerData.eliminated ? 'eliminated' : 'active',
+        eliminated: playerData.eliminated,
+        eliminatedAtHand: playerData.eliminatedAtHand
+      })
+    })
+
+    // If no snapshots exist yet, fall back to registered players
+    if (players.length === 0 && tournament.registeredPlayers && tournament.registeredPlayers.length > 0) {
+      tournament.registeredPlayers.forEach(rp => {
         players.push({
-          name: ep.player?.name || ep.name || 'Unknown',
-          walletAddress: ep.player?.walletAddress || ep.walletAddress,
-          chips: 0,
-          status: 'eliminated',
-          position: ep.position,
-          eliminated: true,
-          eliminatedAt: ep.eliminatedAt
+          id: rp.id || rp.walletAddress,
+          name: rp.name || rp.username,
+          walletAddress: rp.walletAddress,
+          chips: rp.chips || tournament.startingChips || 0,
+          status: 'registered',
+          eliminated: false,
+          eliminatedAtHand: null
         })
       })
     }
 
-    // Sort: eliminated players by position (desc), active players by chips (desc)
+    // Sort: active players by chips (desc), then eliminated players
     players.sort((a, b) => {
       if (a.eliminated && b.eliminated) {
-        return (b.position || 0) - (a.position || 0)
+        // Both eliminated: sort by elimination hand (later = better)
+        return (b.eliminatedAtHand || 0) - (a.eliminatedAtHand || 0)
       }
-      if (a.eliminated) return 1
-      if (b.eliminated) return -1
-      return b.chips - a.chips
+      if (a.eliminated) return 1 // Eliminated go after active
+      if (b.eliminated) return -1 // Active come first
+      return b.chips - a.chips // Sort active by chips descending
     })
 
-    // Assign positions to active players
+    // Assign final positions
     let position = 1
     players.forEach(player => {
-      if (!player.eliminated) {
-        player.position = position++
-      }
+      player.position = position++
     })
 
     return { payouts, players }
-  }, [tournament])
+  }, [tournament, tableSnapshots])
 
   const formatCurrency = (amount) => {
     return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -210,15 +314,17 @@ const WRPayouts = ({ tournament, walletAddress }) => {
                           fontSize: '0.7rem',
                           fontWeight: 'bold'
                         }}>
-                          ELIMINATED
+                          ELIMINATED{player.eliminatedAtHand ? ` (Hand #${player.eliminatedAtHand})` : ''}
                         </span>
                       )}
                     </div>
-                    {!player.eliminated && (
-                      <div style={{ color: '#888', fontSize: '0.85rem', marginTop: '2px' }}>
-                        Chips: {player.chips.toLocaleString()}
-                      </div>
-                    )}
+                    <div style={{ color: '#888', fontSize: '0.85rem', marginTop: '2px' }}>
+                      {player.eliminated ? (
+                        <>Chips: 0 (Eliminated)</>
+                      ) : (
+                        <>Chips: {player.chips.toLocaleString()}</>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>

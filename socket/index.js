@@ -303,7 +303,7 @@ const init = (socket, io) => {
           seats: table.seats,
           history: Array.isArray(table.history) ? table.history.slice(-20) : [],
           handStackSnapshots: Array.isArray(table.handStackSnapshots)
-            ? table.handStackSnapshots.slice(-10)
+            ? table.handStackSnapshots
             : []
         }))
       });

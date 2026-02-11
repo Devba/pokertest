@@ -5,8 +5,6 @@ const Seat = require('./Seat');
 const Deck = require('./Deck');
 const SidePot = require('./SidePot');
 
-const MAX_HAND_STACK_SNAPSHOTS = 30;
-
 class Table {
   constructor(id, name, limit, maxPlayers = 5) {
     this.id = id;
@@ -300,11 +298,7 @@ class Table {
       stacks: this.buildSeatStackSnapshot(),
     };
     this.handStackSnapshots.push(snapshot);
-    if (this.handStackSnapshots.length > MAX_HAND_STACK_SNAPSHOTS) {
-      this.handStackSnapshots = this.handStackSnapshots.slice(
-        -MAX_HAND_STACK_SNAPSHOTS,
-      );
-    }
+    // Store all snapshots (no limit)
   }
 
   getSnapshotBigBlindValue() {
