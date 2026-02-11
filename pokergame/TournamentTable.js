@@ -165,6 +165,8 @@ class TournamentTable extends Table {
 
     // Check if tournament is over
     if (this.activePlayers().length === 1) {
+      // Capture final snapshot before ending tournament
+      this.captureFinalSnapshot();
       this.endTournament();
     }
     
@@ -175,6 +177,19 @@ class TournamentTable extends Table {
   getTournamentPosition() {
     const remainingPlayers = this.activePlayers().length;
     return remainingPlayers + 1 + this.eliminatedPlayers.length;
+  }
+
+  captureFinalSnapshot() {
+    // Capture the final state of the tournament
+    const bigBlindValue = this.getSnapshotBigBlindValue();
+    const snapshot = {
+      ts: Date.now(),
+      hand: this.handSequence, // Use current hand number
+      bigBlind: bigBlindValue,
+      stacks: this.buildSeatStackSnapshot(),
+    };
+    this.handStackSnapshots.push(snapshot);
+    console.log(`Captured final tournament snapshot for hand ${this.handSequence}`);
   }
 
   endTournament() {

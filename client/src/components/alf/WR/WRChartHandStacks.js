@@ -43,27 +43,42 @@ const playerLabel = (seat) => {
   return seat.player.username || seat.player.name || seat.player.id || 'Player'
 }
 
-const WRStartHandStacks = ({ table }) => {
+const WRStartHandStacks = ({ table, tournament }) => {
   const { socket } = useContext(socketContext)
-  const tableId = table?.id
+  
+  // Determine if we're showing multiple tables or single table
+  const tables = useMemo(() => {
+    if (tournament?.tables && Array.isArray(tournament.tables) && tournament.tables.length > 0) {
+      return tournament.tables
+    }
+    if (table) {
+      return [table]
+    }
+    return []
+  }, [tournament, table])
+  
+  const [selectedTableIndex, setSelectedTableIndex] = useState(0)
+  const currentTable = tables[selectedTableIndex] || null
+  const tableId = currentTable?.id
+  
   const chartRef = useRef(null)
   const chartInstanceRef = useRef(null)
   const latestHandRef = useRef(null)
   const [localSnapshots, setLocalSnapshots] = useState(() =>
-    Array.isArray(table?.handStackSnapshots) ? table.handStackSnapshots : []
+    Array.isArray(currentTable?.handStackSnapshots) ? currentTable.handStackSnapshots : []
   )
   const [showSnapshotList, setShowSnapshotList] = useState(false)
 
   useEffect(() => {
-    const initialSnapshots = Array.isArray(table?.handStackSnapshots)
-      ? table.handStackSnapshots
+    const initialSnapshots = Array.isArray(currentTable?.handStackSnapshots)
+      ? currentTable.handStackSnapshots
       : []
     setLocalSnapshots(initialSnapshots)
     const lastHand = initialSnapshots.length
       ? initialSnapshots[initialSnapshots.length - 1].hand || initialSnapshots.length
       : null
     latestHandRef.current = lastHand
-  }, [tableId, table?.handStackSnapshots])
+  }, [tableId, currentTable?.handStackSnapshots])
 
   useEffect(() => {
     if (!socket || !tableId) return undefined
@@ -233,6 +248,10 @@ const WRStartHandStacks = ({ table }) => {
     }
   }, [chartData, chartOptions])
 
+  if (!tables.length) {
+    return <div style={{ color: '#888', fontSize: '0.95rem', marginTop: '0.5rem' }}>No tables available</div>
+  }
+
   if (!tableId) {
     return <div style={{ color: '#888', fontSize: '0.95rem', marginTop: '0.5rem' }}>No table selected</div>
   }
@@ -244,6 +263,46 @@ const WRStartHandStacks = ({ table }) => {
   return (
     <div style={{ marginTop: '1rem', backgroundColor: 'rgba(7, 10, 29, 0.65)', padding: '0.75rem', borderRadius: 8 }}>
       <div style={{ marginBottom: '0.5rem', color: '#ccc', fontWeight: 600 }}>Start-Hand Stacks</div>
+      
+      {/* Table Tabs */}
+      {tables.length > 1 && (
+        <div style={{
+          display: 'flex',
+          gap: '0.5rem',
+          marginBottom: '0.75rem',
+          overflowX: 'auto',
+          paddingBottom: '0.25rem'
+        }}>
+          {tables.map((tbl, index) => (
+            <button
+              key={tbl.id || index}
+              type="button"
+              onClick={() => setSelectedTableIndex(index)}
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease',
+                backgroundColor: selectedTableIndex === index 
+                  ? 'rgba(76, 201, 240, 0.25)' 
+                  : 'rgba(255, 255, 255, 0.05)',
+                color: selectedTableIndex === index 
+                  ? '#4cc9f0' 
+                  : '#aaa',
+                borderBottom: selectedTableIndex === index 
+                  ? '2px solid #4cc9f0' 
+                  : '2px solid transparent'
+              }}
+            >
+              Table {tbl.id || index + 1}
+            </button>
+          ))}
+        </div>
+      )}
       <div style={{ height: 260, marginBottom: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.02)', borderRadius: 6, padding: '0.5rem' }}>
         {chartData ? (
           <canvas ref={chartRef} style={{ width: '100%', height: '100%' }} />
@@ -355,11 +414,13 @@ const WRStartHandStacks = ({ table }) => {
 }
 
 WRStartHandStacks.propTypes = {
-  table: PropTypes.object
+  table: PropTypes.object,
+  tournament: PropTypes.object
 }
 
 WRStartHandStacks.defaultProps = {
-  table: {}
+  table: null,
+  tournament: null
 }
 
 export default React.memo(WRStartHandStacks)

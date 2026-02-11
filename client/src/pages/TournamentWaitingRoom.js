@@ -15,7 +15,7 @@ import WRActionButtons from '../components/alf/WR/WRActionButtons'
 import WRConnectionIndicator from '../components/alf/WR/WRConnectionIndicator'
 import ZipPanel from '../components/alf/WR/ZipPanel'
 import WRHandHistory from '../components/alf/WR/WRHandHistory'
-import WRStartHandStacks from '../components/alf/WR/WRStartHandStacks'
+import WRStartHandStacks from '../components/alf/WR/WRChartHandStacks'
 import WRPayouts from '../components/alf/WR/WRPayouts'
 import { CS_TABLE_SUBSCRIBE, CS_TABLE_UNSUBSCRIBE } from '../pokergame/actions'
 
@@ -291,7 +291,7 @@ const TournamentWaitingRoom = () => {
 
          <div style={{ marginTop: '0.75rem' }}>
             <div style={{ marginTop: '0.5rem' }}>
-              <WRStartHandStacks table={tournament.tables && tournament.tables[0]} />
+              <WRStartHandStacks tournament={tournament} />
             </div>
 
             <div style={{
