@@ -117,8 +117,8 @@ class TournamentTable extends Table {
       // Check if blinds should increase
       if (this.handCount % this.handsPerLevel === 0) {
         const blindIncrease = this.increaseBlinds();
-        console.log(`Tournament Table ${this.id} - ${blindIncrease.message}`);
         if (blindIncrease) {
+          console.log(`Tournament Table ${this.id} - ${blindIncrease.message}`);
           this.winMessages.push(blindIncrease.message);
         }
       }

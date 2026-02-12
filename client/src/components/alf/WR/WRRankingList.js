@@ -77,6 +77,11 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
   // track which seat keys have recently changed (for glow animation)
   const [changedSeats, setChangedSeats] = useState([])
   const ANIM_DURATION = 10000 // 10 seconds
+  
+  // track total player count changes for glow effect
+  const [totalCountGlowing, setTotalCountGlowing] = useState(false)
+  const prevTotalCountRef = useRef(0)
+  const TOTAL_GLOW_DURATION = 3000 // 3 seconds
 
   // helper to apply seat updates and detect changed stacks
   const applySeatUpdate = useCallback((newSeats = {}) => {
@@ -215,13 +220,47 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
       return bVal - aVal
     }), [localSeats])
 
+  // Calculate player count per table
+  const tablePlayerCounts = useMemo(() => {
+    const counts = {}
+    seatEntries.forEach(({ seat }) => {
+      if (seat.tableId) {
+        counts[seat.tableId] = (counts[seat.tableId] || 0) + 1
+      }
+    })
+    return counts
+  }, [seatEntries])
+
+  // Get list of active tables from live seat data
+  const activeTables = useMemo(() => {
+    const tableIds = Object.keys(tablePlayerCounts).sort()
+    return tableIds.map(id => ({ id, count: tablePlayerCounts[id] }))
+  }, [tablePlayerCounts])
+
+  // Detect total player count changes and trigger glow effect
+  useEffect(() => {
+    const currentTotal = seatEntries.length
+    const previousTotal = prevTotalCountRef.current
+    
+    if (previousTotal !== 0 && currentTotal !== previousTotal) {
+      console.log(`✨ Total player count changed: ${previousTotal} → ${currentTotal}`)
+      setTotalCountGlowing(true)
+      
+      setTimeout(() => {
+        setTotalCountGlowing(false)
+      }, TOTAL_GLOW_DURATION)
+    }
+    
+    prevTotalCountRef.current = currentTotal
+  }, [seatEntries.length, TOTAL_GLOW_DURATION])
+
   if (!tournament && !table) {
     return <div style={{ color: '#888' }}>No table data available</div>
   }
 
   const noPlayers = seatEntries.length === 0
 
-  const showingMultipleTables = tournament?.tables && tournament.tables.length > 1
+  const showingMultipleTables = activeTables.length > 1
 
   return (
     <div>
@@ -232,11 +271,37 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
         borderRadius: '8px',
         padding: '0.75rem'
       }}>
-        <div style={{ marginBottom: '0.5rem', color: '#aaa' }}>
-          {showingMultipleTables 
-            ? `All Players (${tournament.tables.length} tables)` 
-            : `Table ID: ${table?.id || tournament?.tables?.[0]?.id || '—'}`}
+        <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ color: '#aaa' }}>
+            {showingMultipleTables 
+              ? `All Players (${activeTables.length} tables)` 
+              : `Table ID: ${table?.id || tournament?.tables?.[0]?.id || activeTables[0]?.id || '—'}`}
+          </span>
+          <span style={{ color: '#5dd67a', fontWeight: '600', fontSize: '0.95rem' }}>
+            {seatEntries.length} Active
+          </span>
         </div>
+        {showingMultipleTables && activeTables.length > 0 && (
+          <div style={{ 
+            marginBottom: '0.5rem', 
+            display: 'flex', 
+            gap: '0.5rem', 
+            flexWrap: 'wrap',
+            fontSize: '0.85rem',
+            color: '#888'
+          }}>
+            {activeTables.map(({ id, count }) => (
+              <span key={id} style={{ 
+                padding: '0.25rem 0.5rem', 
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                borderRadius: '4px',
+                color: count > 0 ? '#ccc' : '#666'
+              }}>
+                T{id}: {count}
+              </span>
+            ))}
+          </div>
+        )}
         {noPlayers ? (
           <div style={{ color: '#777', padding: '0.5rem' }}>No seated players</div>
         ) : (
