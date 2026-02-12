@@ -342,6 +342,9 @@ class TournamentManager {
 
     const position = this.getTotalActivePlayers(tournamentId) + 1 + tournament.eliminatedPlayers.length;
 
+    console.log(`💀 Player eliminated at table ${tableId}, position ${position}`);
+    console.log(`   Total active players in tournament: ${this.getTotalActivePlayers(tournamentId)}`);
+
     tournament.eliminatedPlayers.push({
       player: playerId,
       position: position,
@@ -351,11 +354,13 @@ class TournamentManager {
 
     // Check if tournament is over
     if (this.getTotalActivePlayers(tournamentId) === 1) {
+      console.log(`🏆 Tournament ${tournamentId} complete - 1 player remaining`);
       this.completeTournament(tournamentId);
       return;
     }
 
-    // Balance tables if needed
+    // Balance tables after elimination
+    console.log(`⚖️  Triggering table balance after elimination...`);
     this.balanceTables(tournamentId);
     this.broadcastTournamentUpdate(tournamentId);
   }
@@ -458,23 +463,30 @@ class TournamentManager {
 
   consolidateTables(tournament, targetTableCount) {
     console.log(`🔄 Consolidating to ${targetTableCount} tables...`);
+    console.log(`   Current table count: ${tournament.tables.length}`);
+    console.log(`   Total players: ${this.getTotalActivePlayers(tournament.id)}`);
     
     // Sort tables by player count (ascending)
     const sortedTables = [...tournament.tables].sort((a, b) => 
       a.activePlayers().length - b.activePlayers().length
     );
     
+    // Log current distribution
+    sortedTables.forEach(t => {
+      console.log(`   Table ${t.id}: ${t.activePlayers().length} players`);
+    });
+    
     // Keep the tables with most players, close the smallest ones
     const tablesToKeep = sortedTables.slice(-targetTableCount);
     const tablesToClose = sortedTables.slice(0, sortedTables.length - targetTableCount);
     
-    console.log(`   Keeping: ${tablesToKeep.map(t => t.id).join(', ')}`);
-    console.log(`   Closing: ${tablesToClose.map(t => t.id).join(', ')}`);
+    console.log(`   Keeping: ${tablesToKeep.map(t => `${t.id}(${t.activePlayers().length}p)`).join(', ')}`);
+    console.log(`   Closing: ${tablesToClose.map(t => `${t.id}(${t.activePlayers().length}p)`).join(', ')}`);
     
     // Move all players from closing tables to remaining tables
     tablesToClose.forEach(closingTable => {
       const playersToMove = closingTable.activePlayers();
-      console.log(`   Moving ${playersToMove.length} players from table ${closingTable.id}`);
+      console.log(`   🚚 Moving ${playersToMove.length} players from table ${closingTable.id}`);
       
       playersToMove.forEach(seat => {
         // Find table with most space
@@ -482,24 +494,29 @@ class TournamentManager {
           table.activePlayers().length < min.activePlayers().length ? table : min
         );
         
+        console.log(`      Moving ${seat.player.name} to table ${targetTable.id}`);
         this.movePlayerBetweenTables(closingTable, targetTable, tournament.startingChips, seat.player.socketId);
       });
       
       // Remove from main tables registry
       if (this.tables && this.tables[closingTable.id]) {
         delete this.tables[closingTable.id];
+        console.log(`   🗑️  Removed table ${closingTable.id} from registry`);
       }
     });
     
     // Update tournament tables array
     tournament.tables = tablesToKeep;
     
+    console.log(`✅ Consolidation complete - now ${tournament.tables.length} tables:`);
+    tournament.tables.forEach(t => {
+      console.log(`   Table ${t.id}: ${t.activePlayers().length} players`);
+    });
+    
     // Broadcast updates for all remaining tables
     tablesToKeep.forEach(table => {
       this.broadcastTableState(table);
     });
-    
-    console.log(`✅ Consolidation complete - now ${tournament.tables.length} tables`);
   }
 
   movePlayerBetweenTables(fromTable, toTable, startingChips, specificSocketId = null) {

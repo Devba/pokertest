@@ -34,10 +34,13 @@ const server = app.listen(config.PORT, () => {
 //  Handle real-time poker game logic with socket.io
 const io = socketio(server);
 
+// Initialize managers immediately (don't wait for first socket connection)
+gameSocket.initializeManagers(io);
+console.log('✅ Game managers initialized');
 
 io.on("connect", (socket) => gameSocket.init(socket, io));
 
-// Initialize bot API routes after socket is set up
+// Initialize bot API routes after managers are set up
 const { initBotRoutes } = require('./routes/api/bots');
 const { initTournamentRoutes } = require('./routes/api/tournaments');
 setTimeout(() => {
@@ -46,7 +49,7 @@ setTimeout(() => {
     
     initTournamentRoutes(gameSocket);
     console.log('🏆 Tournament API routes initialized');
-}, 1000);
+}, 100);
 
 // Optional: Add bots to tables on server start (after a delay to ensure initialization)
 // Uncomment the code below to auto-populate tables with bots

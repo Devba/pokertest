@@ -153,7 +153,7 @@ router.get('/:id', (req, res) => {
 router.post('/:id/register', (req, res) => {
   try {
     const { id } = req.params;
-    const { walletAddress, playerName } = req.body;
+    const { walletAddress, playerName, isBot } = req.body;
     
     if (!walletAddress) {
       return res.status(400).json({ error: 'Wallet address is required' });
@@ -163,10 +163,15 @@ router.post('/:id/register', (req, res) => {
       return res.status(500).json({ error: 'Tournament manager not initialized' });
     }
 
-    const result = tournamentManager.registerPlayer(parseInt(id), {
-      walletAddress,
-      name: playerName || `Player_${walletAddress.slice(2, 8)}`
-    });
+    // Create proper player object
+    const playerData = {
+      id: walletAddress,
+      name: playerName || `Player_${walletAddress.slice(2, 8)}`,
+      walletAddress: walletAddress,
+      isBot: isBot || false
+    };
+
+    const result = tournamentManager.registerPlayer(parseInt(id), playerData, playerData);
 
     if (!result.success) {
       return res.status(400).json({ error: result.message });

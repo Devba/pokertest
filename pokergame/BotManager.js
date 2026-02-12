@@ -174,13 +174,28 @@ class BotManager {
       return;
     }
 
-    const bot = this.bots[player.socketId];
+    // Check if bot exists in registry, if not, it's a tournament bot
+    let bot = this.bots[player.socketId];
     if (!bot) {
-      console.log(`⚠️  Bot not found in BotManager for ${player.socketId} on table ${tableId}`);
-      return;
+      // Tournament bot - create a temporary Bot instance for decision-making
+      console.log(`🎯 Tournament bot detected: ${player.name} on table ${tableId}`);
+      const Bot = require('./Bot');
+      // Extract strategy from player name if possible (e.g., "Bot_aggressive_5")
+      const strategyMatch = player.name.match(/Bot_(tight|loose|aggressive|passive|balanced)_/);
+      const strategy = strategyMatch ? strategyMatch[1] : 'balanced';
+      
+      bot = new Bot(
+        player.socketId,
+        player.id,
+        player.name,
+        player.bankroll || 10000,
+        strategy
+      );
+      
+      console.log(`🤖 Created temporary bot instance for ${player.name} with ${strategy} strategy`);
+    } else {
+      console.log(`🤖 Table ${tableId}: Bot ${bot.name} is about to act (seat ${table.turn})`);
     }
-
-    console.log(`🤖 Table ${tableId}: Bot ${bot.name} is about to act (seat ${table.turn})`);
 
     // Clear any existing timer
     if (this.actionTimers[player.socketId]) {

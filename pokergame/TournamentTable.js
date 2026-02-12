@@ -157,6 +157,12 @@ class TournamentTable extends Table {
           }
         }, 3000);
         
+        // Notify tournament manager of elimination (triggers balancing)
+        if (this.tournamentManager) {
+          console.log(`🔔 Notifying TournamentManager of ${seat.player.name}'s elimination`);
+          this.tournamentManager.handlePlayerElimination(this.tournamentId, this.id, seat.player.id);
+        }
+        
         // Remove eliminated player from seat
         console.log(`Removing eliminated player ${seat.player.name} from tournament table seat ${i}`);
         this.seats[i] = null;

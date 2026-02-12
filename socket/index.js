@@ -77,23 +77,27 @@ function getCurrentTables() {
   }));
 }
 
-const init = (socket, io) => {
-  // Set a custom property for this socket connection
-  socket.origSockID = '';
-
-  // Initialize BotManager if not already initialized
+// Initialize managers (can be called before any socket connects)
+function initializeManagers(io) {
   if (!botManager) {
     botManager = new BotManager(io, tables, players);
     console.log('🤖 BotManager initialized');
   }
 
-  // Initialize TournamentManager if not already initialized
   if (!tournamentManager) {
     tournamentManager = new TournamentManager(io, botManager, tables);
     // Give BotManager access to TournamentManager for broadcasting tournament updates
     botManager.tournamentManager = tournamentManager;
     console.log('🏆 TournamentManager initialized');
   }
+}
+
+const init = (socket, io) => {
+  // Set a custom property for this socket connection
+  socket.origSockID = '';
+
+  // Initialize managers if not already initialized
+  initializeManagers(io);
 
   // Tournament socket handlers
   socket.on('CREATE_TOURNAMENT', (config) => {
@@ -998,6 +1002,7 @@ if (!player) {
 
 module.exports = { 
   init, 
+  initializeManagers,
   get botManager() { return botManager; },
   get tournamentManager() { return tournamentManager; },
   tables, 
