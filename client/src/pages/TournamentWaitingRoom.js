@@ -8,7 +8,7 @@ import Swal from 'sweetalert2'
 import './TournamentLobby.scss'
 import RegistrationStatus from '../components/alf/RegistrationStatus'
 import gameContext from '../context/game/gameContext'
-import WRPlayersTablePanel from '../components/alf/WR/WRPlayersTablePanel'
+import WRPlayersTablePanel from '../components/alf/WR/WRRankingList'
 import WRRegisteredPlayers from '../components/alf/WR/WRRegisteredPlayers'
 import TournamentInfoGrid from '../components/alf/WR/WRTournamentInfoGrid'
 import WRActionButtons from '../components/alf/WR/WRActionButtons'
@@ -333,7 +333,7 @@ const TournamentWaitingRoom = () => {
               <div style={{ marginTop: '0.75rem' }}>
                 {activeTableTab === 'seats' ? (
                   <ZipPanel title="Table Seats" defaultCollapsed={false}>
-                    <WRPlayersTablePanel table={tournament.tables && tournament.tables[0]} walletAddress={walletAddress} />
+                    <WRPlayersTablePanel tournament={tournament} walletAddress={walletAddress} />
                   </ZipPanel>
                 ) : (
                   <div style={{ padding: '0.25rem 0.25rem 0.75rem' }}>
@@ -370,7 +370,7 @@ const TournamentWaitingRoom = () => {
                   </Button>
                   {showTablesPanel && (
                     <div style={{ marginTop: '0.75rem' }}>
-                      <WRPlayersTablePanel table={tournament.tables && tournament.tables[0]} walletAddress={walletAddress} />
+                      <WRPlayersTablePanel tournament={tournament} walletAddress={walletAddress} />
                     </div>
                   )}
                 </div>*/}
