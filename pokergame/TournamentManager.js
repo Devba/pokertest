@@ -773,25 +773,29 @@ class TournamentManager {
   broadcastTableState(table) {
     if (!this.io) return;
 
-    // Remove circular reference before broadcasting
+    // Use BotManager's broadcast method if available (it handles SC_TABLE_UPDATED correctly)
+    if (this.botManager && this.botManager.broadcastToTable) {
+      this.botManager.broadcastToTable(table, '', null);
+      return;
+    }
+
+    // Fallback: manual broadcast with SC_TABLE_UPDATED (matching client expectations)
     const { tournamentManager, ...cleanTable } = table;
 
     // Emit to the table room (includes spectators)
-    this.io.to(`table-${cleanTable.id}`).emit('TABLE_UPDATED', {
+    this.io.to(`table-${cleanTable.id}`).emit('SC_TABLE_UPDATED', {
       table: cleanTable,
       message: '',
-      action: '',
-      notification: ''
+      from: null,
     });
 
-    // Also emit to individual players
+    // Also broadcast to all players individually
     cleanTable.players.forEach(player => {
       if (player && player.socketId) {
-        this.io.to(player.socketId).emit('TABLE_UPDATED', {
+        this.io.to(player.socketId).emit('SC_TABLE_UPDATED', {
           table: cleanTable,
           message: '',
-          action: '',
-          notification: ''
+          from: null,
         });
       }
     });

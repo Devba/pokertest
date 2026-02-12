@@ -171,6 +171,9 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
         const prev = prevSeatsRef.current || {}
         const updated = { ...prev }
         
+        // Count seats before update
+        const prevTotalSeats = Object.keys(prev).filter(k => prev[k]).length
+        
         // Get current big blind for this table (ONLY from snapshots, like WRChartHandStacks)
         let bigBlindValue = null
         if (updatedTable.handStackSnapshots && updatedTable.handStackSnapshots.length > 0) {
@@ -195,7 +198,9 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
               delete updated[uniqueKey]
             }
           })
+          const newTotalSeats = Object.keys(updated).filter(k => updated[k]).length
           console.log(`   - Updated ${Object.keys(updatedTable.seats).length} seats for table ${updatedTable.id}`);
+          console.log(`   - Total active players: ${prevTotalSeats} → ${newTotalSeats}`);
         }
         // Use applySeatUpdate to trigger change detection and animations
         applySeatUpdate(updated)
@@ -277,7 +282,15 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
               ? `All Players (${activeTables.length} tables)` 
               : `Table ID: ${table?.id || tournament?.tables?.[0]?.id || activeTables[0]?.id || '—'}`}
           </span>
-          <span style={{ color: '#5dd67a', fontWeight: '600', fontSize: '0.95rem' }}>
+          <span style={{ 
+            color: '#5dd67a', 
+            fontWeight: '600', 
+            fontSize: '0.95rem',
+            ...(totalCountGlowing ? { 
+              animation: `glowAnim ${TOTAL_GLOW_DURATION}ms ease`, 
+              color: '#fff900' 
+            } : {})
+          }}>
             {seatEntries.length} Active
           </span>
         </div>
@@ -312,7 +325,8 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
             overflowY: 'auto',
             paddingRight: '0.25rem'
           }}>
-          {seatEntries.map(({ sKey, seat }) => {
+          {seatEntries.map(({ sKey, seat }, index) => {
+            const rank = index + 1
             const player = seat.player || {}
             const isYou = player.walletAddress && walletAddress && player.walletAddress === walletAddress
             const changed = changedSeats.includes(String(sKey))
@@ -352,7 +366,16 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
                 border: isYou ? '1px solid rgba(39,174,96,0.3)' : '1px solid transparent',
                 ...glowStyle
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ 
+                    color: rank === 1 ? '#FFD700' : rank === 2 ? '#C0C0C0' : rank === 3 ? '#CD7F32' : '#888',
+                    fontSize: '1.1rem', 
+                    fontWeight: '700',
+                    minWidth: '36px',
+                    textAlign: 'right'
+                  }}>
+                    #{rank}
+                  </span>
                   <span style={{ color: '#aaa', fontSize: '0.875rem', minWidth: '48px' }}>{seatLabel}</span>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
