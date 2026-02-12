@@ -373,14 +373,207 @@ class TournamentManager {
     const tournament = this.tournaments.get(tournamentId);
     if (!tournament || tournament.tables.length <= 1) return;
 
-    // Remove empty tables
-    tournament.tables = tournament.tables.filter(table =>
-      table.activePlayers().length > 0
-    );
+    console.log(`⚖️  Balancing tables for tournament ${tournamentId}...`);
 
-    // TODO: Implement table balancing logic
-    // Move players from larger tables to smaller tables
-    // Close tables when total players fit on fewer tables
+    // Remove empty tables first
+    const emptyTables = tournament.tables.filter(table => table.activePlayers().length === 0);
+    if (emptyTables.length > 0) {
+      console.log(`🗑️  Removing ${emptyTables.length} empty table(s)`);
+      emptyTables.forEach(table => {
+        // Remove from main tables registry
+        if (this.tables && this.tables[table.id]) {
+          delete this.tables[table.id];
+          console.log(`   - Removed table ${table.id} from registry`);
+        }
+      });
+      tournament.tables = tournament.tables.filter(table => table.activePlayers().length > 0);
+    }
+
+    if (tournament.tables.length <= 1) {
+      console.log(`✅ Only one table remaining, no balancing needed`);
+      return;
+    }
+
+    // Calculate players per table
+    const totalPlayers = this.getTotalActivePlayers(tournamentId);
+    const numTables = tournament.tables.length;
+    const idealPlayersPerTable = totalPlayers / numTables;
+    const maxPlayersPerTable = Math.ceil(idealPlayersPerTable);
+    
+    console.log(`📊 Total players: ${totalPlayers}, Tables: ${numTables}, Ideal per table: ${idealPlayersPerTable.toFixed(1)}`);
+
+    // Check if we can consolidate to fewer tables
+    const maxCapacity = 9; // Max players per table
+    const minTablesNeeded = Math.ceil(totalPlayers / maxCapacity);
+    
+    if (minTablesNeeded < numTables) {
+      console.log(`🔄 Can consolidate from ${numTables} to ${minTablesNeeded} tables`);
+      this.consolidateTables(tournament, minTablesNeeded);
+      return;
+    }
+
+    // Balance existing tables - move players from largest to smallest
+    let moved = false;
+    
+    do {
+      moved = false;
+      
+      // Sort tables by player count
+      const sortedTables = [...tournament.tables].sort((a, b) => 
+        b.activePlayers().length - a.activePlayers().length
+      );
+      
+      const largestTable = sortedTables[0];
+      const smallestTable = sortedTables[sortedTables.length - 1];
+      
+      const largestCount = largestTable.activePlayers().length;
+      const smallestCount = smallestTable.activePlayers().length;
+      
+      // Only move if difference is 2 or more players
+      if (largestCount - smallestCount >= 2 && largestCount > maxPlayersPerTable) {
+        console.log(`🔀 Moving player from table ${largestTable.id} (${largestCount} players) to ${smallestTable.id} (${smallestCount} players)`);
+        
+        // Move one player from largest to smallest
+        const moved = this.movePlayerBetweenTables(largestTable, smallestTable, tournament.startingChips);
+        
+        if (moved) {
+          moved = true;
+          // Broadcast updates for both tables
+          this.broadcastTableState(largestTable);
+          this.broadcastTableState(smallestTable);
+        }
+      }
+    } while (moved);
+    
+    console.log(`✅ Table balancing complete`);
+    
+    // Log final distribution
+    tournament.tables.forEach(table => {
+      console.log(`   Table ${table.id}: ${table.activePlayers().length} players`);
+    });
+    
+    // Broadcast tournament update to reflect changes
+    this.broadcastTournamentUpdate(tournamentId);
+  }
+
+  consolidateTables(tournament, targetTableCount) {
+    console.log(`🔄 Consolidating to ${targetTableCount} tables...`);
+    
+    // Sort tables by player count (ascending)
+    const sortedTables = [...tournament.tables].sort((a, b) => 
+      a.activePlayers().length - b.activePlayers().length
+    );
+    
+    // Keep the tables with most players, close the smallest ones
+    const tablesToKeep = sortedTables.slice(-targetTableCount);
+    const tablesToClose = sortedTables.slice(0, sortedTables.length - targetTableCount);
+    
+    console.log(`   Keeping: ${tablesToKeep.map(t => t.id).join(', ')}`);
+    console.log(`   Closing: ${tablesToClose.map(t => t.id).join(', ')}`);
+    
+    // Move all players from closing tables to remaining tables
+    tablesToClose.forEach(closingTable => {
+      const playersToMove = closingTable.activePlayers();
+      console.log(`   Moving ${playersToMove.length} players from table ${closingTable.id}`);
+      
+      playersToMove.forEach(seat => {
+        // Find table with most space
+        const targetTable = tablesToKeep.reduce((min, table) => 
+          table.activePlayers().length < min.activePlayers().length ? table : min
+        );
+        
+        this.movePlayerBetweenTables(closingTable, targetTable, tournament.startingChips, seat.player.socketId);
+      });
+      
+      // Remove from main tables registry
+      if (this.tables && this.tables[closingTable.id]) {
+        delete this.tables[closingTable.id];
+      }
+    });
+    
+    // Update tournament tables array
+    tournament.tables = tablesToKeep;
+    
+    // Broadcast updates for all remaining tables
+    tablesToKeep.forEach(table => {
+      this.broadcastTableState(table);
+    });
+    
+    console.log(`✅ Consolidation complete - now ${tournament.tables.length} tables`);
+  }
+
+  movePlayerBetweenTables(fromTable, toTable, startingChips, specificSocketId = null) {
+    // Find a player to move (preferably not current dealer/blinds to minimize disruption)
+    const fromPlayers = fromTable.activePlayers();
+    
+    if (fromPlayers.length === 0) return false;
+    
+    // Try to find a player that's not on button/blinds
+    let seatToMove = specificSocketId 
+      ? fromPlayers.find(s => s.player.socketId === specificSocketId)
+      : fromPlayers.find(s => 
+          s.id !== fromTable.button && 
+          s.id !== fromTable.smallBlind && 
+          s.id !== fromTable.bigBlind
+        );
+    
+    // If all are on button/blinds, just take the first one
+    if (!seatToMove) seatToMove = fromPlayers[0];
+    
+    const player = seatToMove.player;
+    const currentStack = seatToMove.stack;
+    
+    console.log(`   🚶 Moving ${player.name} (${currentStack} chips) from seat ${seatToMove.id}`);
+    
+    // Find available seat in target table
+    let targetSeatId = null;
+    for (let i = 1; i <= toTable.maxPlayers; i++) {
+      if (!toTable.seats[i]) {
+        targetSeatId = i;
+        break;
+      }
+    }
+    
+    if (!targetSeatId) {
+      console.error(`❌ No available seats in target table ${toTable.id}`);
+      return false;
+    }
+    
+    // Remove from old table
+    fromTable.seats[seatToMove.id] = null;
+    fromTable.players = fromTable.players.filter(p => p.socketId !== player.socketId);
+    
+    // Add to new table
+    toTable.addPlayer(player);
+    toTable.sitPlayer(player, targetSeatId, currentStack);
+    
+    console.log(`   ✅ ${player.name} now at table ${toTable.id}, seat ${targetSeatId}`);
+    
+    // Update socket room membership if player is connected
+    if (this.io && player.socketId) {
+      const socket = this.io.sockets.sockets.get(player.socketId);
+      if (socket) {
+        socket.leave(`table-${fromTable.id}`);
+        socket.join(`table-${toTable.id}`);
+        console.log(`   📡 ${player.name} moved from room table-${fromTable.id} to table-${toTable.id}`);
+        
+        // Notify player of table change
+        socket.emit('PLAYER_MOVED_TABLE', {
+          message: `You have been moved to ${toTable.name}`,
+          newTableId: toTable.id,
+          seatId: targetSeatId
+        });
+      }
+    }
+    
+    // If source table now has only 1 player, end any active hand
+    if (fromTable.activePlayers().length === 1 && !fromTable.handOver) {
+      console.log(`   ⚠️  Table ${fromTable.id} now has only 1 player, ending hand`);
+      fromTable.handOver = true;
+      fromTable.clearWinMessages();
+    }
+    
+    return true;
   }
 
   completeTournament(tournamentId) {

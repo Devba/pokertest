@@ -199,7 +199,18 @@ class BotManager {
    * Execute the bot's decision
    */
   executeBotAction(bot, table, tableId, seat) {
-    console.log(`🎯 executeBotAction called for bot ${bot.name} on table ${tableId}`);\n    \n    // Verify table is accessible\n    const tableCheck = this.tables[tableId];\n    if (!tableCheck) {\n      console.error(`❌ Table ${tableId} NOT FOUND in this.tables! Available tables:`, Object.keys(this.tables));\n      return;\n    } else {\n      console.log(`✅ Table ${tableId} IS ACCESSIBLE in this.tables`);\n    }\n    \n    // Gather game state
+    console.log(`🎯 executeBotAction called for bot ${bot.name} on table ${tableId}`);
+    
+    // Verify table is accessible
+    const tableCheck = this.tables[tableId];
+    if (!tableCheck) {
+      console.error(`❌ Table ${tableId} NOT FOUND in this.tables! Available tables:`, Object.keys(this.tables));
+      return;
+    } else {
+      console.log(`✅ Table ${tableId} IS ACCESSIBLE in this.tables`);
+    }
+    
+    // Gather game state
     const gameState = {
       hand: seat.hand,
       pot: table.pot,
