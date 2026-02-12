@@ -40,28 +40,45 @@ const WRPayouts = ({ tournament, walletAddress }) => {
     // Calculate payout structure based on total players
     let payouts = {}
     if (totalPlayers <= 2) {
-      payouts[1] = prizePool
+      payouts[1] = prizePool * 1.00
     } else if (totalPlayers <= 5) {
       payouts[1] = prizePool * 0.50
       payouts[2] = prizePool * 0.30
       payouts[3] = prizePool * 0.20
-    } else if (totalPlayers <= 8) {
+    } else if (totalPlayers <= 10) {
       payouts[1] = prizePool * 0.40
       payouts[2] = prizePool * 0.25
       payouts[3] = prizePool * 0.15
-      payouts[4] = prizePool * 0.10
-      payouts[5] = prizePool * 0.06
-      payouts[6] = prizePool * 0.04
-    } else {
+      payouts[4] = prizePool * 0.12
+      payouts[5] = prizePool * 0.08
+    } else if (totalPlayers <= 20) {
       payouts[1] = prizePool * 0.35
+      payouts[2] = prizePool * 0.22
+      payouts[3] = prizePool * 0.15
+      payouts[4] = prizePool * 0.12
+      payouts[5] = prizePool * 0.09
+      payouts[6] = prizePool * 0.07
+    } else if (totalPlayers <= 30) {
+      payouts[1] = prizePool * 0.30
       payouts[2] = prizePool * 0.20
+      payouts[3] = prizePool * 0.15
+      payouts[4] = prizePool * 0.11
+      payouts[5] = prizePool * 0.09
+      payouts[6] = prizePool * 0.07
+      payouts[7] = prizePool * 0.05
+      payouts[8] = prizePool * 0.03
+    } else {
+      // For 31+ players (like 50-player tournaments)
+      payouts[1] = prizePool * 0.25
+      payouts[2] = prizePool * 0.18
       payouts[3] = prizePool * 0.13
       payouts[4] = prizePool * 0.10
-      payouts[5] = prizePool * 0.07
-      payouts[6] = prizePool * 0.05
-      payouts[7] = prizePool * 0.04
-      payouts[8] = prizePool * 0.03
-      payouts[9] = prizePool * 0.03
+      payouts[5] = prizePool * 0.08
+      payouts[6] = prizePool * 0.07
+      payouts[7] = prizePool * 0.06
+      payouts[8] = prizePool * 0.05
+      payouts[9] = prizePool * 0.04
+      payouts[10] = prizePool * 0.04
     }
 
     // Use handStackSnapshots to build player standings
@@ -116,28 +133,39 @@ const WRPayouts = ({ tournament, walletAddress }) => {
             playerData.chips = stack
             playerData.lastSeenHand = currentHand
 
-            // Check if player got eliminated (stack went to 0)
+            // ONLY mark as eliminated if stack is actually 0
             if (stack === 0 && !playerData.eliminated) {
               playerData.eliminated = true
               playerData.eliminatedAtHand = currentHand
-              playerData.chips = 0
+            } else if (stack > 0) {
+              // If player has chips again, they're not eliminated (shouldn't happen, but defensive)
+              playerData.eliminated = false
+              playerData.eliminatedAtHand = null
             }
           }
         })
       }
     })
 
-    // After processing all snapshots, check for players who stopped appearing
+    // Check tournament's eliminatedPlayers list if available
+    if (tournament.eliminatedPlayers && Array.isArray(tournament.eliminatedPlayers)) {
+      tournament.eliminatedPlayers.forEach(eliminated => {
+        const playerId = eliminated.player || eliminated.playerId
+        if (playerId && playerHistory.has(playerId)) {
+          const playerData = playerHistory.get(playerId)
+          playerData.eliminated = true
+          playerData.chips = 0
+          // Use the position as a proxy for elimination order if no hand number
+          playerData.eliminatedAtHand = eliminated.eliminatedAtHand || eliminated.hand || null
+        }
+      })
+    }
+
+    // DO NOT mark players as eliminated just because they're not in the latest snapshot
+    // In multi-table tournaments, tables progress at different rates
+
+    // Final cleanup - ensure eliminated players have 0 chips
     playerHistory.forEach((playerData) => {
-      // If player was not seen in the most recent hand(s) and not already marked eliminated
-      if (!playerData.eliminated && playerData.lastSeenHand < lastHandNumber) {
-        // Player disappeared from snapshots - they were eliminated
-        playerData.eliminated = true
-        playerData.eliminatedAtHand = playerData.lastSeenHand
-        playerData.chips = 0
-      }
-      
-      // Ensure eliminated players always show 0 chips
       if (playerData.eliminated) {
         playerData.chips = 0
       }

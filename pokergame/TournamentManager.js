@@ -617,28 +617,45 @@ class TournamentManager {
     const payouts = {};
 
     if (totalPlayers <= 2) {
-      payouts[1] = prizePool;
+      payouts[1] = prizePool * 1.00;
     } else if (totalPlayers <= 5) {
       payouts[1] = prizePool * 0.50;
       payouts[2] = prizePool * 0.30;
       payouts[3] = prizePool * 0.20;
-    } else if (totalPlayers <= 100) {
+    } else if (totalPlayers <= 10) {
       payouts[1] = prizePool * 0.40;
       payouts[2] = prizePool * 0.25;
       payouts[3] = prizePool * 0.15;
-      payouts[4] = prizePool * 0.10;
-      payouts[5] = prizePool * 0.06;
-      payouts[6] = prizePool * 0.04;
-    } else {
+      payouts[4] = prizePool * 0.12;
+      payouts[5] = prizePool * 0.08;
+    } else if (totalPlayers <= 20) {
       payouts[1] = prizePool * 0.35;
+      payouts[2] = prizePool * 0.22;
+      payouts[3] = prizePool * 0.15;
+      payouts[4] = prizePool * 0.12;
+      payouts[5] = prizePool * 0.09;
+      payouts[6] = prizePool * 0.07;
+    } else if (totalPlayers <= 30) {
+      payouts[1] = prizePool * 0.30;
       payouts[2] = prizePool * 0.20;
+      payouts[3] = prizePool * 0.15;
+      payouts[4] = prizePool * 0.11;
+      payouts[5] = prizePool * 0.09;
+      payouts[6] = prizePool * 0.07;
+      payouts[7] = prizePool * 0.05;
+      payouts[8] = prizePool * 0.03;
+    } else {
+      // For 31+ players (like 50-player tournaments)
+      payouts[1] = prizePool * 0.25;
+      payouts[2] = prizePool * 0.18;
       payouts[3] = prizePool * 0.13;
       payouts[4] = prizePool * 0.10;
-      payouts[5] = prizePool * 0.07;
-      payouts[6] = prizePool * 0.05;
-      payouts[7] = prizePool * 0.04;
-      payouts[8] = prizePool * 0.03;
-      payouts[9] = prizePool * 0.03;
+      payouts[5] = prizePool * 0.08;
+      payouts[6] = prizePool * 0.07;
+      payouts[7] = prizePool * 0.06;
+      payouts[8] = prizePool * 0.05;
+      payouts[9] = prizePool * 0.04;
+      payouts[10] = prizePool * 0.04;
     }
 
     return payouts;

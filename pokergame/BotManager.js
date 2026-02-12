@@ -250,7 +250,7 @@ class BotManager {
 
 
 
-    console.log(`🤖 Table ${tableId}: ${bot.name} decides to ${decision.action}${decision.amount ? ` $${decision.amount}` : ''}`);
+  //  console.log(`🤖 Table ${tableId}: ${bot.name} decides to ${decision.action}${decision.amount ? ` $${decision.amount}` : ''}`);
 
     // Execute the action through the table's handlers
     let result = null;
@@ -288,7 +288,7 @@ class BotManager {
           this.handleHandOver(table, tableId);
         } else {
           // Check if next player is also a bot
-          console.log(`➡️  Table ${tableId}: Checking next player after ${bot.name}'s action`);
+     //     console.log(`➡️  Table ${tableId}: Checking next player after ${bot.name}'s action`);
           this.checkAndActForBot(table, tableId);
         }
       }, 1000);
