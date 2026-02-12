@@ -9,14 +9,22 @@ const WRPayouts = ({ tournament, walletAddress }) => {
 
   // Listen for table updates to get fresh handStackSnapshots
   useEffect(() => {
-    if (!socket || !tournament?.tables) return
+    if (!socket) return
 
     const handler = ({ table: updatedTable }) => {
       if (!updatedTable || !updatedTable.id) return
       
-      // Check if this table belongs to our tournament
-      const belongsToTournament = tournament.tables.some(t => t.id === updatedTable.id)
-      if (!belongsToTournament) return
+      // Check if this table belongs to our tournament (dual check like WRRankingList)
+      const tableIds = tournament?.tables 
+        ? tournament.tables.map(t => t.id).filter(Boolean)
+        : []
+      
+      const isWatchedTable = tableIds.includes(updatedTable.id)
+      const isTournamentTable = tournament && updatedTable.tournamentId === tournament.id
+      
+      if (!isWatchedTable && !isTournamentTable) return
+
+      console.log(`💰 WRPayouts: Received update for table ${updatedTable.id}`)
 
       // Update local tracking of handStackSnapshots for this table
       if (Array.isArray(updatedTable.handStackSnapshots)) {
@@ -24,12 +32,13 @@ const WRPayouts = ({ tournament, walletAddress }) => {
           ...prev,
           [updatedTable.id]: updatedTable.handStackSnapshots
         }))
+        console.log(`💰 WRPayouts: Updated snapshots for table ${updatedTable.id}, total snapshots: ${updatedTable.handStackSnapshots.length}`)
       }
     }
 
     socket.on(SC_TABLE_UPDATED, handler)
     return () => socket.off(SC_TABLE_UPDATED, handler)
-  }, [socket, tournament?.tables])
+  }, [socket, tournament?.tables, tournament?.id])
 
   const payoutData = useMemo(() => {
     if (!tournament) return { payouts: {}, players: [] }

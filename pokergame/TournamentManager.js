@@ -7,6 +7,7 @@ class TournamentManager {
     this.tables = tables; // Reference to main tables object for socket broadcasting
     this.tournaments = new Map();
     this.nextTournamentId = 1;
+    this.blindTimers = new Map(); // Store blind increase timers for each tournament
   }
 
   createTournament(config) {
@@ -38,8 +39,9 @@ class TournamentManager {
       lateRegistrationAllowed: (config.registrationPeriod || 5) > 0,
       creatorWallet: config.creatorWallet,
       blindLevel: startingBlindLevel,
-      handsPerLevel: this.getHandsPerLevel(config.blindStructure),
-      startingBlindLevel
+      minutesPerLevel: this.getMinutesPerLevel(config.blindStructure),
+      startingBlindLevel,
+      lastBlindIncreaseTime: null // Track when blinds were last increased
     };
 
     this.tournaments.set(tournament.id, tournament);
@@ -71,12 +73,23 @@ class TournamentManager {
     return tournament;
   }
 
-  getHandsPerLevel(blindStructure) {
+
+  // In TournamentManager.js, getMinutesPerLevel():
+getMinutesPerLevel(blindStructure) {
+  switch (blindStructure) {
+    case 'hyper': return 0.5;   // 30 seconds for testing
+    case 'turbo': return 1;     // 1 minute for testing  
+    case 'normal':
+    default: return 2;          // 2 minutes for testing
+  }
+}
+
+  getMinutesPerLevelprod(blindStructure) {
     switch (blindStructure) {
-      case 'hyper': return 3;
-      case 'turbo': return 5;
+      case 'hyper': return 3;   // 3 minutes per blind level
+      case 'turbo': return 5;   // 5 minutes per blind level
       case 'normal':
-      default: return 10;
+      default: return 10;       // 10 minutes per blind level
     }
   }
 
@@ -271,7 +284,86 @@ class TournamentManager {
     
     console.log(`🎮 All ${tournament.tables.length} table starts scheduled`);
 
+    // Start time-based blind increase timer
+    this.startBlindTimer(tournamentId);
+
     return { success: true, tournamentId: tournament.id, tournament: this.getTournamentInfo(tournamentId) };
+  }
+
+  startBlindTimer(tournamentId) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) return;
+
+    // Clear any existing timer for this tournament
+    this.stopBlindTimer(tournamentId);
+
+    // Initialize last blind increase time
+    tournament.lastBlindIncreaseTime = Date.now();
+
+    const minutesPerLevel = tournament.minutesPerLevel;
+    const checkIntervalMs = 30000; // Check every 30 seconds
+
+    console.log(`⏰ Starting blind timer for tournament ${tournamentId}: ${minutesPerLevel} minutes per level`);
+
+    const timer = setInterval(() => {
+      const t = this.tournaments.get(tournamentId);
+      if (!t || t.status !== 'live') {
+        console.log(`⏰ Stopping blind timer for tournament ${tournamentId}: tournament ${!t ? 'not found' : 'not live'}`);
+        this.stopBlindTimer(tournamentId);
+        return;
+      }
+
+      const elapsedMs = Date.now() - t.lastBlindIncreaseTime;
+      const elapsedMinutes = elapsedMs / 60000;
+
+      if (elapsedMinutes >= minutesPerLevel) {
+        console.log(`⏰ Time to increase blinds! Elapsed: ${elapsedMinutes.toFixed(1)} minutes`);
+        this.increaseBlindsForAllTables(tournamentId);
+        t.lastBlindIncreaseTime = Date.now();
+      }
+    }, checkIntervalMs);
+
+    this.blindTimers.set(tournamentId, timer);
+  }
+
+  stopBlindTimer(tournamentId) {
+    const timer = this.blindTimers.get(tournamentId);
+    if (timer) {
+      clearInterval(timer);
+      this.blindTimers.delete(tournamentId);
+      console.log(`⏰ Stopped blind timer for tournament ${tournamentId}`);
+    }
+  }
+
+  increaseBlindsForAllTables(tournamentId) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) return;
+
+    console.log(`📈 Increasing blinds for all tables in tournament ${tournamentId}`);
+
+    let blindIncreaseInfo = null;
+
+    // Increase blinds on all tables simultaneously
+    tournament.tables.forEach(table => {
+      if (table.activePlayers().length >= 2) {
+        const increaseResult = table.increaseBlinds();
+        if (increaseResult) {
+          blindIncreaseInfo = increaseResult;
+          console.log(`📈 Table ${table.id}: ${increaseResult.message}`);
+          table.winMessages.push(increaseResult.message);
+          
+          // Broadcast updated table state
+          this.broadcastTableState(table);
+        }
+      }
+    });
+
+    if (blindIncreaseInfo) {
+      // Update tournament's blind level
+      tournament.blindLevel = blindIncreaseInfo.level;
+      console.log(`📈 Tournament ${tournamentId} blind level updated to ${blindIncreaseInfo.level}`);
+      this.broadcastTournamentUpdate(tournamentId);
+    }
   }
 
   createTables(tournamentId) {
@@ -292,7 +384,6 @@ class TournamentManager {
         tournament.startingBlindLevel || 1,
         this
       );
-      table.handsPerLevel = tournament.handsPerLevel;
       tournament.tables.push(table);
 
       console.log(`✅ Created tournament table: ${tableId} (blindLevel: ${tournament.startingBlindLevel || 1})`);
@@ -340,6 +431,15 @@ class TournamentManager {
     const table = tournament.tables.find(t => t.id === tableId);
     if (!table) return;
 
+    // Find the player to get their name
+    let playerName = 'Unknown Player';
+    const registeredPlayer = tournament.registeredPlayers.find(p => 
+      p.id === playerId || p.walletAddress === playerId
+    );
+    if (registeredPlayer) {
+      playerName = registeredPlayer.name || registeredPlayer.username || playerId;
+    }
+
     const position = this.getTotalActivePlayers(tournamentId) + 1 + tournament.eliminatedPlayers.length;
 
     console.log(`💀 Player eliminated at table ${tableId}, position ${position}`);
@@ -347,6 +447,7 @@ class TournamentManager {
 
     tournament.eliminatedPlayers.push({
       player: playerId,
+      playerName: playerName,
       position: position,
       eliminatedAt: new Date(),
       tableId: tableId
@@ -597,6 +698,9 @@ class TournamentManager {
     const tournament = this.tournaments.get(tournamentId);
     if (!tournament) return;
 
+    // Stop the blind timer
+    this.stopBlindTimer(tournamentId);
+
     tournament.status = 'completed';
     tournament.completedAt = new Date();
 
@@ -713,7 +817,15 @@ class TournamentManager {
       blindLevel: tournament.blindLevel,
       blindStructure: tournament.blindStructure,
       tableCount: tournament.tables.length,
-      activePlayers: this.getTotalActivePlayers(tournamentId)
+      activePlayers: this.getTotalActivePlayers(tournamentId),
+      eliminatedPlayers: tournament.eliminatedPlayers || [],
+      tables: tournament.tables.map(t => ({
+        id: t.id,
+        name: t.name,
+        tournamentId: t.tournamentId,
+        maxPlayers: t.maxPlayers,
+        activePlayers: t.activePlayers().length
+      }))
     };
   }
 

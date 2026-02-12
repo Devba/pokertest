@@ -11,7 +11,7 @@ class TournamentTable extends Table {
     this.blindSchedule = this.initBlindSchedule();
     this.currentBlindIndex = 0;
     this.handCount = 0;
-    this.handsPerLevel = 10; // Hands before blinds increase
+    // Blind increases are now time-based and managed by TournamentManager
     this.eliminatedPlayers = [];
     this.startTime = null;
     this.isTournament = true;
@@ -107,21 +107,13 @@ class TournamentTable extends Table {
     }
   }
 
-  // Override startHand to track hand count and blind increases
+  // Override startHand to track hand count (blinds are now managed by TournamentManager based on time)
   startHand() {
     super.startHand();
     
     if (!this.handOver) {
       this.handCount++;
-      console.log(`Tournament Table ${this.id} - Starting hand #${this.handCount}`);  
-      // Check if blinds should increase
-      if (this.handCount % this.handsPerLevel === 0) {
-        const blindIncrease = this.increaseBlinds();
-        if (blindIncrease) {
-          console.log(`Tournament Table ${this.id} - ${blindIncrease.message}`);
-          this.winMessages.push(blindIncrease.message);
-        }
-      }
+      console.log(`Tournament Table ${this.id} - Starting hand #${this.handCount}`);
     }
   }
 
@@ -278,6 +270,18 @@ findPlayerById(i) {
 
   getTournamentStatus() {
     const currentBlinds = this.getCurrentBlinds();
+    
+    // Get time until next blind increase from tournament manager
+    const tournament = this.tournamentManager ? this.tournamentManager.getTournament(this.tournamentId) : null;
+    let timeUntilBlindIncrease = null;
+    
+    if (tournament && tournament.lastBlindIncreaseTime && tournament.minutesPerLevel) {
+      const elapsedMs = Date.now() - tournament.lastBlindIncreaseTime;
+      const elapsedMinutes = elapsedMs / 60000;
+      const remainingMinutes = tournament.minutesPerLevel - elapsedMinutes;
+      timeUntilBlindIncrease = Math.max(0, remainingMinutes);
+    }
+    
     return {
       tournamentId: this.tournamentId,
       tableId: this.id,
@@ -286,7 +290,7 @@ findPlayerById(i) {
       smallBlind: currentBlinds.smallBlind,
       bigBlind: currentBlinds.bigBlind,
       ante: currentBlinds.ante,
-      handsUntilBlindIncrease: this.handsPerLevel - (this.handCount % this.handsPerLevel),
+      timeUntilBlindIncrease: timeUntilBlindIncrease, // In minutes
       activePlayers: this.activePlayers().length,
       eliminatedPlayers: this.eliminatedPlayers.length,
       averageStack: this.getAverageStack(),

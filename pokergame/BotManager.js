@@ -194,7 +194,7 @@ class BotManager {
       
       console.log(`🤖 Created temporary bot instance for ${player.name} with ${strategy} strategy`);
     } else {
-      console.log(`🤖 Table ${tableId}: Bot ${bot.name} is about to act (seat ${table.turn})`);
+    //  console.log(`🤖 Table ${tableId}: Bot ${bot.name} is about to act (seat ${table.turn})`);
     }
 
     // Clear any existing timer
@@ -214,7 +214,7 @@ class BotManager {
    * Execute the bot's decision
    */
   executeBotAction(bot, table, tableId, seat) {
-    console.log(`🎯 executeBotAction called for bot ${bot.name} on table ${tableId}`);
+  //  console.log(`🎯 executeBotAction called for bot ${bot.name} on table ${tableId}`);
     
     // Verify table is accessible
     const tableCheck = this.tables[tableId];
@@ -379,7 +379,7 @@ class BotManager {
     // Remove circular reference before any processing
     const { tournamentManager, ...cleanTable } = table;
     
-    console.log(`📡 Broadcasting to table ${cleanTable.id}: ${cleanTable.players.length} players`);
+  //  console.log(`📡 Broadcasting to table ${cleanTable.id}: ${cleanTable.players.length} players`);
     
     // Broadcast to all players in the table
     for (let i = 0; i < cleanTable.players.length; i++) {
