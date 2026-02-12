@@ -123,11 +123,24 @@ class TournamentTable extends Table {
     this.checkForEliminations();
   }
 
+  // Override sitOutFeltedPlayers to prevent base class from removing eliminated players
+  // Tournament tables handle eliminations through checkForEliminations instead
+  sitOutFeltedPlayers() {
+    // Do nothing - let checkForEliminations handle player removal
+    console.log(`🚫 sitOutFeltedPlayers blocked for tournament table ${this.id} - using checkForEliminations instead`);
+  }
+
   checkForEliminations() {
     let playersEliminated = false;
     
+    console.log(`🔍 checkForEliminations: Checking ${this.maxPlayers} seats on table ${this.id}`);
+    
     for (let i = 1; i <= this.maxPlayers; i++) {
       const seat = this.seats[i];
+      if (seat) {
+        console.log(`   Seat ${i}: ${seat.player.name}, stack: ${seat.stack}, eliminated: ${seat.eliminated || false}`);
+      }
+      
       if (seat && seat.stack === 0 && !seat.eliminated) {
         seat.eliminated = true;
         playersEliminated = true;
@@ -140,6 +153,8 @@ class TournamentTable extends Table {
         
         const eliminationMessage = `${seat.player.name} eliminated in position ${this.getTournamentPosition()}`;
         this.winMessages.push(eliminationMessage);
+        
+        console.log(`💀 ${eliminationMessage} at table ${this.id}`);
         
         // Auto-clear the elimination message after 3 seconds
         setTimeout(() => {

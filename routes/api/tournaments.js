@@ -137,8 +137,14 @@ router.get('/:id', (req, res) => {
         structure: tournament.structure,
         blindLevel: tournament.blindLevel,
         blindSchedule: tournament.blindSchedule,
-        tables: tournament.tables,
-        eliminatedPlayers: tournament.eliminatedPlayers
+        tables: tournament.tables ? tournament.tables.map(t => ({
+          id: t.id,
+          name: t.name,
+          tournamentId: t.tournamentId,
+          maxPlayers: t.maxPlayers,
+          activePlayers: t.activePlayers ? t.activePlayers().length : 0
+        })) : [],
+        eliminatedPlayers: tournament.eliminatedPlayers || []
       }
     });
   } catch (error) {

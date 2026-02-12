@@ -147,6 +147,11 @@ class BotManager {
    * Check if it's a bot's turn and make them act
    */
   checkAndActForBot(table, tableId) {
+    // Add stack trace to see where this is called from
+    const stack = new Error().stack;
+    console.log(`🔍🔍 checkAndActForBot ENTRY - Table ${tableId}`);
+    console.log(`📞 Called from:\n${stack.split('\n').slice(1, 4).join('\n')}`);
+    
     if (!table) {
       console.log(`⚠️  checkAndActForBot: table is null/undefined for tableId ${tableId}`);
       return;
@@ -169,6 +174,7 @@ class BotManager {
     }
 
     const player = currentSeat.player;
+    console.log(`🔍 Current state - Table ${tableId}, turn: seat ${table.turn}, player: ${player.name}, socketId: ${player.socketId}`);
     if (!player.isBot) {
       console.log(`✋ Table ${tableId}: Current player ${player.name} is not a bot`);
       return;
@@ -184,15 +190,16 @@ class BotManager {
       const strategyMatch = player.name.match(/Bot_(tight|loose|aggressive|passive|balanced)_/);
       const strategy = strategyMatch ? strategyMatch[1] : 'balanced';
       
+      // Use player.id as socketId for tournament bots (they don't have real sockets)
       bot = new Bot(
-        player.socketId,
+        player.id,        // Use player ID instead of undefined socketId
         player.id,
         player.name,
         player.bankroll || 10000,
         strategy
       );
       
-      console.log(`🤖 Created temporary bot instance for ${player.name} with ${strategy} strategy`);
+      console.log(`🤖 Created temporary bot instance for ${player.name} (playerId: ${player.id}) with ${strategy} strategy`);
     } else {
     //  console.log(`🤖 Table ${tableId}: Bot ${bot.name} is about to act (seat ${table.turn})`);
     }
@@ -205,6 +212,8 @@ class BotManager {
     // Schedule bot action with delay for realism
     const delay = bot.getRandomDelay(1200, 3000);
     
+    console.log(`⏲️  Scheduling ${player.name} action in ${delay}ms`);
+    
     this.actionTimers[player.socketId] = setTimeout(() => {
       this.executeBotAction(bot, table, tableId, currentSeat);
     }, delay);
@@ -214,7 +223,7 @@ class BotManager {
    * Execute the bot's decision
    */
   executeBotAction(bot, table, tableId, seat) {
-  //  console.log(`🎯 executeBotAction called for bot ${bot.name} on table ${tableId}`);
+    console.log(`🎯 executeBotAction called for bot ${bot.name} on table ${tableId}`);
     
     // Verify table is accessible
     const tableCheck = this.tables[tableId];
@@ -224,6 +233,8 @@ class BotManager {
     } else {
       console.log(`✅ Table ${tableId} IS ACCESSIBLE in this.tables`);
     }
+    
+    console.log(`📊 Getting game state for ${bot.name}...`);
     
     // Gather game state
     const gameState = {
@@ -237,8 +248,7 @@ class BotManager {
       numPlayers: table.unfoldedPlayers().length
     };
 
-
-    //if (seat.stack <= 0) {console.log(`🤖 ${bot.name} is all-in and cannot act.`); //return;}
+    console.log(`🤔 ${bot.name} making decision...`);
 
     // Get bot's decision 
     const decision = bot.makeDecision(gameState);
@@ -248,9 +258,7 @@ class BotManager {
     if( decision.amount <= 0){
       decision.action = 'CS_CHECK';}
 
-
-
-  //  console.log(`🤖 Table ${tableId}: ${bot.name} decides to ${decision.action}${decision.amount ? ` $${decision.amount}` : ''}`);
+    console.log(`🤖 Table ${tableId}: ${bot.name} decides to ${decision.action}${decision.amount ? ` $${decision.amount}` : ''}`);
 
     // Execute the action through the table's handlers
     let result = null;
@@ -275,11 +283,14 @@ class BotManager {
 
     // Broadcast the result
     if (result) {
+      console.log(`✅ Action result: seatId=${result.seatId}, message="${result.message}"`);
       this.broadcastToTable(table, result.message);
       
       // Change turn after a short delay
       setTimeout(() => {
+        console.log(`⏰ setTimeout fired - BEFORE changeTurn: table.turn = ${table.turn}`);
         table.changeTurn(result.seatId);
+        console.log(`⏰ AFTER changeTurn: table.turn = ${table.turn}, handOver = ${table.handOver}`);
         this.broadcastToTable(table);
 
         // Check if hand is over
@@ -288,7 +299,7 @@ class BotManager {
           this.handleHandOver(table, tableId);
         } else {
           // Check if next player is also a bot
-     //     console.log(`➡️  Table ${tableId}: Checking next player after ${bot.name}'s action`);
+          console.log(`➡️ Table ${tableId}: Checking next player after ${bot.name}'s action`);
           this.checkAndActForBot(table, tableId);
         }
       }, 1000);

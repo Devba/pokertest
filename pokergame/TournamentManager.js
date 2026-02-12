@@ -403,6 +403,11 @@ getMinutesPerLevel(blindStructure) {
 
     shuffledPlayers.forEach((player, idx) => {
       const table = tournament.tables[tableIndex];
+      
+      // For tournament players without socketId, use their id as socketId
+      if (!player.socketId) {
+        player.socketId = player.id;
+      }
 
       console.log(`👤 [${idx + 1}/${shuffledPlayers.length}] ${player.name} → Table ${table.id}, seat ${seatIndex}`);
       table.addPlayer(player);
@@ -540,10 +545,9 @@ getMinutesPerLevel(blindStructure) {
         console.log(`🔀 Moving player from table ${largestTable.id} (${largestCount} players) to ${smallestTable.id} (${smallestCount} players)`);
         
         // Move one player from largest to smallest
-        const moved = this.movePlayerBetweenTables(largestTable, smallestTable, tournament.startingChips);
+        moved = this.movePlayerBetweenTables(largestTable, smallestTable, tournament.startingChips);
         
         if (moved) {
-          moved = true;
           // Broadcast updates for both tables
           this.broadcastTableState(largestTable);
           this.broadcastTableState(smallestTable);
@@ -590,6 +594,12 @@ getMinutesPerLevel(blindStructure) {
       console.log(`   🚚 Moving ${playersToMove.length} players from table ${closingTable.id}`);
       
       playersToMove.forEach(seat => {
+        // Skip players with 0 chips (they're eliminated but not removed yet)
+        if (seat.stack <= 0) {
+          console.log(`      ⏭️  Skipping ${seat.player.name} (0 chips - eliminated)`);
+          return;
+        }
+        
         // Find table with most space
         const targetTable = tablesToKeep.reduce((min, table) => 
           table.activePlayers().length < min.activePlayers().length ? table : min
@@ -667,8 +677,8 @@ getMinutesPerLevel(blindStructure) {
     
     console.log(`   ✅ ${player.name} now at table ${toTable.id}, seat ${targetSeatId}`);
     
-    // Update socket room membership if player is connected
-    if (this.io && player.socketId) {
+    // Update socket room membership if player is connected (skip for bots)
+    if (this.io && player.socketId && !player.isBot) {
       const socket = this.io.sockets.sockets.get(player.socketId);
       if (socket) {
         socket.leave(`table-${fromTable.id}`);
@@ -682,6 +692,8 @@ getMinutesPerLevel(blindStructure) {
           seatId: targetSeatId
         });
       }
+    } else if (player.isBot) {
+      console.log(`   🤖 ${player.name} (bot) moved - skipping socket room update`);
     }
     
     // If source table now has only 1 player, end any active hand
