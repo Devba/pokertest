@@ -3,6 +3,13 @@ import PropTypes from 'prop-types'
 import socketContext from '../../../context/websocket/socketContext'
 import { SC_TABLE_UPDATED } from '../../../pokergame/actions'
 
+const formatBigBlindValue = (value) => {
+  if (!Number.isFinite(value)) return null
+  if (Math.abs(value) >= 100) return value.toFixed(0)
+  if (Math.abs(value) >= 10) return value.toFixed(1)
+  return value.toFixed(2)
+}
+
 const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
   // Aggregate seats from all tournament tables or use single table
   const allSeats = useMemo(() => {
@@ -11,6 +18,15 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
       const aggregated = {}
       tournament.tables.forEach((tbl) => {
         if (tbl?.seats) {
+          // Get current big blind for this table (ONLY from snapshots, like WRChartHandStacks)
+          let bigBlindValue = null
+          if (tbl.handStackSnapshots && tbl.handStackSnapshots.length > 0) {
+            const latestSnapshot = tbl.handStackSnapshots[tbl.handStackSnapshots.length - 1]
+            if (latestSnapshot && typeof latestSnapshot.bigBlind === 'number') {
+              bigBlindValue = latestSnapshot.bigBlind
+            }
+          }
+          
           Object.keys(tbl.seats).forEach((seatKey) => {
             const seat = tbl.seats[seatKey]
             if (seat) {
@@ -19,7 +35,8 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
               aggregated[uniqueKey] = {
                 ...seat,
                 tableId: tbl.id,
-                originalSeatId: seatKey
+                originalSeatId: seatKey,
+                bigBlind: bigBlindValue
               }
             }
           })
@@ -27,7 +44,26 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
       })
       return aggregated
     }
-    return table?.seats || {}
+    // For single table (ONLY use snapshots, like WRChartHandStacks)
+    let bigBlindValue = null
+    if (table?.handStackSnapshots && table.handStackSnapshots.length > 0) {
+      const latestSnapshot = table.handStackSnapshots[table.handStackSnapshots.length - 1]
+      if (latestSnapshot && typeof latestSnapshot.bigBlind === 'number') {
+        bigBlindValue = latestSnapshot.bigBlind
+      }
+    }
+    
+    const seats = table?.seats || {}
+    const enrichedSeats = {}
+    Object.keys(seats).forEach((seatKey) => {
+      if (seats[seatKey]) {
+        enrichedSeats[seatKey] = {
+          ...seats[seatKey],
+          bigBlind: bigBlindValue
+        }
+      }
+    })
+    return enrichedSeats
   }, [tournament, table])
   
   const { socket } = useContext(socketContext)
@@ -112,6 +148,16 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
         // Merge the updated table's seats into our aggregated structure
         const prev = prevSeatsRef.current || {}
         const updated = { ...prev }
+        
+        // Get current big blind for this table (ONLY from snapshots, like WRChartHandStacks)
+        let bigBlindValue = null
+        if (updatedTable.handStackSnapshots && updatedTable.handStackSnapshots.length > 0) {
+          const latestSnapshot = updatedTable.handStackSnapshots[updatedTable.handStackSnapshots.length - 1]
+          if (latestSnapshot && typeof latestSnapshot.bigBlind === 'number') {
+            bigBlindValue = latestSnapshot.bigBlind
+          }
+        }
+        
         if (updatedTable.seats) {
           Object.keys(updatedTable.seats).forEach((seatKey) => {
             const seat = updatedTable.seats[seatKey]
@@ -120,7 +166,8 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
               updated[uniqueKey] = {
                 ...seat,
                 tableId: updatedTable.id,
-                originalSeatId: seatKey
+                originalSeatId: seatKey,
+                bigBlind: bigBlindValue
               }
             } else {
               delete updated[uniqueKey]
@@ -185,6 +232,14 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
             const stackVal = seat.stack ?? seat.chips
             const formatNumber = (v) => Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
             const stackDisplay = (stackVal === undefined || stackVal === null) ? '—' : formatNumber(stackVal)
+            
+            // Calculate BB equivalent (same method as WRChartHandStacks)
+            const bigBlindValue = seat.bigBlind
+            const stackInBB = (bigBlindValue && typeof bigBlindValue === 'number' && bigBlindValue > 0 && stackVal) 
+              ? (stackVal / bigBlindValue) 
+              : null
+            const bbDisplay = stackInBB != null ? formatBigBlindValue(stackInBB) : null
+            
             // compute previous stack (from the snapshot stored in applySeatUpdate)
             const prevSeat = (prevSeatValuesRef.current || {})[sKey] || {}
             const prevValRaw = prevSeat.stack ?? prevSeat.chips
@@ -224,7 +279,14 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', color: '#ccc' }}>
-                  <div style={{ fontWeight: '600' }}>{stackDisplay}</div>
+                  <div style={{ fontWeight: '600' }}>
+                    {stackDisplay}
+                    {bbDisplay && (
+                      <span style={{ fontSize: '0.85rem', color: '#888', marginLeft: '0.35rem' }}>
+                        ({bbDisplay} BB)
+                      </span>
+                    )}
+                  </div>
                   {(seat.sittingOut === true || seat.sittingOut === false) && (
                     <div style={{ fontSize: '0.85rem', color: '#aaa' }}>{seat.sittingOut ? 'Sitting Out' : 'Sitting In'}</div>
                   )}

@@ -89,7 +89,7 @@ const init = (socket, io) => {
 
   // Initialize TournamentManager if not already initialized
   if (!tournamentManager) {
-    tournamentManager = new TournamentManager(io, botManager);
+    tournamentManager = new TournamentManager(io, botManager, tables);
     // Give BotManager access to TournamentManager for broadcasting tournament updates
     botManager.tournamentManager = tournamentManager;
     console.log('🏆 TournamentManager initialized');

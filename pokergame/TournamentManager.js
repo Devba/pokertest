@@ -1,9 +1,10 @@
 const TournamentTable = require('./TournamentTable');
 
 class TournamentManager {
-  constructor(io, botManager = null) {
+  constructor(io, botManager = null, tables = {}) {
     this.io = io;
     this.botManager = botManager;
+    this.tables = tables; // Reference to main tables object for socket broadcasting
     this.tournaments = new Map();
     this.nextTournamentId = 1;
   }
@@ -209,6 +210,14 @@ class TournamentManager {
     // Create tables and seat players
     this.createTables(tournamentId);
     this.seatPlayers(tournamentId);
+
+    // Add all tournament tables to main tables object for socket broadcasting
+    if (this.tables && tournament.tables) {
+      tournament.tables.forEach(table => {
+        this.tables[table.id] = table;
+        console.log(`Added tournament table ${table.id} to main tables object`);
+      });
+    }
 
     console.log(`Tournament ${tournament.id} started with ${tournament.registeredPlayers.length} players`);
     this.broadcastTournamentUpdate(tournamentId);
