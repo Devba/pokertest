@@ -212,37 +212,64 @@ class TournamentManager {
     this.seatPlayers(tournamentId);
 
     // Add all tournament tables to main tables object for socket broadcasting
+    console.log(`📋 Adding ${tournament.tables.length} tournament tables to main tables object...`);
     if (this.tables && tournament.tables) {
-      tournament.tables.forEach(table => {
+      tournament.tables.forEach((table, idx) => {
         this.tables[table.id] = table;
-        console.log(`Added tournament table ${table.id} to main tables object`);
+        console.log(`✅ [${idx + 1}/${tournament.tables.length}] Registered table ${table.id} in main tables object`);
       });
+      
+      // Verify all tables are accessible
+      console.log(`🔍 Verifying table registration:`);
+      tournament.tables.forEach(table => {
+        const found = this.tables[table.id];
+        console.log(`   - Table ${table.id}: ${found ? '✅ FOUND' : '❌ NOT FOUND'}`);
+      });
+    } else {
+      console.error(`⚠️  Cannot register tables: this.tables=${!!this.tables}, tournament.tables=${!!tournament.tables}`);
     }
 
     console.log(`Tournament ${tournament.id} started with ${tournament.registeredPlayers.length} players`);
     this.broadcastTournamentUpdate(tournamentId);
 
-    // Start first hand on all tables
+    // Start first hand on all tables (staggered to avoid conflicts)
+    console.log(`🎮 Starting hands on ${tournament.tables.length} tables...`);
     tournament.tables.forEach((table, idx) => {
       const activePlayers = table.activePlayers().length;
-      console.log(`Table ${idx}: Attempting to start hand with ${activePlayers} active players`);
+      console.log(`🎲 Table ${table.id} (idx:${idx}): ${activePlayers} active players, ${activePlayers >= 2 ? 'WILL START' : 'NOT ENOUGH PLAYERS'}`);
+      
       if (activePlayers >= 2) {
-        console.log(`Starting hand on table ${idx}`);
-        table.startHand();
+        // Stagger table starts by 500ms each to avoid simultaneous broadcasts
+        const startDelay = idx * 500;
+        console.log(`⏱️  Table ${table.id}: Scheduled to start in ${startDelay}ms`);
+        
+        setTimeout(() => {
+          console.log(`🎴 Table ${table.id}: START HAND NOW (turn will be: ${table.button ? 'seat ' + table.button : 'not set yet'})`);
+          table.startHand();
+          
+          console.log(`🎴 Table ${table.id}: Hand started, current turn: seat ${table.turn}, handOver: ${table.handOver}`);
 
-        // Broadcast table state to all connected clients after starting hand
-        this.broadcastTableState(table);
+          // Broadcast table state to all connected clients after starting hand
+          this.broadcastTableState(table);
 
-        // Check if first player to act is a bot
-        if (this.botManager) {
-          setTimeout(() => {
-            this.botManager.checkAndActForBot(table, table.id);
-          }, 1500);
-        }
+          // Check if first player to act is a bot (capture table in closure)
+          if (this.botManager) {
+            const currentTable = table; // Capture in closure
+            const currentTableId = table.id;
+            setTimeout(() => {
+              console.log(`🤖 Table ${currentTableId}: Checking for bot action...`);
+              this.botManager.checkAndActForBot(currentTable, currentTableId);
+            }, 1500);
+          } else {
+            console.log(`⚠️  Table ${table.id}: No botManager available`);
+          }
+        }, startDelay);
       } else {
-        console.log(`Not starting hand on table ${idx} - only ${activePlayers} players`);
+        console.log(`⚠️  Table ${table.id}: Cannot start - only ${activePlayers} players`);
       }
     });
+    
+    console.log(`🎮 All ${tournament.tables.length} table starts scheduled`);
 
     return { success: true, tournamentId: tournament.id, tournament: this.getTournamentInfo(tournamentId) };
   }
@@ -251,6 +278,8 @@ class TournamentManager {
     const tournament = this.tournaments.get(tournamentId);
     const playersPerTable = 9; // Max 9 players per table
     const numTables = Math.ceil(tournament.registeredPlayers.length / playersPerTable);
+
+    console.log(`🏗️  Creating ${numTables} tables for tournament ${tournamentId} with ${tournament.registeredPlayers.length} players`);
 
     for (let i = 0; i < numTables; i++) {
       const tableId = `${tournamentId}-${i + 1}`;
@@ -266,23 +295,25 @@ class TournamentManager {
       table.handsPerLevel = tournament.handsPerLevel;
       tournament.tables.push(table);
 
-      console.log(`Created tournament table: ${tableId} (blindLevel: ${tournament.startingBlindLevel || 1})`);
+      console.log(`✅ Created tournament table: ${tableId} (blindLevel: ${tournament.startingBlindLevel || 1})`);
     }
+    
+    console.log(`🏗️  Total tables created: ${tournament.tables.length}`);
   }
 
   seatPlayers(tournamentId) {
     const tournament = this.tournaments.get(tournamentId);
     const shuffledPlayers = [...tournament.registeredPlayers].sort(() => Math.random() - 0.5);
 
-    console.log(`Seating ${shuffledPlayers.length} players in tournament ${tournamentId}`);
+    console.log(`👥 Seating ${shuffledPlayers.length} players across ${tournament.tables.length} tables...`);
 
     let tableIndex = 0;
     let seatIndex = 1;
 
-    shuffledPlayers.forEach(player => {
+    shuffledPlayers.forEach((player, idx) => {
       const table = tournament.tables[tableIndex];
 
-      console.log(`Seating player ${player.name} at table ${tableIndex}, seat ${seatIndex}`);
+      console.log(`👤 [${idx + 1}/${shuffledPlayers.length}] ${player.name} → Table ${table.id}, seat ${seatIndex}`);
       table.addPlayer(player);
       table.sitPlayer(player, seatIndex, tournament.startingChips);
 
@@ -294,9 +325,12 @@ class TournamentManager {
     });
 
     // Log final state
+    console.log(`\n📊 Final seating arrangement:`);
     tournament.tables.forEach((table, idx) => {
-      console.log(`Table ${idx}: ${table.activePlayers().length} active players`);
+      const players = table.activePlayers();
+      console.log(`   Table ${table.id}: ${players.length} players - [${players.map(s => s.player.name).join(', ')}]`);
     });
+    console.log('');
   }
 
   handlePlayerElimination(tournamentId, tableId, playerId) {

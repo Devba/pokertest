@@ -147,16 +147,40 @@ class BotManager {
    * Check if it's a bot's turn and make them act
    */
   checkAndActForBot(table, tableId) {
-    if (!table || !table.turn || table.handOver) return;
+    if (!table) {
+      console.log(`⚠️  checkAndActForBot: table is null/undefined for tableId ${tableId}`);
+      return;
+    }
+    
+    if (!table.turn) {
+      console.log(`⚠️  checkAndActForBot: no turn set on table ${tableId}`);
+      return;
+    }
+    
+    if (table.handOver) {
+      console.log(`⚠️  checkAndActForBot: hand is over on table ${tableId}`);
+      return;
+    }
 
     const currentSeat = table.seats[table.turn];
-    if (!currentSeat || !currentSeat.player) return;
+    if (!currentSeat || !currentSeat.player) {
+      console.log(`⚠️  checkAndActForBot: no player in seat ${table.turn} on table ${tableId}`);
+      return;
+    }
 
     const player = currentSeat.player;
-    if (!player.isBot) return;
+    if (!player.isBot) {
+      console.log(`✋ Table ${tableId}: Current player ${player.name} is not a bot`);
+      return;
+    }
 
     const bot = this.bots[player.socketId];
-    if (!bot) return;
+    if (!bot) {
+      console.log(`⚠️  Bot not found in BotManager for ${player.socketId} on table ${tableId}`);
+      return;
+    }
+
+    console.log(`🤖 Table ${tableId}: Bot ${bot.name} is about to act (seat ${table.turn})`);
 
     // Clear any existing timer
     if (this.actionTimers[player.socketId]) {
@@ -175,7 +199,7 @@ class BotManager {
    * Execute the bot's decision
    */
   executeBotAction(bot, table, tableId, seat) {
-    // Gather game state
+    console.log(`🎯 executeBotAction called for bot ${bot.name} on table ${tableId}`);\n    \n    // Verify table is accessible\n    const tableCheck = this.tables[tableId];\n    if (!tableCheck) {\n      console.error(`❌ Table ${tableId} NOT FOUND in this.tables! Available tables:`, Object.keys(this.tables));\n      return;\n    } else {\n      console.log(`✅ Table ${tableId} IS ACCESSIBLE in this.tables`);\n    }\n    \n    // Gather game state
     const gameState = {
       hand: seat.hand,
       pot: table.pot,
@@ -190,7 +214,7 @@ class BotManager {
 
     //if (seat.stack <= 0) {console.log(`🤖 ${bot.name} is all-in and cannot act.`); //return;}
 
-    // Get bot's decision alf hay que dejarlo en
+    // Get bot's decision 
     const decision = bot.makeDecision(gameState);
     if (decision.amount > seat.stack) {
       decision.amount = seat.stack;
@@ -200,7 +224,7 @@ class BotManager {
 
 
 
-    console.log(`🤖 ${bot.name} decides to ${decision.action}${decision.amount ? ` $${decision.amount}` : ''}`);
+    console.log(`🤖 Table ${tableId}: ${bot.name} decides to ${decision.action}${decision.amount ? ` $${decision.amount}` : ''}`);
 
     // Execute the action through the table's handlers
     let result = null;
@@ -234,12 +258,16 @@ class BotManager {
 
         // Check if hand is over
         if (table.handOver) {
+          console.log(`🏁 Table ${tableId}: Hand over after ${bot.name}'s action`);
           this.handleHandOver(table, tableId);
         } else {
           // Check if next player is also a bot
+          console.log(`➡️  Table ${tableId}: Checking next player after ${bot.name}'s action`);
           this.checkAndActForBot(table, tableId);
         }
       }, 1000);
+    } else {
+      console.log(`⚠️  Table ${tableId}: No result from ${bot.name}'s ${decision.action}`);
     }
   }
 
@@ -269,6 +297,8 @@ class BotManager {
    * Handle when hand is over
    */
   handleHandOver(table, tableId) {
+    console.log(`🏁 Table ${tableId}: Hand over, checking for eliminations`);
+    
     // Check if this is a tournament table and if players were eliminated
     if (table.isTournament && table.checkForEliminations && typeof table.checkForEliminations === 'function') {
       const playersEliminated = table.checkForEliminations();
@@ -280,37 +310,50 @@ class BotManager {
       }
     }
     
-    if (table.activePlayers().length >= 2) {
+    const activeCount = table.activePlayers().length;
+    console.log(`🏁 Table ${tableId}: ${activeCount} active players remaining`);
+    
+    if (activeCount >= 2) {
       this.broadcastToTable(table, '---New hand starting in 5 seconds---');
       
       setTimeout(() => {
+        console.log(`🃏 Table ${tableId}: Starting new hand with ${table.activePlayers().length} players`);
         table.clearWinMessages();
         table.startHand();
         this.broadcastToTable(table, '--- New hand started ---');
         
         // Start bot actions for new hand
-        this.checkAndActForBot(table, tableId);
+        setTimeout(() => {
+          this.checkAndActForBot(table, tableId);
+        }, 500);
       }, 5000);
-    } else if (table.activePlayers().length === 1) {
-  // Only one player left - declare winner and finish tournament
-            const winnerSeat = table.activePlayers()[0];
-            const winnerName = winnerSeat.player?.name || 'Winner';
-            this.broadcastToTable(table, `${winnerName} wins the tournament!`);
-            this.tournamentManager.completeTournament(table.tournamentId, winnerSeat.player);
-
-            // Finish the tournament if possible , no existe el método finishTournament en TournamentManager pero se puede implementar para marcar el torneo como terminado y distribuir premios
-            if (table.isTournament && this.tournamentManager && typeof this.tournamentManager.finishTournament === 'function') {
-              this.tournamentManager.finishTournament(table.tournamentId, winnerSeat.player);
-            }
-          }
+    } else if (activeCount === 1) {
+      // Only one player left - declare winner and finish tournament
+      const winnerSeat = table.activePlayers()[0];
+      const winnerName = winnerSeat.player?.name || 'Winner';
+      console.log(`🏆 Table ${tableId}: Tournament winner: ${winnerName}`);
+      this.broadcastToTable(table, `${winnerName} wins the tournament!`);
+      if (this.tournamentManager && table.tournamentId) {
+        this.tournamentManager.completeTournament(table.tournamentId, winnerSeat.player);
+      }
+    } else {
+      console.log(`⚠️  Table ${tableId}: No active players, cannot continue`);
+    }
   }
 
   /**
    * Broadcast table state to all players
    */
   broadcastToTable(table, message = null, from = null) {
+    if (!table) {
+      console.error('❌ broadcastToTable: table is null/undefined');
+      return;
+    }
+    
     // Remove circular reference before any processing
     const { tournamentManager, ...cleanTable } = table;
+    
+    console.log(`📡 Broadcasting to table ${cleanTable.id}: ${cleanTable.players.length} players`);
     
     // Broadcast to all players in the table
     for (let i = 0; i < cleanTable.players.length; i++) {

@@ -138,13 +138,30 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
       ? tournament.tables.map(t => t.id).filter(Boolean)
       : (table?.id ? [table.id] : [])
     
-    if (tableIds.length === 0) return
+    console.log('🔊 WRRankingList: Setting up socket listener for tables:', tableIds);
+    
+    if (tableIds.length === 0) {
+      console.warn('⚠️ WRRankingList: No table IDs to watch');
+      return;
+    }
 
     const handler = ({ table: updatedTable }) => {
-      if (!updatedTable) return
+      if (!updatedTable) {
+        console.warn('⚠️ WRRankingList: Received table update with no table');
+        return;
+      }
+      
+      console.log(`📥 WRRankingList: Received update for table ${updatedTable.id}, watching:`, tableIds);
       
       // Check if this update is for one of our tables
-      if (tableIds.includes(updatedTable.id)) {
+      const isWatchedTable = tableIds.includes(updatedTable.id);
+      const isTournamentTable = tournament && updatedTable.tournamentId === tournament.id;
+      
+      console.log(`   - In watched list: ${isWatchedTable}, Tournament match: ${isTournamentTable}`);
+      
+      if (isWatchedTable || isTournamentTable) {
+        console.log(`✅ WRRankingList: Processing update for table ${updatedTable.id}`);
+        
         // Merge the updated table's seats into our aggregated structure
         const prev = prevSeatsRef.current || {}
         const updated = { ...prev }
@@ -173,14 +190,20 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
               delete updated[uniqueKey]
             }
           })
+          console.log(`   - Updated ${Object.keys(updatedTable.seats).length} seats for table ${updatedTable.id}`);
         }
         // Use applySeatUpdate to trigger change detection and animations
         applySeatUpdate(updated)
+      } else {
+        console.log(`⏭️  WRRankingList: Ignoring update for table ${updatedTable.id}`);
       }
     }
     socket.on(SC_TABLE_UPDATED, handler)
-    return () => socket.off(SC_TABLE_UPDATED, handler)
-  }, [socket, tournament?.tables, table?.id, applySeatUpdate])
+    return () => {
+      console.log('🔇 WRRankingList: Removing socket listener');
+      socket.off(SC_TABLE_UPDATED, handler);
+    }
+  }, [socket, tournament?.tables, tournament?.id, table?.id, applySeatUpdate])
 
   // Convert seats object into an array and sort by stack/chips descending (numeric)
   const seatEntries = useMemo(() => Object.keys(localSeats)
