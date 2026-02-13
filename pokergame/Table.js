@@ -31,6 +31,7 @@ class Table {
     this.history = [];
     this.handStackSnapshots = [];
     this.handSequence = 0;
+    this.handStartedAt = null;
   }
 
   initSeats(maxPlayers) {
@@ -155,6 +156,7 @@ class Table {
     if (this.activePlayers().length > 1) {
       this.button = this.nextActivePlayer(this.button, 1);
       this.handSequence += 1;
+      this.handStartedAt = new Date();
       this.captureStartHandStacks();
       this.setTurn();
       this.dealPreflop();

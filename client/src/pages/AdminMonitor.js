@@ -4,6 +4,21 @@ import Container from '../components/layout/Container';
 import axios from 'axios';
 import './AdminMonitor.scss';
 
+// Helper function to format time since last hand
+const formatTimeSince = (timestamp) => {
+  if (!timestamp) return 'No hand started';
+  const now = new Date();
+  const then = new Date(timestamp);
+  const diffMs = now - then;
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  
+  if (diffSecs < 60) return `${diffSecs}s ago`;
+  if (diffMins < 60) return `${diffMins}m ${diffSecs % 60}s ago`;
+  return `${diffHours}h ${diffMins % 60}m ago`;
+};
+
 const AdminMonitor = () => {
   const navigate = useNavigate();
   const [tournaments, setTournaments] = useState([]);
@@ -11,8 +26,10 @@ const AdminMonitor = () => {
   const [tournamentDetails, setTournamentDetails] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [autoRefresh, setAutoRefresh] = useState(false);
-  const [refreshInterval, setRefreshInterval] = useState(15);
+  const [refreshInterval, setRefreshInterval] = useState(30);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [nextRefreshTime, setNextRefreshTime] = useState(null);
+  const [countdownSeconds, setCountdownSeconds] = useState(0);
 
   // Fetch all tournaments
   const fetchTournaments = async () => {
@@ -21,6 +38,7 @@ const AdminMonitor = () => {
       if (data.success) {
         setTournaments(data.tournaments);
         setLastUpdate(new Date());
+        setNextRefreshTime(new Date(Date.now() + refreshInterval * 1000));
       }
     } catch (error) {
       console.error('Error fetching tournaments:', error);
@@ -66,21 +84,21 @@ const AdminMonitor = () => {
   // Select tournament
   const handleSelectTournament = async (tournamentId) => {
     setSelectedTournament(tournamentId);
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 500));
     await fetchTournamentDetails(tournamentId);
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 500));
     await fetchLeaderboard(tournamentId);
   };
 
   // Auto-refresh effect
   useEffect(() => {
-    // Initial fetch with a small delay to avoid rate limiting
+    // Initial fetch with delays to avoid rate limiting
     const initialFetch = async () => {
       await fetchTournaments();
       if (selectedTournament) {
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
         await fetchTournamentDetails(selectedTournament);
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
         await fetchLeaderboard(selectedTournament);
       }
     };
@@ -88,13 +106,14 @@ const AdminMonitor = () => {
     initialFetch();
     
     if (autoRefresh) {
+      setNextRefreshTime(new Date(Date.now() + refreshInterval * 1000));
       const interval = setInterval(async () => {
         await fetchTournaments();
         if (selectedTournament) {
-          // Add small delay between requests to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Add delay between requests to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 500));
           await fetchTournamentDetails(selectedTournament);
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise(resolve => setTimeout(resolve, 500));
           await fetchLeaderboard(selectedTournament);
         }
       }, refreshInterval * 1000);
@@ -102,6 +121,19 @@ const AdminMonitor = () => {
       return () => clearInterval(interval);
     }
   }, [autoRefresh, refreshInterval, selectedTournament]);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (!autoRefresh || !nextRefreshTime) return;
+    
+    const countdownInterval = setInterval(() => {
+      const now = new Date();
+      const diff = Math.max(0, Math.floor((nextRefreshTime - now) / 1000));
+      setCountdownSeconds(diff);
+    }, 1000);
+    
+    return () => clearInterval(countdownInterval);
+  }, [autoRefresh, nextRefreshTime]);
 
   const formatTime = (date) => {
     return new Date(date).toLocaleTimeString();
@@ -139,14 +171,18 @@ const AdminMonitor = () => {
                 onChange={(e) => setRefreshInterval(Number(e.target.value))}
                 disabled={!autoRefresh}
               >
-                <option value="10">10s</option>
-                <option value="15">15s</option>
                 <option value="30">30s</option>
                 <option value="60">60s</option>
+                <option value="120">2m</option>
               </select>
               <button onClick={fetchTournaments} className="btn-refresh">
                 🔄 Refresh Now
               </button>
+              {autoRefresh && countdownSeconds > 0 && (
+                <div className="countdown" style={{ color: '#00CCFF' }}>
+                  Next refresh in {countdownSeconds}s
+                </div>
+              )}
             </div>
           </div>
           {lastUpdate && (
@@ -240,6 +276,29 @@ const AdminMonitor = () => {
                           <span className="stat-label">Active:</span>
                           <span className="stat-value">{table.activePlayers}/{table.maxPlayers}</span>
                         </div>
+                        <div className="stat">
+                          <span className="stat-label">Hand #:</span>
+                          <span className="stat-value">{table.handSequence || 0}</span>
+                        </div>
+                        <div className="stat">
+                          <span className="stat-label">Last Hand:</span>
+                          <span className="stat-value hand-time" style={{
+                            color: !table.handStartedAt ? '#888' : 
+                                   table.handOver ? '#FFA500' : '#00FF00'
+                          }}>
+                            {formatTimeSince(table.handStartedAt)}
+                          </span>
+                        </div>
+                        {table.handOver !== undefined && (
+                          <div className="stat">
+                            <span className="stat-label">Status:</span>
+                            <span className="stat-value" style={{
+                              color: table.handOver ? '#888' : '#00FF00'
+                            }}>
+                              {table.handOver ? '⏸ Idle' : '▶ Playing'}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="table-progress">
                         <div

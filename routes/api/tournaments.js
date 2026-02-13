@@ -145,7 +145,10 @@ router.get('/:id', (req, res) => {
           name: t.name,
           tournamentId: t.tournamentId,
           maxPlayers: t.maxPlayers,
-          activePlayers: t.activePlayers ? t.activePlayers().length : 0
+          activePlayers: t.activePlayers ? t.activePlayers().length : 0,
+          handStartedAt: t.handStartedAt,
+          handSequence: t.handSequence,
+          handOver: t.handOver
         })) : [],
         eliminatedPlayers: tournament.eliminatedPlayers || []
       }
