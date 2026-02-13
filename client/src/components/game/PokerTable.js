@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import table from '../../assets/game/table.svg';
+import table from '../../assets/game/table.webp';
 
 const StyledPokerTable = styled.img`
   display: block;

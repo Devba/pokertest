@@ -577,6 +577,37 @@ getMinutesPerLevel(blindStructure) {
     
     // Broadcast tournament update to reflect changes
     this.broadcastTournamentUpdate(tournamentId);
+
+    // Check if any tables that previously didn't have enough players can now start
+    this.startTablesReadyToPlay(tournamentId);
+  }
+
+  startTablesReadyToPlay(tournamentId) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament || tournament.status !== 'live') return;
+
+    tournament.tables.forEach(table => {
+      const activePlayers = table.activePlayers().length;
+      
+      // Check if table has enough players and is not already playing
+      if (activePlayers >= 2 && table.handOver && !table.currentHand) {
+        console.log(`🎴 Table ${table.id} now has ${activePlayers} players - starting first hand`);
+        
+        // Reset table state for new hand
+        table.startHand();
+        this.broadcastTableState(table);
+        
+        // Check if first player to act is a bot
+        if (this.botManager) {
+          const currentTable = table;
+          const currentTableId = table.id;
+          setTimeout(() => {
+            console.log(`🤖 Table ${currentTableId}: Checking for bot action after rebalance...`);
+            this.botManager.checkAndActForBot(currentTable, currentTableId);
+          }, 1500);
+        }
+      }
+    });
   }
 
   consolidateTables(tournament, targetTableCount) {

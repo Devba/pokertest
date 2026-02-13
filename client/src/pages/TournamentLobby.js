@@ -479,7 +479,7 @@ useEffect(() => {
                 inputValue: 2,
                 inputAttributes: {
                   min: 1,
-                  max: 10,
+                  max: 50,
                   step: 1
                 },
                 showCancelButton: true,
