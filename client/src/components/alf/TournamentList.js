@@ -18,6 +18,7 @@ const TournamentList = ({
       return new Set()
     }
   })
+  const [openDropdown, setOpenDropdown] = useState(null)
 
   useEffect(() => {
     try {
@@ -181,14 +182,113 @@ const TournamentList = ({
           >
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'minmax(240px, 2.1fr) minmax(520px, 3fr) auto',
-              alignItems: 'center',
+              gridTemplateColumns: 'minmax(240px, 1fr) 1fr',
+              alignItems: 'flex-start',
               gap: '1.25rem'
             }}>
               {/* Left: Tournament Info */}
               <div style={{ minWidth: 0 }}>
                 <h3 style={{ margin: '0 0 8px 0', fontSize: '1.3rem', lineHeight: 1.15 }}>{tournament.name}</h3>
-                <p style={{ margin: 0, color: '#aaa', fontSize: '14px' }}>{tournament.structure}</p>
+                <p style={{ margin: '0 0 12px 0', color: '#aaa', fontSize: '14px' }}>{tournament.structure}</p>
+                
+                {/* Actions Dropdown - Integrated here */}
+                <div style={{ position: 'relative' }}>
+                  <Button
+                    small
+                    secondary
+                    onClick={(e) => { 
+                      e.stopPropagation()
+                      setOpenDropdown(openDropdown === tournament.id ? null : tournament.id)
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '100px', justifyContent: 'flex-start' }}
+                  >
+                    <span>Actions</span>
+                    <span style={{ fontSize: '0.9rem', lineHeight: 1 }}>
+                      {openDropdown === tournament.id ? '▴' : '▾'}
+                    </span>
+                  </Button>
+
+                  {/* Dropdown Items */}
+                  {openDropdown === tournament.id && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      marginTop: '4px',
+                      backgroundColor: '#0f1724',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      borderRadius: '6px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                      zIndex: 1000,
+                      minWidth: '160px',
+                      overflow: 'hidden'
+                    }}>
+                      <div
+                        onClick={(e) => { 
+                          e.stopPropagation()
+                          navigate(`/tournament/${tournament.id}/waiting`)
+                          setOpenDropdown(null)
+                        }}
+                        style={{
+                          padding: '10px 14px',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          borderBottom: '1px solid rgba(255,255,255,0.08)',
+                          fontSize: '14px',
+                          transition: 'background-color 0.2s',
+                          backgroundColor: 'transparent'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(0,123,255,0.2)'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                      >
+                        Waiting Room
+                      </div>
+                      {(tournament.status === 'registering' || tournament.status === 'upcoming') && (
+                        <div
+                          onClick={(e) => { 
+                            e.stopPropagation()
+                            navigate(`/tournament/${tournament.id}/waitingxx`)
+                            setOpenDropdown(null)
+                          }}
+                          style={{
+                            padding: '10px 14px',
+                            color: '#fff',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid rgba(255,255,255,0.08)',
+                            fontSize: '14px',
+                            transition: 'background-color 0.2s',
+                            backgroundColor: 'transparent'
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(0,123,255,0.2)'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                        >
+                          View Tournament
+                        </div>
+                      )}
+                      {tournament.status === 'live' && (
+                        <div
+                          onClick={(e) => { 
+                            e.stopPropagation()
+                            navigate(`/tournament/${tournament.id}?mode=spectator`)
+                            setOpenDropdown(null)
+                          }}
+                          style={{
+                            padding: '10px 14px',
+                            color: '#fff',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            transition: 'background-color 0.2s',
+                            backgroundColor: 'transparent'
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(0,123,255,0.2)'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                        >
+                          Watch
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Middle: Tournament Stats */}
@@ -235,61 +335,6 @@ const TournamentList = ({
                   <p style={{ margin: 0, fontWeight: 'bold' }}>{timing.value}</p>
                   <div style={{ marginTop: '4px' }}>{getStatusBadge(tournament.status)}</div>
                 </div>
-              </div>
-
-              {/* Right: Action Buttons */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-                gap: '8px',
-                flexShrink: 0,
-                minWidth: '390px',
-                width: '390px',
-                padding: '0.55rem',
-                borderRadius: '12px',
-                border: '1px solid rgba(255,255,255,0.08)',
-                backgroundColor: 'rgba(8, 20, 53, 0.7)',
-                boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.02)'
-              }}>
-                <Button
-                  small
-                  secondary
-                  onClick={(e) => { e.stopPropagation(); navigate(`/tournament/${tournament.id}/waiting`) }}
-                  style={{ minWidth: '110px' }}
-                >
-                  Waiting Room
-                </Button>
-                { (tournament.status === 'registering' || tournament.status === 'upcoming') && (
-                  <Button
-                    small
-                    onClick={(e) => { e.stopPropagation(); navigate(`/tournament/${tournament.id}/waitingxx`) }}
-                    style={{ minWidth: '110px' }}
-                  >
-                    View Tournament
-                  </Button>
-                ) }
-                { tournament.status === 'live' && (
-                  <Button
-                    small
-                    secondary
-                    onClick={(e) => { e.stopPropagation(); navigate(`/tournament/${tournament.id}?mode=spectator`) }}
-                    style={{ minWidth: '110px' }}
-                  >
-                    Watch
-                  </Button>
-                ) }
-                <Button
-                  small
-                  secondary
-                  onClick={(e) => { e.stopPropagation(); toggleHidden(tournament.id, e) }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '86px', justifyContent: 'center' }}
-                >
-                  <span>{hiddenSet.has(tournament.id) ? 'Show' : 'Hide'}</span>
-                  <span style={{ fontSize: '1rem', lineHeight: 1 }}>
-                    {hiddenSet.has(tournament.id) ? '▸' : '▾'}
-                  </span>
-                </Button>
               </div>
             </div>
           </div>
