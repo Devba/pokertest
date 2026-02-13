@@ -187,7 +187,7 @@ const TournamentList = ({
             }}>
               {/* Left: Tournament Info */}
               <div style={{ minWidth: 0 }}>
-                <h3 style={{ margin: '0 0 8px 0', fontSize: '2.4rem', lineHeight: 1.08 }}>{tournament.name}</h3>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '1.3rem', lineHeight: 1.15 }}>{tournament.name}</h3>
                 <p style={{ margin: 0, color: '#aaa', fontSize: '14px' }}>{tournament.structure}</p>
               </div>
 

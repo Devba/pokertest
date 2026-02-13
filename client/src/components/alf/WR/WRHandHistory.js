@@ -54,7 +54,9 @@ const buildStackDiffSummary = (currentSeats, previousSeats) => {
     }
   })
 
-  const meaningfulDiffs = diffs.filter((item) => item.diff !== null)
+  const meaningfulDiffs = diffs
+    .filter((item) => item.diff !== null)
+    .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff))
   return meaningfulDiffs.length ? meaningfulDiffs : []
 }
 
