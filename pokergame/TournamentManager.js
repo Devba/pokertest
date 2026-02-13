@@ -837,6 +837,7 @@ getMinutesPerLevel(blindStructure) {
       })),
       startingChips: tournament.startingChips,
       startTime: tournament.startTime,
+      actualStartTime: tournament.actualStartTime,
       status: tournament.status,
       structure: tournament.structure,
       blindLevel: tournament.blindLevel,

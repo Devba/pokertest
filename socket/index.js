@@ -207,7 +207,11 @@ const init = (socket, io) => {
         startingChips: t.startingChips,
         registrationEndsAt: t.registrationEndsAt,
         startTime: t.startTime,
+        actualStartTime: t.actualStartTime,
         maxPlayers: t.maxPlayers,
+        activePlayers: t.status === 'live'
+          ? (t.tables || []).reduce((total, table) => total + (typeof table.activePlayers === 'function' ? table.activePlayers().length : 0), 0)
+          : 0,
         registeredPlayers: t.registeredPlayers.map(p => ({
           id: p.id,
           name: p.name,
