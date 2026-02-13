@@ -6,6 +6,7 @@ import ConnectWallet from '../../pages/ConnectWallet';
 import TournamentLobby from '../../pages/TournamentLobby';
 import TournamentPlay from '../../pages/TournamentPlay';
 import TournamentWaitingRoom from '../../pages/TournamentWaitingRoom';
+import AdminMonitor from '../../pages/AdminMonitor';
 
 const AppRoutes = () => {
 
@@ -20,6 +21,7 @@ const AppRoutes = () => {
       <Route path="/tournament-lobby" element={<TournamentLobby />} />
       <Route path="/tournament/:tournamentId/waiting" element={<TournamentWaitingRoom />} />
       <Route path="/tournament/:tournamentId" element={<TournamentPlay />} />
+      <Route path="/admin/monitor" element={<AdminMonitor />} />
       <Route element={<NotFoundPage />} />
     </Routes>
   );

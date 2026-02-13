@@ -1,0 +1,322 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Container from '../components/layout/Container';
+import axios from 'axios';
+import './AdminMonitor.scss';
+
+const AdminMonitor = () => {
+  const navigate = useNavigate();
+  const [tournaments, setTournaments] = useState([]);
+  const [selectedTournament, setSelectedTournament] = useState(null);
+  const [tournamentDetails, setTournamentDetails] = useState(null);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(15);
+  const [lastUpdate, setLastUpdate] = useState(null);
+
+  // Fetch all tournaments
+  const fetchTournaments = async () => {
+    try {
+      const { data } = await axios.get('/api/tournaments/list');
+      if (data.success) {
+        setTournaments(data.tournaments);
+        setLastUpdate(new Date());
+      }
+    } catch (error) {
+      console.error('Error fetching tournaments:', error);
+      if (error.response?.status === 429) {
+        console.warn('Rate limited - slowing down requests');
+        setAutoRefresh(false);
+      }
+    }
+  };
+
+  // Fetch tournament details
+  const fetchTournamentDetails = async (tournamentId) => {
+    try {
+      const { data } = await axios.get(`/api/tournaments/${tournamentId}`);
+      if (data.success) {
+        setTournamentDetails(data.tournament);
+      }
+    } catch (error) {
+      console.error('Error fetching tournament details:', error);
+      if (error.response?.status === 429) {
+        console.warn('Rate limited - slowing down requests');
+        setAutoRefresh(false);
+      }
+    }
+  };
+
+  // Fetch leaderboard
+  const fetchLeaderboard = async (tournamentId) => {
+    try {
+      const { data } = await axios.get(`/api/tournaments/${tournamentId}/leaderboard`);
+      if (data.success) {
+        setLeaderboard(data.leaderboard);
+      }
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      if (error.response?.status === 429) {
+        console.warn('Rate limited - slowing down requests');
+        setAutoRefresh(false);
+      }
+    }
+  };
+
+  // Select tournament
+  const handleSelectTournament = async (tournamentId) => {
+    setSelectedTournament(tournamentId);
+    await new Promise(resolve => setTimeout(resolve, 100));
+    await fetchTournamentDetails(tournamentId);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    await fetchLeaderboard(tournamentId);
+  };
+
+  // Auto-refresh effect
+  useEffect(() => {
+    // Initial fetch with a small delay to avoid rate limiting
+    const initialFetch = async () => {
+      await fetchTournaments();
+      if (selectedTournament) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await fetchTournamentDetails(selectedTournament);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await fetchLeaderboard(selectedTournament);
+      }
+    };
+    
+    initialFetch();
+    
+    if (autoRefresh) {
+      const interval = setInterval(async () => {
+        await fetchTournaments();
+        if (selectedTournament) {
+          // Add small delay between requests to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 300));
+          await fetchTournamentDetails(selectedTournament);
+          await new Promise(resolve => setTimeout(resolve, 300));
+          await fetchLeaderboard(selectedTournament);
+        }
+      }, refreshInterval * 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [autoRefresh, refreshInterval, selectedTournament]);
+
+  const formatTime = (date) => {
+    return new Date(date).toLocaleTimeString();
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'registering': return '#FFA500';
+      case 'live': return '#00FF00';
+      case 'completed': return '#808080';
+      default: return '#FFFFFF';
+    }
+  };
+
+  return (
+    <Container>
+      <div className="admin-monitor">
+        <div className="admin-header">
+          <h1>🎰 Tournament Admin Monitor</h1>
+          <div className="header-controls">
+            <button onClick={() => navigate('/tournament-lobby')} className="btn-back">
+              ← Back to Lobby
+            </button>
+            <div className="refresh-controls">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={autoRefresh}
+                  onChange={(e) => setAutoRefresh(e.target.checked)}
+                />
+                Auto-refresh
+              </label>
+              <select
+                value={refreshInterval}
+                onChange={(e) => setRefreshInterval(Number(e.target.value))}
+                disabled={!autoRefresh}
+              >
+                <option value="10">10s</option>
+                <option value="15">15s</option>
+                <option value="30">30s</option>
+                <option value="60">60s</option>
+              </select>
+              <button onClick={fetchTournaments} className="btn-refresh">
+                🔄 Refresh Now
+              </button>
+            </div>
+          </div>
+          {lastUpdate && (
+            <div className="last-update">
+              Last updated: {formatTime(lastUpdate)}
+            </div>
+          )}
+        </div>
+
+        <div className="admin-content">
+          <div className="tournaments-panel">
+            <h2>All Tournaments ({tournaments.length})</h2>
+            <div className="tournaments-list">
+              {tournaments.map((t) => (
+                <div
+                  key={t.id}
+                  className={`tournament-card ${selectedTournament === t.id ? 'selected' : ''}`}
+                  onClick={() => handleSelectTournament(t.id)}
+                >
+                  <div className="tournament-header">
+                    <span className="tournament-id">#{t.id}</span>
+                    <span
+                      className="tournament-status"
+                      style={{ color: getStatusColor(t.status) }}
+                    >
+                      ● {t.status.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="tournament-name">{t.name}</div>
+                  <div className="tournament-stats">
+                    <div>👥 {t.registeredPlayers}/{t.maxPlayers}</div>
+                    <div>🎚️ Level {t.blindLevel}</div>
+                  </div>
+                  <div className="tournament-time">
+                    Started: {formatTime(t.startTime)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {tournamentDetails && (
+            <div className="details-panel">
+              <h2>Tournament #{selectedTournament} Details</h2>
+              
+              <div className="info-section">
+                <h3>📊 Overview</h3>
+                <div className="info-grid">
+                  <div className="info-item">
+                    <span className="label">Status:</span>
+                    <span className="value" style={{ color: getStatusColor(tournamentDetails.status) }}>
+                      {tournamentDetails.status.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="info-item">
+                    <span className="label">Blind Level:</span>
+                    <span className="value">{tournamentDetails.blindLevel}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="label">Active Players:</span>
+                    <span className="value">
+                      {tournamentDetails.tables?.reduce((sum, t) => sum + t.activePlayers, 0) || 0}
+                    </span>
+                  </div>
+                  <div className="info-item">
+                    <span className="label">Eliminated:</span>
+                    <span className="value">{tournamentDetails.eliminatedPlayers?.length || 0}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="label">Total Tables:</span>
+                    <span className="value">{tournamentDetails.tables?.length || 0}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="label">Prize Pool:</span>
+                    <span className="value">{tournamentDetails.prizePool}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="info-section">
+                <h3>🎲 Tables Status</h3>
+                <div className="tables-grid">
+                  {tournamentDetails.tables?.map((table) => (
+                    <div key={table.id} className="table-card">
+                      <div className="table-header">
+                        <span className="table-name">{table.name}</span>
+                        <span className="table-id">{table.id}</span>
+                      </div>
+                      <div className="table-stats">
+                        <div className="stat">
+                          <span className="stat-label">Active:</span>
+                          <span className="stat-value">{table.activePlayers}/{table.maxPlayers}</span>
+                        </div>
+                      </div>
+                      <div className="table-progress">
+                        <div
+                          className="progress-bar"
+                          style={{
+                            width: `${(table.activePlayers / table.maxPlayers) * 100}%`,
+                            backgroundColor: table.activePlayers > 0 ? '#00FF00' : '#FF0000'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="info-section">
+                <h3>🏆 Leaderboard (Top 10)</h3>
+                <div className="leaderboard-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Player</th>
+                        <th>Chips</th>
+                        <th>Table</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {leaderboard.slice(0, 10).map((player) => (
+                        <tr key={player.walletAddress}>
+                          <td className="position">#{player.position}</td>
+                          <td className="name">{player.name}</td>
+                          <td className="chips">{Math.round(player.chips).toLocaleString()}</td>
+                          <td className="table">{player.tableId}</td>
+                          <td className="status">
+                            <span className={`status-badge ${player.status}`}>
+                              {player.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {tournamentDetails.eliminatedPlayers?.length > 0 && (
+                <div className="info-section">
+                  <h3>💀 Recently Eliminated ({tournamentDetails.eliminatedPlayers.length})</h3>
+                  <div className="eliminated-list">
+                    {tournamentDetails.eliminatedPlayers.slice(-5).reverse().map((player, idx) => (
+                      <div key={idx} className="eliminated-item">
+                        <span className="player-name">{player.name || player.id}</span>
+                        <span className="elimination-position">
+                          Finished: #{tournamentDetails.eliminatedPlayers.length - idx}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!tournamentDetails && (
+            <div className="details-panel empty">
+              <div className="empty-state">
+                <h2>👈 Select a tournament</h2>
+                <p>Click on a tournament card to view its details</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </Container>
+  );
+};
+
+export default AdminMonitor;

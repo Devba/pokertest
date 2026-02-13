@@ -664,6 +664,13 @@ useEffect(() => {
             </Button>
             <Button 
               small 
+              onClick={() => navigate('/admin/monitor')}
+              style={{ background: '#e17055' }}
+            >
+              🎰 Admin Monitor
+            </Button>
+            <Button 
+              small 
               onClick={async () => {
                 const result = await showCreateTournamentForm(walletAddress);
                 if (result.isConfirmed && socket) {
