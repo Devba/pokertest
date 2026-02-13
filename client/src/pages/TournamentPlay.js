@@ -217,6 +217,29 @@ useEffect(() => {
     setIsSittingIn(!isSittingIn);
   };
 
+  const TABLE_SEAT_COUNT = 9
+  const HERO_DISPLAY_INDEX = 4
+
+  const seatDisplaySlots = [
+    { top: '-30%', left: '50%', scale: 0.66, origin: 'top center' },
+    { top: '-8%', right: '22%', scale: 0.66, origin: 'top center' },
+    { top: '14%', right: '6%', scale: 0.66, origin: 'top right' },
+    { top: '42%', right: '1%', scale: 0.66, origin: 'top right' },
+    { bottom: '-8%', left: '50%', scale: 0.66, origin: 'bottom center', zIndex: '120' },
+    { top: '42%', left: '1%', scale: 0.66, origin: 'top left' },
+    { top: '14%', left: '6%', scale: 0.66, origin: 'top left' },
+    { top: '-8%', left: '22%', scale: 0.66, origin: 'top center' },
+    { top: '-30%', left: '34%', scale: 0.66, origin: 'top center' }
+  ]
+
+  const normalizeSeatNumber = (value, maxSeats) => ((value - 1 + maxSeats) % maxSeats) + 1
+
+  const getDisplayedSeatNumber = (displayIndex) => {
+    const maxSeats = TABLE_SEAT_COUNT
+    const bottomAnchorSeat = mode === 'player' && seatId ? seatId : 4
+    return normalizeSeatNumber(bottomAnchorSeat + (displayIndex - HERO_DISPLAY_INDEX), maxSeats)
+  }
+
   return (
     <>
      
@@ -333,105 +356,33 @@ useEffect(() => {
           <PokerTable />
           {currentTable && (
             <>
-              <PositionedUISlot
-                top="-5%"
-                left="0%"
-                scale="0.55"
-                origin="top center"
-              >
-                <p>1</p>
-                <Seat
-                  seatNumber={seatId?((seatId +2) % 6) : 1}
-                  currentTable={currentTable}
-                  sitDown={sitDown}
-                 folded={currentTable.seats[seatId?((seatId +2 ) % 6)  : 1]?.folded}
-                />
-              </PositionedUISlot>
-
-
-                <PositionedUISlot
-                top="-42%"
-                left="25%"
-                scale="0.55"
-                origin="top center"
-              >
-                <p>2</p>
-                <Seat
-                  seatNumber={seatId?((seatId +3) % 6)  : 2}
-                  currentTable={currentTable}
-                  sitDown={sitDown}
-          folded={currentTable.seats[seatId?((seatId +3) % 6)  : 2]?.folded}
-                />
-              </PositionedUISlot>
-              <PositionedUISlot
-                top="-30%"
-                right="15vw"
-                scale="0.55"
-                origin="top right"
-              >
-                <Seat
-                  seatNumber={seatId?((seatId +4) % 6)  : 3}
-                  currentTable={currentTable}
-                  sitDown={sitDown}
-                 folded={currentTable.seats[seatId?((seatId +4) % 6)  : 3]?.folded}
-                />
-              </PositionedUISlot>
-
-                     <PositionedUISlot
-                top="40%"
-                right="5vw"
-                scale="0.55"
-                origin="top right"
-              >
-                <Seat
-                  seatNumber={seatId?((seatId + 5) % 6)  : 4}
-                  currentTable={currentTable}
-                  sitDown={sitDown}
-                  
-                  folded={currentTable.seats[seatId?((seatId +5) % 6)  : 4]?.folded}
-                />
-              </PositionedUISlot>
-
-              
-              <PositionedUISlot
-               bottom="-20%"
-                left="50%"
-                scale="0.15"
-                origin="bottom center"
-                zIndex="100"
-                info="este es es jugador"
-                position="absolute"
-              >
-               <Seat
-                    seatNumber={seatId?((seatId ) % 6)  : 5}
-                    currentTable={currentTable}
-                    sitDown={sitDown}
-                    folded={currentTable.seats[seatId?((seatId ) % 6)  : 5]?.folded}
-                    
-                  />
+              {seatDisplaySlots.map((slot, index) => {
+                const seatNumber = getDisplayedSeatNumber(index)
+                return (
+                  <PositionedUISlot
+                    key={`seat-slot-${index}`}
+                    top={slot.top}
+                    right={slot.right}
+                    bottom={slot.bottom}
+                    left={slot.left}
+                    scale={slot.scale}
+                    origin={slot.origin}
+                    zIndex={slot.zIndex}
+                    style={{
+                      transform: `scale(${slot.scale})`,
+                      transformOrigin: slot.origin,
+                      zIndex: slot.zIndex || '60'
+                    }}
+                  >
+                    <Seat
+                      seatNumber={seatNumber}
+                      currentTable={currentTable}
+                      sitDown={sitDown}
+                      folded={currentTable.seats[seatNumber]?.folded}
+                    />
                   </PositionedUISlot>
-          
-
-
-
-
-
-                <PositionedUISlot
-                 bottom="0%"
-                left="0%"
-                scale="0.15"
-                origin="bottom left"
-                  zIndex="100"
-              
-              zIndex="100">
-              
-                <Seat
-                  seatNumber={seatId?((seatId  +1) % 6) : 6}
-                  currentTable={currentTable}
-                  sitDown={sitDown}
-                  folded={currentTable.seats[((seatId  +1) % 6)]?.folded}
-                />
-              </PositionedUISlot>
+                )
+              })}
           
 
 
