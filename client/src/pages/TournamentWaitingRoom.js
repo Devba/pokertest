@@ -62,7 +62,41 @@ const TournamentWaitingRoom = () => {
       socket.on('TOURNAMENT_UPDATE', (info) => {
         console.log('Tournament update:', info)
         if (info.id === parseInt(tournamentId)) {
-         // setTournament(info) , lo borramos pq hace fallar la tabla de jugadores al recibir actualizaciones frecuentes (stack updates) y el componente no puede seguir el ritmo, lo que genera errores. En su lugar, confiamos en los eventos específicos de actualización (ej: BOTS_ADDED) para mostrar cambios relevantes, y evitamos actualizar el estado con cada cambio menor.
+          setTournament((prev) => {
+            if (!prev) return info
+
+            const next = { ...prev }
+            let changed = false
+
+            const prevTableIds = (prev.tables || []).map((t) => t?.id).filter(Boolean).join('|')
+            const incomingTables = Array.isArray(info.tables) ? info.tables : null
+            const incomingTableIds = incomingTables
+              ? incomingTables.map((t) => t?.id).filter(Boolean).join('|')
+              : prevTableIds
+
+            if (incomingTables && incomingTableIds !== prevTableIds) {
+              next.tables = incomingTables
+              changed = true
+            }
+
+            const scalarFields = ['status', 'blindLevel', 'activePlayers', 'tableCount', 'registrationEndsAt']
+            scalarFields.forEach((field) => {
+              if (typeof info[field] !== 'undefined' && info[field] !== prev[field]) {
+                next[field] = info[field]
+                changed = true
+              }
+            })
+
+            if (Array.isArray(info.eliminatedPlayers)) {
+              const prevCount = Array.isArray(prev.eliminatedPlayers) ? prev.eliminatedPlayers.length : 0
+              if (info.eliminatedPlayers.length !== prevCount) {
+                next.eliminatedPlayers = info.eliminatedPlayers
+                changed = true
+              }
+            }
+
+            return changed ? next : prev
+          })
           
           // If tournament started, redirect to play page
           //por ahora lo anulamos

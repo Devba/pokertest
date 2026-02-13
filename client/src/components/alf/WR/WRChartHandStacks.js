@@ -60,6 +60,12 @@ const WRStartHandStacks = ({ table, tournament }) => {
   const [selectedTableIndex, setSelectedTableIndex] = useState(0)
   const currentTable = tables[selectedTableIndex] || null
   const tableId = currentTable?.id
+
+  useEffect(() => {
+    if (selectedTableIndex > 0 && selectedTableIndex >= tables.length) {
+      setSelectedTableIndex(Math.max(0, tables.length - 1))
+    }
+  }, [selectedTableIndex, tables.length])
   
   const chartRef = useRef(null)
   const chartInstanceRef = useRef(null)

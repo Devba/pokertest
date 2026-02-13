@@ -365,13 +365,24 @@ class BotManager {
         }, 500);
       }, 5000);
     } else if (activeCount === 1) {
-      // Only one player left - declare winner and finish tournament
       const winnerSeat = table.activePlayers()[0];
       const winnerName = winnerSeat.player?.name || 'Winner';
-      console.log(`🏆 Table ${tableId}: Tournament winner: ${winnerName}`);
-      this.broadcastToTable(table, `${winnerName} wins the tournament!`);
-      if (this.tournamentManager && table.tournamentId) {
-        this.tournamentManager.completeTournament(table.tournamentId, winnerSeat.player);
+
+      if (table.isTournament && this.tournamentManager && table.tournamentId) {
+        const totalActiveInTournament = this.tournamentManager.getTotalActivePlayers(table.tournamentId);
+
+        if (totalActiveInTournament === 1) {
+          console.log(`🏆 Tournament ${table.tournamentId}: Winner is ${winnerName}`);
+          this.broadcastToTable(table, `${winnerName} wins the tournament!`);
+          this.tournamentManager.completeTournament(table.tournamentId, winnerSeat.player);
+        } else {
+          console.log(`ℹ️  Table ${tableId}: Only one player left on this table (${winnerName}), but tournament still has ${totalActiveInTournament} active players`);
+          this.broadcastToTable(table, `${winnerName} wins this table and advances`);
+        }
+      } else {
+        // Non-tournament table winner
+        console.log(`🏆 Table ${tableId}: Winner: ${winnerName}`);
+        this.broadcastToTable(table, `${winnerName} wins the table!`);
       }
     } else {
       console.log(`⚠️  Table ${tableId}: No active players, cannot continue`);

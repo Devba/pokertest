@@ -723,6 +723,10 @@ getMinutesPerLevel(blindStructure) {
     const tournament = this.tournaments.get(tournamentId);
     if (!tournament) return;
 
+    if (tournament.status === 'completed') {
+      return;
+    }
+
     // Stop the blind timer
     this.stopBlindTimer(tournamentId);
 
