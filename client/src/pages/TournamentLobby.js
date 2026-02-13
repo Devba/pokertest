@@ -7,7 +7,6 @@ import globalContext from '../context/global/globalContext'
 import Swal from 'sweetalert2'
 import './TournamentLobby.scss'
 import { showCreateTournamentForm } from '../components/alf/CreateTourn';
-import TournamentInitialBar from '../components/alf/tournamentInitialBar';
 import TournamentList from '../components/alf/TournamentList';
 import FondoMatrix from '../components/alf/matrix/fondo'
 
@@ -363,6 +362,208 @@ useEffect(() => {
     }
   }, [socket, navigate])
 
+  // Show tournament details in Swal when selected
+  useEffect(() => {
+    if (selectedTournament) {
+      const isRegistered = selectedTournament.registeredPlayers && 
+        Array.isArray(selectedTournament.registeredPlayers) &&
+        selectedTournament.registeredPlayers.some(p => p.id === walletAddress);
+
+      let buttonsHtml = `
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+          <button class="swal2-confirm swal2-styled" style="background-color: #007bff; margin: 5px;">
+            Go to Waiting Room
+          </button>
+      `;
+
+      if (selectedTournament.status === 'registering' || selectedTournament.status === 'upcoming') {
+        buttonsHtml += `
+          <button id="btn-join-player" class="swal2-confirm swal2-styled" style="background-color: #28a745; margin: 5px;">
+            Join Table as Player
+          </button>
+          <button id="btn-register" class="swal2-confirm swal2-styled" style="background-color: #17a2b8; margin: 5px;">
+            Register Now
+          </button>
+          <button id="btn-unregister" class="swal2-confirm swal2-styled" style="background-color: #6c757d; margin: 5px;">
+            Unregister
+          </button>
+          <button id="btn-add-bots" class="swal2-confirm swal2-styled" style="background-color: #ffc107; margin: 5px; color: #000;">
+            Add Bots
+          </button>
+          <button id="btn-start" class="swal2-confirm swal2-styled" style="background-color: #dc3545; margin: 5px;">
+            Start Tournament
+          </button>
+          <button id="btn-delete" class="swal2-cancel swal2-styled" style="background-color: #d33; margin: 5px;">
+            Delete Tournament
+          </button>
+        `;
+      } else if (selectedTournament.status === 'live') {
+        buttonsHtml += `
+          <button id="btn-spectate" class="swal2-confirm swal2-styled" style="background-color: #6c757d; margin: 5px;">
+            Watch
+          </button>
+          <button id="btn-join-live" class="swal2-confirm swal2-styled" style="background-color: #28a745; margin: 5px;">
+            Join Table as Player
+          </button>
+        `;
+      }
+
+      buttonsHtml += `
+        <button id="btn-close" class="swal2-cancel swal2-styled" style="margin: 5px;">
+          Close
+        </button>
+        </div>
+      `;
+
+      Swal.fire({
+        title: selectedTournament.name,
+        html: `
+          <div style="text-align: left; color: #fff;">
+            <p><strong>Structure:</strong> ${selectedTournament.structure}</p>
+            <p><strong>Buy-in:</strong> ${selectedTournament.buyIn === 0 ? 'FREE' : `$${selectedTournament.buyIn}`}</p>
+            <p><strong>Prize Pool:</strong> $${selectedTournament.prizePool}</p>
+            <p><strong>Players:</strong> ${selectedTournament.registeredPlayers?.length || 0}/${selectedTournament.maxPlayers}</p>
+            <p><strong>Status:</strong> <span style="background-color: ${selectedTournament.status === 'live' ? '#dc3545' : '#28a745'}; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+              ${selectedTournament.status.toUpperCase()}
+            </span></p>
+          </div>
+          ${buttonsHtml}
+        `,
+        showConfirmButton: false,
+        showCancelButton: false,
+        background: '#16213e',
+        didOpen: () => {
+          const btnClose = document.getElementById('btn-close');
+          if (btnClose) {
+            btnClose.addEventListener('click', () => {
+              setSelectedTournament(null);
+              Swal.close();
+            });
+          }
+
+          const btnRegister = document.getElementById('btn-register');
+          if (btnRegister) {
+            btnRegister.addEventListener('click', () => {
+              setSelectedTournament(null);
+              Swal.close();
+              handleRegister(selectedTournament.id);
+            });
+          }
+
+          const btnUnregister = document.getElementById('btn-unregister');
+          if (btnUnregister) {
+            btnUnregister.addEventListener('click', () => {
+              setSelectedTournament(null);
+              Swal.close();
+              handleUnregister(selectedTournament.id);
+            });
+          }
+
+          const btnDelete = document.getElementById('btn-delete');
+          if (btnDelete) {
+            btnDelete.addEventListener('click', () => {
+              setSelectedTournament(null);
+              Swal.close();
+              handleDeleteTournament(selectedTournament.id);
+            });
+          }
+
+          const btnAddBots = document.getElementById('btn-add-bots');
+          if (btnAddBots) {
+            btnAddBots.addEventListener('click', async () => {
+              Swal.close();
+              const { value: botCount } = await Swal.fire({
+                title: 'Add Bots',
+                input: 'number',
+                inputLabel: 'How many bots to add?',
+                inputValue: 2,
+                inputAttributes: {
+                  min: 1,
+                  max: 10,
+                  step: 1
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Add Bots'
+              });
+              if (botCount && socket) {
+                socket.emit('ADD_BOTS_TO_TOURNAMENT', {
+                  tournamentId: selectedTournament.id,
+                  botCount: parseInt(botCount)
+                });
+                Swal.fire({
+                  title: 'Adding Bots...',
+                  text: 'Please wait',
+                  allowOutsideClick: false,
+                  didOpen: () => {
+                    Swal.showLoading();
+                  }
+                });
+              }
+              setSelectedTournament(null);
+            });
+          }
+
+          const btnStart = document.getElementById('btn-start');
+          if (btnStart) {
+            btnStart.addEventListener('click', () => {
+              setSelectedTournament(null);
+              Swal.close();
+              if (socket) {
+                socket.emit('START_TOURNAMENT', { tournamentId: selectedTournament.id });
+                Swal.fire({
+                  title: 'Starting Tournament...',
+                  text: 'The tournament is being started',
+                  timer: 2000,
+                  showConfirmButton: false
+                });
+              }
+            });
+          }
+
+          const btnJoinPlayer = document.getElementById('btn-join-player');
+          if (btnJoinPlayer) {
+            btnJoinPlayer.addEventListener('click', () => {
+              setSelectedTournament(null);
+              Swal.close();
+              navigate(`/tournament/${selectedTournament.id}?mode=player`);
+            });
+          }
+
+          const btnJoinLive = document.getElementById('btn-join-live');
+          if (btnJoinLive) {
+            btnJoinLive.addEventListener('click', () => {
+              setSelectedTournament(null);
+              Swal.close();
+              navigate(`/tournament/${selectedTournament.id}?mode=player`);
+            });
+          }
+
+          const btnSpectate = document.getElementById('btn-spectate');
+          if (btnSpectate) {
+            btnSpectate.addEventListener('click', () => {
+              setSelectedTournament(null);
+              Swal.close();
+              navigate(`/tournament/${selectedTournament.id}?mode=spectator`);
+            });
+          }
+
+          // Find the waiting room button by querying all confirm buttons
+          const buttons = document.querySelectorAll('.swal2-confirm');
+          buttons.forEach((btn, idx) => {
+            if (idx === 0) {
+              btn.id = 'btn-waiting-room';
+              btn.addEventListener('click', () => {
+                setSelectedTournament(null);
+                Swal.close();
+                navigate(`/tournament/${selectedTournament.id}/waiting`);
+              });
+            }
+          });
+        }
+      });
+    }
+  }, [selectedTournament, navigate, socket, walletAddress])
+
   const filteredTournaments = tournaments.filter(t => 
     filter === 'all' ? true : t.status === filter
   )
@@ -529,61 +730,6 @@ useEffect(() => {
             <p>No tournaments found</p>
           </div>
         )}
-
-        {/* Selected Tournament Details Panel */}
-         
-          {selectedTournament && (
-            <TournamentInitialBar
-              selectedTournament={selectedTournament}
-              onClose={() => setSelectedTournament(null)}
-              onRegister={handleRegister}
-              onUnregister={handleUnregister}
-              onDelete={handleDeleteTournament}
-              onAddBots={async (tournamentId, socket) => {
-                const { value: botCount } = await Swal.fire({
-                  title: 'Add Bots',
-                  input: 'number',
-                  inputLabel: 'How many bots to add?',
-                  inputValue: 2,
-                  inputAttributes: {
-                    min: 1,
-                    max: 10,
-                    step: 1
-                  },
-                  showCancelButton: true,
-                  confirmButtonText: 'Add Bots'
-                });
-                if (botCount && socket) {
-                  socket.emit('ADD_BOTS_TO_TOURNAMENT', {
-                    tournamentId,
-                    botCount: parseInt(botCount)
-                  });
-                  Swal.fire({
-                    title: 'Adding Bots...',
-                    text: 'Please wait',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                      Swal.showLoading();
-                    }
-                  });
-                }
-              }}
-              onStart={(tournamentId) => {
-                if (socket) {
-                  socket.emit('START_TOURNAMENT', { tournamentId });
-                  Swal.fire({
-                    title: 'Starting Tournament...',
-                    text: 'The tournament is being started',
-                    timer: 2000,
-                    showConfirmButton: false
-                  });
-                }
-              }}
-              isUserRegistered={isUserRegistered}
-              navigate={navigate}
-              socket={socket}
-            />
-          )}
 
         </div>
       </div>

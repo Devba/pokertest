@@ -692,7 +692,14 @@ getMinutesPerLevel(blindStructure) {
     
     // Update socket room membership if player is connected (skip for bots)
     if (this.io && player.socketId && !player.isBot) {
-      const socket = this.io.sockets.sockets.get(player.socketId);
+      // Get socket - handle both Map and object-based socket stores
+      let socket;
+      if (this.io.sockets.sockets instanceof Map) {
+        socket = this.io.sockets.sockets.get(player.socketId);
+      } else {
+        socket = this.io.sockets.sockets[player.socketId];
+      }
+      
       if (socket) {
         socket.leave(`table-${fromTable.id}`);
         socket.join(`table-${toTable.id}`);

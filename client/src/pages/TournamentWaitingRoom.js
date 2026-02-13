@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Container from '../components/layout/Container'
 import Button from '../components/buttons/Button'
@@ -32,6 +32,9 @@ const TournamentWaitingRoom = () => {
   const [showTablesPanel, setShowTablesPanel] = useState(false)
   const [activeTableTab, setActiveTableTab] = useState('seats')
   const [selectedHistoryTableId, setSelectedHistoryTableId] = useState('')
+  const [tableUpdateTimestamps, setTableUpdateTimestamps] = useState({})
+  const [frozenTables, setFrozenTables] = useState(new Set())
+  const tableTimestampsRef = useRef({})  // Use ref to track timestamps without state updates
   const subscribedTableIds = useMemo(
     () => (tournament?.tables || []).map((t) => t?.id).filter(Boolean),
     [tournament?.tables]
@@ -244,6 +247,93 @@ const TournamentWaitingRoom = () => {
     }
   }, [tournament?.tables, selectedHistoryTableId])
 
+  // Monitor for frozen tables - DISABLED FOR NOW
+  /* useEffect(() => {
+    if (!socket || !tournament?.tables || tournament.tables.length === 0) return
+
+    const { SC_TABLE_UPDATED } = require('../pokergame/actions');
+    const FREEZE_TIMEOUT = 10000 // 10 seconds
+
+    // Handle table updates
+    const handleTableUpdate = ({ table }) => {
+      if (table?.id) {
+        // Update ref immediately for freeze check
+        tableTimestampsRef.current[table.id] = Date.now()
+        
+        // Also update state for debugging/display purposes
+        setTableUpdateTimestamps(prev => ({
+          ...prev,
+          [table.id]: Date.now()
+        }))
+
+        // Clear from frozen set if it was frozen
+        setFrozenTables(prev => {
+          const next = new Set(prev);
+          next.delete(table.id);
+          return next;
+        });
+      }
+    }
+
+    socket.on(SC_TABLE_UPDATED, handleTableUpdate)
+
+    // Check for frozen tables every 3 seconds
+    const freezeCheckInterval = setInterval(() => {
+      const now = Date.now()
+      const frozenTableIds = []
+      const newlyFrozen = []
+
+      tournament?.tables?.forEach(table => {
+        if (!table?.id) return
+
+        const lastUpdate = tableTimestampsRef.current[table.id]
+        const timeSinceUpdate = lastUpdate ? now - lastUpdate : Infinity
+        const isFrozen = timeSinceUpdate > FREEZE_TIMEOUT
+
+        if (isFrozen) {
+          frozenTableIds.push(table.id)
+          if (!frozenTables.has(table.id)) {
+            newlyFrozen.push(table.id)
+            console.warn(`⚠️ Table ${table.id} appears frozen (no update for ${Math.round(timeSinceUpdate / 1000)}s)`)
+          }
+        }
+      })
+
+      // Update frozen tables state if we found frozen tables
+      if (frozenTableIds.length > 0 || frozenTables.size > 0) {
+        const newFrozenSet = new Set(frozenTableIds)
+        setFrozenTables(newFrozenSet)
+
+        // Show alert for newly frozen tables
+        if (newlyFrozen.length > 0) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Table Stalled',
+            html: `<div style="text-align: left;">
+              <p>The following table(s) appear to have stalled:</p>
+              <ul style="margin: 10px 0;">
+                ${newlyFrozen.map(tableId => `<li>Table ${tableId}</li>`).join('')}
+              </ul>
+              <p>No updates received for ${Math.round(FREEZE_TIMEOUT / 1000)} seconds.</p>
+              <p>The server may be experiencing issues. Please try refreshing the page.</p>
+            </div>`,
+            confirmButtonText: 'Refresh Page',
+            showCancelButton: true,
+            cancelButtonText: 'Keep Watching'
+          }).then(result => {
+            if (result.isConfirmed) {
+              window.location.reload()
+            }
+          })
+        }
+      }
+    }, 3000)
+
+    return () => {
+      clearInterval(freezeCheckInterval)
+      socket.off(SC_TABLE_UPDATED, handleTableUpdate)
+    }
+  }, [socket, tournament?.tables]) */
 
 
 
@@ -283,6 +373,51 @@ const TournamentWaitingRoom = () => {
         padding: '2rem',
         color: 'white'
       }}>
+        {/* Frozen Tables Alert Banner */}
+        {frozenTables.size > 0 && (
+          <div style={{
+            backgroundColor: '#dc3545',
+            border: '2px solid #ff6b6b',
+            borderRadius: '8px',
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            color: 'white'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+              <strong>Stalled Table(s) Detected</strong>
+            </div>
+            <div style={{ fontSize: '0.95rem', marginLeft: '2.5rem' }}>
+              <p style={{ margin: '0 0 8px 0' }}>
+                The following table(s) have not received updates for 10+ seconds:
+              </p>
+              <div style={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                gap: '8px'
+              }}>
+                {Array.from(frozenTables).map(tableId => (
+                  <span 
+                    key={tableId}
+                    style={{
+                      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                      padding: '4px 12px',
+                      borderRadius: '4px',
+                      fontSize: '0.9rem',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    Table {tableId}
+                  </span>
+                ))}
+              </div>
+              <p style={{ margin: '12px 0 0 0', fontSize: '0.9rem', opacity: 0.9 }}>
+                The server may be experiencing issues. If this persists, try refreshing the page.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Header: Tournament name and status */}
         
        
