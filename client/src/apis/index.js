@@ -67,9 +67,68 @@ export const useApi = () => {
   }
 
 
+  // Tournament API functions
+  const getTournaments = async (status = null) => {
+    try {
+      const url = status 
+        ? `/api/tournaments/list?status=${status}` 
+        : '/api/tournaments/list';
+      
+      const { data } = await axios.get(url);
+      
+      if (data.success) {
+        return data.tournaments;
+      } else {
+        toast.error('Failed to load tournaments.');
+        return null;
+      }
+    } catch (err) {
+      toast.error(err.message);
+      console.log(err);
+      return null;
+    }
+  };
+
+  const getTournamentInfo = async (tournamentId) => {
+    try {
+      const { data } = await axios.get(`/api/tournaments/${tournamentId}`);
+      
+      if (data.success) {
+        return data.tournament;
+      } else {
+        toast.error('Failed to load tournament info.');
+        return null;
+      }
+    } catch (err) {
+      toast.error(err.message);
+      console.log(err);
+      return null;
+    }
+  };
+
+  const getTournamentLeaderboard = async (tournamentId) => {
+    try {
+      const { data } = await axios.get(`/api/tournaments/${tournamentId}/leaderboard`);
+      
+      if (data.success) {
+        return data.leaderboard;
+      } else {
+        toast.error('Failed to load leaderboard.');
+        return null;
+      }
+    } catch (err) {
+      toast.error(err.message);
+      console.log(err);
+      return null;
+    }
+  };
+
   return {
     getUserProfile,
     getPokerTables,
     getGameById,
+    getTournaments,
+    getTournamentInfo,
+    getTournamentLeaderboard,
   }
 }

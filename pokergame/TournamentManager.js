@@ -354,6 +354,17 @@ getMinutesPerLevel(blindStructure) {
           
           // Broadcast updated table state
           this.broadcastTableState(table);
+          
+          // ⭐ FIX: Check if hand needs to start after blind increase
+          // If table is between hands (handOver === true), start a new hand
+          if (table.handOver && table.activePlayers().length >= 2) {
+            console.log(`🎴 Table ${table.id}: Hand over after blind increase - starting new hand`);
+            if (this.botManager) {
+              this.botManager.handleHandOver(table, table.id);
+            } else {
+              console.warn(`⚠️  Table ${table.id}: No botManager available to start hand`);
+            }
+          }
         }
       }
     });
