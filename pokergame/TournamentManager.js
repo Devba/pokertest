@@ -445,7 +445,20 @@ getMinutesPerLevel(blindStructure) {
       playerName = registeredPlayer.name || registeredPlayer.username || playerId;
     }
 
-    const position = this.getTotalActivePlayers(tournamentId) + 1 + tournament.eliminatedPlayers.length;
+    const alreadyEliminated = tournament.eliminatedPlayers.some((eliminated) =>
+      String(eliminated.player || eliminated.playerId) === String(playerId),
+    );
+
+    if (alreadyEliminated) {
+      console.log(`⚠️  Skipping duplicate elimination record for player ${playerId}`);
+      return;
+    }
+
+    const totalRegisteredPlayers = Array.isArray(tournament.registeredPlayers) && tournament.registeredPlayers.length > 0
+      ? tournament.registeredPlayers.length
+      : this.getTotalActivePlayers(tournamentId) + tournament.eliminatedPlayers.length;
+
+    const position = Math.max(2, totalRegisteredPlayers - tournament.eliminatedPlayers.length);
 
     console.log(`💀 Player eliminated at table ${tableId}, position ${position}`);
     console.log(`   Total active players in tournament: ${this.getTotalActivePlayers(tournamentId)}`);

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Container from '../components/layout/Container'
 import Button from '../components/buttons/Button'
@@ -8,7 +8,7 @@ import Swal from 'sweetalert2'
 import './TournamentLobby.scss'
 import RegistrationStatus from '../components/alf/RegistrationStatus'
 import gameContext from '../context/game/gameContext'
-import WRPlayersTablePanel from '../components/alf/WR/WRRankingList'
+import WRPlayersTablePanel from '../components/alf/WR/WRPlayersTablePanel'
 import WRRegisteredPlayers from '../components/alf/WR/WRRegisteredPlayers'
 import TournamentInfoGrid from '../components/alf/WR/WRTournamentInfoGrid'
 import WRActionButtons from '../components/alf/WR/WRActionButtons'
@@ -31,7 +31,10 @@ const TournamentWaitingRoom = () => {
   const [showDebug, setShowDebug] = useState(false)
   const [showTablesPanel, setShowTablesPanel] = useState(false)
   const [activeTableTab, setActiveTableTab] = useState('seats')
-  const primaryTableId = tournament?.tables?.[0]?.id || null
+  const subscribedTableIds = useMemo(
+    () => (tournament?.tables || []).map((t) => t?.id).filter(Boolean),
+    [tournament?.tables]
+  )
 
 /* useEffect(() => {
   alert("TournamentWaitingRoom mounted, alfTPmode:", {alfTPmode});
@@ -173,14 +176,18 @@ const TournamentWaitingRoom = () => {
 
 
   useEffect(() => {
-    if (!socket || !primaryTableId) return undefined
+    if (!socket || subscribedTableIds.length === 0) return undefined
 
-    socket.emit(CS_TABLE_SUBSCRIBE, { tableId: primaryTableId })
+    subscribedTableIds.forEach((tableId) => {
+      socket.emit(CS_TABLE_SUBSCRIBE, { tableId })
+    })
 
     return () => {
-      socket.emit(CS_TABLE_UNSUBSCRIBE, { tableId: primaryTableId })
+      subscribedTableIds.forEach((tableId) => {
+        socket.emit(CS_TABLE_UNSUBSCRIBE, { tableId })
+      })
     }
-  }, [socket, primaryTableId])
+  }, [socket, subscribedTableIds])
 
 
 

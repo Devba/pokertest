@@ -188,6 +188,16 @@ class TournamentTable extends Table {
   }
 
   getTournamentPosition() {
+    if (this.tournamentManager && this.tournamentId) {
+      const tournament = this.tournamentManager.getTournament(this.tournamentId);
+      if (tournament && Array.isArray(tournament.registeredPlayers)) {
+        const eliminatedCount = Array.isArray(tournament.eliminatedPlayers)
+          ? tournament.eliminatedPlayers.length
+          : 0;
+        return Math.max(2, tournament.registeredPlayers.length - eliminatedCount);
+      }
+    }
+
     const remainingPlayers = this.activePlayers().length;
     return remainingPlayers + 1 + this.eliminatedPlayers.length;
   }

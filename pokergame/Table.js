@@ -595,12 +595,20 @@ class Table {
     let seat = this.findPlayerBySocketId(socketId);
 
     if (seat) {
-      let addedToPot =
-        this.callAmount > seat.stack + seat.bet
-          ? seat.stack
-          : this.callAmount - seat.bet;
+      const targetCallAmount = this.callAmount || 0;
+      const amountToCall = targetCallAmount - seat.bet;
 
-      seat.callRaise(this.callAmount);
+      if (amountToCall <= 0) {
+        seat.check();
+        return {
+          seatId: seat.id,
+          message: `${seat.player.name} checks`,
+        };
+      }
+
+      let addedToPot = amountToCall > seat.stack ? seat.stack : amountToCall;
+
+      seat.callRaise(targetCallAmount);
 
       if (this.sidePots.length > 0) {
         this.sidePots[this.sidePots.length - 1].amount += addedToPot;

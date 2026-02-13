@@ -14,7 +14,7 @@ const WRPayouts = ({ tournament, walletAddress }) => {
     const handler = ({ table: updatedTable }) => {
       if (!updatedTable || !updatedTable.id) return
       
-      // Check if this table belongs to our tournament (dual check like WRRankingList)
+      // Check if this table belongs to our tournament (dual check like WRPlayersTablePanel)
       const tableIds = tournament?.tables 
         ? tournament.tables.map(t => t.id).filter(Boolean)
         : []
