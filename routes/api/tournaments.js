@@ -21,6 +21,7 @@ router.post('/create', (req, res) => {
       startingChips, 
       blindStructure, 
       startTime,
+      registrationPeriod,
       creatorWallet 
     } = req.body;
     
@@ -43,6 +44,7 @@ router.post('/create', (req, res) => {
       startingChips: startingChips || 5000,
       blindStructure: blindStructure || 'normal',
       startTime: startTime || 'immediate',
+      registrationPeriod: typeof registrationPeriod === 'number' ? registrationPeriod : 5,
       creatorWallet
     });
 
@@ -57,7 +59,8 @@ router.post('/create', (req, res) => {
         startingChips: tournament.startingChips,
         blindStructure: tournament.blindStructure,
         status: tournament.status,
-        startTime: tournament.startTime
+        startTime: tournament.startTime,
+        registrationPeriod: tournament.registrationPeriod
       }
     });
   } catch (error) {

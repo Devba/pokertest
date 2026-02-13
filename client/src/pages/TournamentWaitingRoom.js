@@ -31,10 +31,19 @@ const TournamentWaitingRoom = () => {
   const [showDebug, setShowDebug] = useState(false)
   const [showTablesPanel, setShowTablesPanel] = useState(false)
   const [activeTableTab, setActiveTableTab] = useState('seats')
+  const [selectedHistoryTableId, setSelectedHistoryTableId] = useState('')
   const subscribedTableIds = useMemo(
     () => (tournament?.tables || []).map((t) => t?.id).filter(Boolean),
     [tournament?.tables]
   )
+  const selectedHistoryTable = useMemo(() => {
+    if (!Array.isArray(tournament?.tables) || tournament.tables.length === 0) return null
+    if (selectedHistoryTableId) {
+      const table = tournament.tables.find((t) => String(t?.id) === selectedHistoryTableId)
+      if (table) return table
+    }
+    return tournament.tables[0]
+  }, [tournament?.tables, selectedHistoryTableId])
 
 /* useEffect(() => {
   alert("TournamentWaitingRoom mounted, alfTPmode:", {alfTPmode});
@@ -223,6 +232,18 @@ const TournamentWaitingRoom = () => {
     }
   }, [socket, subscribedTableIds])
 
+  useEffect(() => {
+    if (!Array.isArray(tournament?.tables) || tournament.tables.length === 0) {
+      setSelectedHistoryTableId('')
+      return
+    }
+
+    const hasSelected = selectedHistoryTableId && tournament.tables.some((t) => String(t?.id) === selectedHistoryTableId)
+    if (!hasSelected) {
+      setSelectedHistoryTableId(String(tournament.tables[0]?.id || ''))
+    }
+  }, [tournament?.tables, selectedHistoryTableId])
+
 
 
 
@@ -379,7 +400,27 @@ const TournamentWaitingRoom = () => {
                   </ZipPanel>
                 ) : (
                   <div style={{ padding: '0.25rem 0.25rem 0.75rem' }}>
-                    <WRHandHistory table={tournament.tables && tournament.tables[0]} />
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+                      <select
+                        value={selectedHistoryTableId}
+                        onChange={(e) => setSelectedHistoryTableId(e.target.value)}
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                          color: 'white',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '6px',
+                          padding: '0.35rem 0.5rem',
+                          fontSize: '0.85rem'
+                        }}
+                      >
+                        {(tournament.tables || []).map((tableOption, index) => (
+                          <option key={tableOption?.id || index} value={String(tableOption?.id || '')}>
+                            {tableOption?.name || `Table ${tableOption?.id || index + 1}`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <WRHandHistory table={selectedHistoryTable} />
                   </div>
                 )}
               </div>

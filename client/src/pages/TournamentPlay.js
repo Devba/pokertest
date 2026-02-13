@@ -225,7 +225,7 @@ useEffect(() => {
     { top: '-8%', right: '22%', scale: 0.66, origin: 'top center' },
     { top: '14%', right: '6%', scale: 0.66, origin: 'top right' },
     { top: '42%', right: '1%', scale: 0.66, origin: 'top right' },
-    { bottom: '-8%', left: '50%', scale: 0.66, origin: 'bottom center', zIndex: '120' },
+    { bottom: '-8%', left: '70%', scale: 0.99, origin: 'bottom center', zIndex: '120' },
     { top: '42%', left: '1%', scale: 0.66, origin: 'top left' },
     { top: '14%', left: '6%', scale: 0.66, origin: 'top left' },
     { top: '-8%', left: '22%', scale: 0.66, origin: 'top center' },

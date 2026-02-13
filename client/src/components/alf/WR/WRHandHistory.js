@@ -22,9 +22,61 @@ const formatBoard = (board = []) => {
   return board.map((card) => `${card.rank || ''}${(card.suit || '').charAt(0).toUpperCase()}`).join(' ')
 }
 
+const normalizeSeats = (seats) => {
+  if (!seats) return []
+  return Array.isArray(seats) ? seats.filter(Boolean) : Object.values(seats).filter(Boolean)
+}
+
+const getSeatPlayerId = (seat) => String(
+  seat?.player?.id || seat?.player?.username || seat?.player?.name || seat?.id || ''
+)
+
+const getSeatPlayerName = (seat) => seat?.player?.username || seat?.player?.name || seat?.player?.id || 'Unknown'
+
+const buildStackDiffSummary = (currentSeats, previousSeats) => {
+  const prevByPlayer = new Map()
+
+  normalizeSeats(previousSeats).forEach((seat) => {
+    prevByPlayer.set(getSeatPlayerId(seat), Number(seat?.stack || 0))
+  })
+
+  const diffs = normalizeSeats(currentSeats).map((seat) => {
+    const playerId = getSeatPlayerId(seat)
+    const playerName = getSeatPlayerName(seat)
+    const currentStack = Number(seat?.stack || 0)
+    const previousStack = prevByPlayer.get(playerId)
+    const hasPrevious = typeof previousStack === 'number'
+    const diff = hasPrevious ? +(currentStack - previousStack).toFixed(2) : null
+
+    return {
+      playerName,
+      diff
+    }
+  })
+
+  const meaningfulDiffs = diffs.filter((item) => item.diff !== null)
+  return meaningfulDiffs.length ? meaningfulDiffs : []
+}
+
+const stackDiffGradientColor = (diff, maxAbsDiff) => {
+  if (!diff) return '#c7b28d'
+
+  const safeMax = maxAbsDiff > 0 ? maxAbsDiff : Math.abs(diff)
+  const ratio = Math.min(1, Math.abs(diff) / safeMax)
+
+  if (diff > 0) {
+    const lightness = 74 - ratio * 26
+    return `hsl(140, 65%, ${lightness}%)`
+  }
+
+  const lightness = 74 - ratio * 26
+  return `hsl(3, 78%, ${lightness}%)`
+}
+
 const WRHandHistory = ({ table }) => {
   const { socket } = useContext(socketContext)
   const tableId = table?.id
+  const tableLabel = table?.name || (tableId ? `Table ${tableId}` : 'Table')
   const [localHistory, setLocalHistory] = useState(() => Array.isArray(table?.history) ? table.history : [])
   const [tableMessages, setTableMessages] = useState([])
 
@@ -39,10 +91,13 @@ const WRHandHistory = ({ table }) => {
   useEffect(() => {
     if (!socket || !tableId) return undefined
     const handler = ({ table: updatedTable, message, from, timestamp }) => {
-      if (updatedTable && updatedTable.id === tableId && Array.isArray(updatedTable.history)) {
+      const matchesCurrentTable = !updatedTable || String(updatedTable.id) === String(tableId)
+
+      if (updatedTable && matchesCurrentTable && Array.isArray(updatedTable.history)) {
         setLocalHistory(updatedTable.history.slice(-MAX_HISTORY))
       }
-      if (message) {
+
+      if (message && matchesCurrentTable) {
         const normalizedMessage = (message || '').trim().toLowerCase()
         const isNewHandMessage = normalizedMessage.includes('new hand')
         setTableMessages((prev) => {
@@ -61,11 +116,15 @@ const WRHandHistory = ({ table }) => {
   }, [socket, tableId])
 
   const combinedEntries = useMemo(() => {
-    const historyEntries = (localHistory || []).slice(-MAX_HISTORY).map((entry, idx) => ({
+    const recentHistory = (localHistory || []).slice(-MAX_HISTORY)
+    const historyEntries = recentHistory.map((entry, idx) => ({
       type: 'hand',
       ts: entry.ts || entry.timestamp || 0,
       key: `hand-${entry.ts || idx}`,
-      data: entry
+      data: {
+        ...entry,
+        stackDiffSummary: buildStackDiffSummary(entry.seats, idx > 0 ? recentHistory[idx - 1]?.seats : null)
+      }
     }))
 
     const messageEntries = tableMessages.map((msg, idx) => ({
@@ -90,7 +149,7 @@ const WRHandHistory = ({ table }) => {
 
   return (
     <div style={{ marginTop: '1rem', backgroundColor: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: 8 }}>
-      <div style={{ marginBottom: '0.5rem', color: '#ccc', fontWeight: 600 }}>Current hand</div>
+      <div style={{ marginBottom: '0.5rem', color: '#ccc', fontWeight: 600 }}>{`Current hand - ${tableLabel}`}</div>
       <div style={{ display: 'grid', gap: '0.5rem' }}>
         {combinedEntries.map((entry, idx) => {
           const rowKey = `${entry.key || entry.type}-${idx}`
@@ -100,15 +159,37 @@ const WRHandHistory = ({ table }) => {
             const stage = streetLabel(hand.board?.length || 0)
             const board = formatBoard(hand.board)
             const message = hand.winMessages?.length ? hand.winMessages[hand.winMessages.length - 1] : ''
+            const stackDiffSummary = hand.stackDiffSummary || []
+            const maxAbsDiff = stackDiffSummary.reduce((max, item) => {
+              const absDiff = Math.abs(Number(item?.diff || 0))
+              return absDiff > max ? absDiff : max
+            }, 0)
 
             return (
               <div key={rowKey} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', color: '#ddd', alignItems: 'center' }}>
                 <div style={{ color: '#aaa', fontSize: '0.8rem', minWidth: '70px' }}>{time}</div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.85rem', color: '#f1f1f1' }}>{stage} · Pot {formatAmount(hand.pot)}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#f1f1f1' }}>Phase: {stage}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#f1f1f1' }}>Pot {formatAmount(hand.pot)}</div>
                   <div style={{ fontSize: '0.8rem', color: '#bbb' }}>Board: {board}</div>
                   {message && (
                     <div style={{ fontSize: '0.8rem', color: '#5dd67a' }}>{message}</div>
+                  )}
+                  <div style={{ fontSize: '0.78rem', color: '#ffd9a0', marginTop: '0.2rem' }}>Stack Δ vs previous hand:</div>
+                  {stackDiffSummary.length > 0 ? (
+                    stackDiffSummary.map((item, diffIdx) => {
+                      const sign = item.diff > 0 ? '+' : ''
+                      const diffColor = stackDiffGradientColor(item.diff, maxAbsDiff)
+                      return (
+                        <div key={`${rowKey}-diff-${diffIdx}`} style={{ marginTop: '0.05rem', marginLeft: '0.65rem', fontSize: '0.78rem', color: diffColor, lineHeight: 1.2 }}>
+                          {`• ${item.playerName}: ${sign}${formatAmount(item.diff)}`}
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <div style={{ marginTop: '0.05rem', marginLeft: '0.65rem', fontSize: '0.78rem', color: '#9b8f80', lineHeight: 1.2 }}>
+                      • No previous-hand data
+                    </div>
                   )}
                 </div>
               </div>

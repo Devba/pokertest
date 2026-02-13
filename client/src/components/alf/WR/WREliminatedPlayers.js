@@ -4,54 +4,53 @@ import socketContext from '../../../context/websocket/socketContext'
 
 const WREliminatedPlayers = ({ tournament }) => {
   const { socket } = useContext(socketContext)
-  const [eliminatedPlayers, setEliminatedPlayers] = useState([])
+  const [eliminatedPlayers, setEliminatedPlayers] = useState(() =>
+    Array.isArray(tournament?.eliminatedPlayers) ? tournament.eliminatedPlayers : []
+  )
 
-  console.log('🔍 WREliminatedPlayers: Rendering with tournament:', tournament?.id, 'status:', tournament?.status)
+  useEffect(() => {
+    if (!Array.isArray(tournament?.eliminatedPlayers)) return
+
+    setEliminatedPlayers((prev) => {
+      if (prev.length === tournament.eliminatedPlayers.length) {
+        return prev
+      }
+      return tournament.eliminatedPlayers
+    })
+  }, [tournament?.eliminatedPlayers])
 
   // Listen for TOURNAMENT_UPDATE events to track eliminations
   useEffect(() => {
     if (!socket || !tournament) {
-      console.log('⚠️ WREliminatedPlayers: No socket or tournament')
       return
     }
 
-    // Initialize with current eliminated players
-    if (tournament.eliminatedPlayers && Array.isArray(tournament.eliminatedPlayers)) {
-      console.log('💀 WREliminatedPlayers: Initializing with', tournament.eliminatedPlayers.length, 'eliminated players:', tournament.eliminatedPlayers)
-      setEliminatedPlayers(tournament.eliminatedPlayers)
-    } else {
-      console.log('⚠️ WREliminatedPlayers: No eliminatedPlayers in tournament object')
-    }
-
     const handler = (updatedTournament) => {
-      console.log('📥 WREliminatedPlayers: Received TOURNAMENT_UPDATE:', updatedTournament?.id)
-      
       // Only process updates for our tournament
       if (updatedTournament.id !== tournament.id) {
-        console.log('⏭️  WREliminatedPlayers: Ignoring update for different tournament')
         return
       }
 
       if (updatedTournament.eliminatedPlayers && Array.isArray(updatedTournament.eliminatedPlayers)) {
-        console.log('💀 WREliminatedPlayers: Received update with', updatedTournament.eliminatedPlayers.length, 'eliminated players')
-        setEliminatedPlayers([...updatedTournament.eliminatedPlayers])
+        setEliminatedPlayers((prev) => {
+          if (prev.length === updatedTournament.eliminatedPlayers.length) {
+            return prev
+          }
+          return [...updatedTournament.eliminatedPlayers]
+        })
       }
     }
 
     socket.on('TOURNAMENT_UPDATE', handler)
     return () => socket.off('TOURNAMENT_UPDATE', handler)
-  }, [socket, tournament])
-
-  console.log('💀 WREliminatedPlayers: Current eliminated count:', eliminatedPlayers.length)
+  }, [socket, tournament?.id])
 
   if (!tournament) {
-    console.log('⚠️ WREliminatedPlayers: No tournament, returning null')
     return null
   }
 
   // Always show the panel when tournament is live, even with 0 eliminations
   if (tournament.status !== 'live' && eliminatedPlayers.length === 0) {
-    console.log('⚠️ WREliminatedPlayers: Tournament not live and no eliminations, returning null')
     return null
   }
 
