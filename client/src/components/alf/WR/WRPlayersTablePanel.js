@@ -71,6 +71,20 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
   const [totalCountGlowing, setTotalCountGlowing] = useState(false)
   const prevTotalCountRef = useRef(0)
   const TOTAL_GLOW_DURATION = 3000
+  const isMountedRef = useRef(true)
+  const seatChangeTimeoutsRef = useRef([])
+  const totalGlowTimeoutRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false
+      seatChangeTimeoutsRef.current.forEach((timeoutId) => clearTimeout(timeoutId))
+      seatChangeTimeoutsRef.current = []
+      if (totalGlowTimeoutRef.current) {
+        clearTimeout(totalGlowTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const applySeatUpdate = useCallback((newSeats = {}) => {
     const prev = prevSeatsRef.current || {}
@@ -85,22 +99,28 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
     })
 
     if (changed.length > 0) {
-      setChangedSeats((prevArr) => {
-        const set = new Set(prevArr)
-        changed.forEach(k => set.add(k))
-        return Array.from(set)
-      })
+      if (isMountedRef.current) {
+        setChangedSeats((prevArr) => {
+          const set = new Set(prevArr)
+          changed.forEach(k => set.add(k))
+          return Array.from(set)
+        })
+      }
 
       changed.forEach((k) => {
-        setTimeout(() => {
+        const timeoutId = setTimeout(() => {
+          if (!isMountedRef.current) return
           setChangedSeats((prevArr) => prevArr.filter(x => x !== k))
         }, ANIM_DURATION)
+        seatChangeTimeoutsRef.current.push(timeoutId)
       })
     }
 
     prevSeatValuesRef.current = prev
     prevSeatsRef.current = newSeats
-    setLocalSeats(newSeats)
+    if (isMountedRef.current) {
+      setLocalSeats(newSeats)
+    }
   }, [])
 
   useEffect(() => {
@@ -201,8 +221,14 @@ const WRPlayersTablePanel = ({ table, tournament, walletAddress }) => {
     const previousTotal = prevTotalCountRef.current
 
     if (previousTotal !== 0 && currentTotal !== previousTotal) {
-      setTotalCountGlowing(true)
-      setTimeout(() => {
+      if (isMountedRef.current) {
+        setTotalCountGlowing(true)
+      }
+      if (totalGlowTimeoutRef.current) {
+        clearTimeout(totalGlowTimeoutRef.current)
+      }
+      totalGlowTimeoutRef.current = setTimeout(() => {
+        if (!isMountedRef.current) return
         setTotalCountGlowing(false)
       }, TOTAL_GLOW_DURATION)
     }

@@ -61,32 +61,45 @@ const WRStartHandStacks = ({ table, tournament }) => {
   const [selectedTableIndex, setSelectedTableIndex] = useState(0)
   const currentTable = tables[selectedTableIndex] || null
   const tableId = currentTable?.id
+  const [showSnapshotList, setShowSnapshotList] = useState(false)
+  const [isStartingHand, setIsStartingHand] = useState(false)
+  const [allowCarousel, setAllowCarousel] = useState(false)
 
   useEffect(() => {
     if (selectedTableIndex > 0 && selectedTableIndex >= tables.length) {
       setSelectedTableIndex(Math.max(0, tables.length - 1))
     }
   }, [selectedTableIndex, tables.length])
+
+  useEffect(() => {
+    if (!allowCarousel || tables.length < 2) return undefined
+
+    const interval = setInterval(() => {
+      setSelectedTableIndex((prev) => (prev + 1) % tables.length)
+    }, 10000)
+
+    return () => clearInterval(interval)
+  }, [allowCarousel, tables.length])
   
   const chartRef = useRef(null)
   const chartInstanceRef = useRef(null)
   const latestHandRef = useRef(null)
+  const handSnapshots = useMemo(
+    () => (Array.isArray(currentTable?.handStackSnapshots) ? currentTable.handStackSnapshots : []),
+    [currentTable]
+  )
   const [localSnapshots, setLocalSnapshots] = useState(() =>
     Array.isArray(currentTable?.handStackSnapshots) ? currentTable.handStackSnapshots : []
   )
-  const [showSnapshotList, setShowSnapshotList] = useState(false)
-  const [isStartingHand, setIsStartingHand] = useState(false)
 
   useEffect(() => {
-    const initialSnapshots = Array.isArray(currentTable?.handStackSnapshots)
-      ? currentTable.handStackSnapshots
-      : []
+    const initialSnapshots = handSnapshots
     setLocalSnapshots(initialSnapshots)
     const lastHand = initialSnapshots.length
       ? initialSnapshots[initialSnapshots.length - 1].hand || initialSnapshots.length
       : null
     latestHandRef.current = lastHand
-  }, [tableId, currentTable?.handStackSnapshots])
+  }, [tableId, handSnapshots])
 
   useEffect(() => {
     if (!socket || !tableId) return undefined
@@ -324,39 +337,60 @@ const WRStartHandStacks = ({ table, tournament }) => {
       {tables.length > 1 && (
         <div style={{
           display: 'flex',
-          gap: '0.5rem',
+          alignItems: 'center',
+          gap: '0.75rem',
           marginBottom: '0.75rem',
-          overflowX: 'auto',
-          paddingBottom: '0.25rem'
+          flexWrap: 'wrap'
         }}>
-          {tables.map((tbl, index) => (
-            <button
-              key={tbl.id || index}
-              type="button"
-              onClick={() => setSelectedTableIndex(index)}
-              style={{
-                padding: '0.5rem 1rem',
-                borderRadius: '6px',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s ease',
-                backgroundColor: selectedTableIndex === index 
-                  ? 'rgba(76, 201, 240, 0.25)' 
-                  : 'rgba(255, 255, 255, 0.05)',
-                color: selectedTableIndex === index 
-                  ? '#4cc9f0' 
-                  : '#aaa',
-                borderBottom: selectedTableIndex === index 
-                  ? '2px solid #4cc9f0' 
-                  : '2px solid transparent'
-              }}
-            >
-              Table {tbl.id || index + 1}
-            </button>
-          ))}
+          <label style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            fontSize: '0.85rem',
+            color: '#b7c6ff'
+          }}>
+            <input
+              type="checkbox"
+              checked={allowCarousel}
+              onChange={(event) => setAllowCarousel(event.target.checked)}
+            />
+            Allow carousel (10s)
+          </label>
+          <div style={{
+            display: 'flex',
+            gap: '0.5rem',
+            overflowX: 'auto',
+            paddingBottom: '0.25rem'
+          }}>
+            {tables.map((tbl, index) => (
+              <button
+                key={tbl.id || index}
+                type="button"
+                onClick={() => setSelectedTableIndex(index)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: selectedTableIndex === index 
+                    ? 'rgba(76, 201, 240, 0.25)' 
+                    : 'rgba(255, 255, 255, 0.05)',
+                  color: selectedTableIndex === index 
+                    ? '#4cc9f0' 
+                    : '#aaa',
+                  borderBottom: selectedTableIndex === index 
+                    ? '2px solid #4cc9f0' 
+                    : '2px solid transparent'
+                }}
+              >
+                Table {tbl.id || index + 1}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       <div style={{ height: 260, marginBottom: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.02)', borderRadius: 6, padding: '0.5rem' }}>

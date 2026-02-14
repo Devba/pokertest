@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Container from '../components/layout/Container';
 import axios from 'axios';
@@ -31,6 +31,10 @@ const AdminMonitor = () => {
   const [nextRefreshTime, setNextRefreshTime] = useState(null);
   const [countdownSeconds, setCountdownSeconds] = useState(0);
   const [lowPowerMode, setLowPowerMode] = useState(false);
+  const [startHandCooldownUntil, setStartHandCooldownUntil] = useState(0);
+  const refreshInFlightRef = useRef(false);
+  const selectInFlightRef = useRef(false);
+  const startHandCooldownTimeoutRef = useRef(null);
 
   // Cleanup socket connections on mount/unmount to reduce server load
   useEffect(() => {
@@ -41,11 +45,14 @@ const AdminMonitor = () => {
         window.socket.emit('CS_DISCONNECT');
         window.socket.close();
       }
+      if (startHandCooldownTimeoutRef.current) {
+        clearTimeout(startHandCooldownTimeoutRef.current);
+      }
     };
   }, []);
 
   // Fetch all tournaments
-  const fetchTournaments = async () => {
+  const fetchTournaments = useCallback(async () => {
     try {
       const { data } = await axios.get('/api/tournaments/list');
       if (data.success) {
@@ -60,10 +67,10 @@ const AdminMonitor = () => {
         setAutoRefresh(false);
       }
     }
-  };
+  }, [refreshInterval]);
 
   // Fetch tournament details
-  const fetchTournamentDetails = async (tournamentId) => {
+  const fetchTournamentDetails = useCallback(async (tournamentId) => {
     try {
       const { data } = await axios.get(`/api/tournaments/${tournamentId}`);
       if (data.success) {
@@ -76,10 +83,10 @@ const AdminMonitor = () => {
         setAutoRefresh(false);
       }
     }
-  };
+  }, []);
 
   // Fetch leaderboard
-  const fetchLeaderboard = async (tournamentId) => {
+  const fetchLeaderboard = useCallback(async (tournamentId) => {
     try {
       const { data } = await axios.get(`/api/tournaments/${tournamentId}/leaderboard`);
       if (data.success) {
@@ -92,22 +99,47 @@ const AdminMonitor = () => {
         setAutoRefresh(false);
       }
     }
-  };
+  }, []);
+
+  const refreshSequence = useCallback(async (tournamentId) => {
+    if (refreshInFlightRef.current) return;
+    refreshInFlightRef.current = true;
+
+    try {
+      await fetchTournaments();
+      if (tournamentId) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await fetchTournamentDetails(tournamentId);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await fetchLeaderboard(tournamentId);
+      }
+    } finally {
+      refreshInFlightRef.current = false;
+    }
+  }, [fetchTournaments, fetchTournamentDetails, fetchLeaderboard]);
 
   const handleStartHand = async (tableId) => {
     if (!selectedTournament) return;
+    const cooldownSeconds = Math.max(0, Math.ceil((startHandCooldownUntil - Date.now()) / 1000));
+    if (cooldownSeconds > 0) return;
 
     try {
       await axios.post(`/api/tournaments/${selectedTournament}/tables/${tableId}/start-hand`);
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      await fetchTournamentDetails(selectedTournament);
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      await fetchLeaderboard(selectedTournament);
+      await refreshSequence(selectedTournament);
     } catch (error) {
       console.error('Error starting hand:', error);
       if (error.response?.status === 429) {
         console.warn('Rate limited - slowing down requests');
         setAutoRefresh(false);
+        const cooldownMs = 30000;
+        const nextAllowedAt = Date.now() + cooldownMs;
+        setStartHandCooldownUntil(nextAllowedAt);
+        if (startHandCooldownTimeoutRef.current) {
+          clearTimeout(startHandCooldownTimeoutRef.current);
+        }
+        startHandCooldownTimeoutRef.current = setTimeout(() => {
+          setStartHandCooldownUntil(0);
+        }, cooldownMs);
       }
     }
   };
@@ -115,23 +147,17 @@ const AdminMonitor = () => {
   // Select tournament
   const handleSelectTournament = async (tournamentId) => {
     setSelectedTournament(tournamentId);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    await fetchTournamentDetails(tournamentId);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    await fetchLeaderboard(tournamentId);
+    if (selectInFlightRef.current) return;
+    selectInFlightRef.current = true;
+    await refreshSequence(tournamentId);
+    selectInFlightRef.current = false;
   };
 
   // Auto-refresh effect
   useEffect(() => {
     // Initial fetch with delays to avoid rate limiting
     const initialFetch = async () => {
-      await fetchTournaments();
-      if (selectedTournament) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        await fetchTournamentDetails(selectedTournament);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        await fetchLeaderboard(selectedTournament);
-      }
+      await refreshSequence(selectedTournament);
     };
     
     initialFetch();
@@ -140,19 +166,12 @@ const AdminMonitor = () => {
       const actualInterval = lowPowerMode ? refreshInterval * 2 : refreshInterval;
       setNextRefreshTime(new Date(Date.now() + actualInterval * 1000));
       const interval = setInterval(async () => {
-        await fetchTournaments();
-        if (selectedTournament) {
-          // Add delay between requests to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 500));
-          await fetchTournamentDetails(selectedTournament);
-          await new Promise(resolve => setTimeout(resolve, 500));
-          await fetchLeaderboard(selectedTournament);
-        }
+        await refreshSequence(selectedTournament);
       }, actualInterval * 1000);
       
       return () => clearInterval(interval);
     }
-  }, [autoRefresh, refreshInterval, selectedTournament, lowPowerMode]);
+  }, [autoRefresh, refreshInterval, selectedTournament, lowPowerMode, refreshSequence]);
 
   // Countdown timer effect
   useEffect(() => {
@@ -184,7 +203,9 @@ const AdminMonitor = () => {
     <Container>
       <div className="admin-monitor">
         <div className="admin-header">
-          <h1>🎰 Tournament Admin Monitor</h1>
+          <h1>
+            <span role="img" aria-label="slots">🎰</span> Tournament Admin Monitor
+          </h1>
           <div className="header-controls">
             <button onClick={() => navigate('/tournament-lobby')} className="btn-back">
               ← Back to Lobby
@@ -217,7 +238,7 @@ const AdminMonitor = () => {
                 Low Power Mode
               </label>
               <button onClick={fetchTournaments} className="btn-refresh">
-                🔄 Refresh Now
+                <span role="img" aria-label="refresh">🔄</span> Refresh Now
               </button>
               {autoRefresh && countdownSeconds > 0 && (
                 <div className="countdown" style={{ color: '#00CCFF' }}>
@@ -254,8 +275,12 @@ const AdminMonitor = () => {
                   </div>
                   <div className="tournament-name">{t.name}</div>
                   <div className="tournament-stats">
-                    <div>👥 {t.registeredPlayers}/{t.maxPlayers}</div>
-                    <div>🎚️ Level {t.blindLevel}</div>
+                    <div>
+                      <span role="img" aria-label="players">👥</span> {t.registeredPlayers}/{t.maxPlayers}
+                    </div>
+                    <div>
+                      <span role="img" aria-label="level">🎚️</span> Level {t.blindLevel}
+                    </div>
                   </div>
                   <div className="tournament-time">
                     Started: {formatTime(t.startTime)}
@@ -270,7 +295,9 @@ const AdminMonitor = () => {
               <h2>Tournament #{selectedTournament} Details</h2>
               
               <div className="info-section">
-                <h3>📊 Overview</h3>
+                <h3>
+                  <span role="img" aria-label="chart">📊</span> Overview
+                </h3>
                 <div className="info-grid">
                   <div className="info-item">
                     <span className="label">Status:</span>
@@ -304,7 +331,9 @@ const AdminMonitor = () => {
               </div>
 
               <div className="info-section">
-                <h3>🎲 Tables Status</h3>
+                <h3>
+                  <span role="img" aria-label="dice">🎲</span> Tables Status
+                </h3>
                 <div className="tables-grid">
                   {tournamentDetails.tables?.map((table) => (
                     <div key={table.id} className="table-card">
@@ -336,7 +365,15 @@ const AdminMonitor = () => {
                             <span className="stat-value" style={{
                               color: table.handOver ? '#888' : '#00FF00'
                             }}>
-                              {table.handOver ? '⏸ Idle' : '▶ Playing'}
+                              {table.handOver ? (
+                                <>
+                                  <span role="img" aria-label="paused">⏸</span> Idle
+                                </>
+                              ) : (
+                                <>
+                                  <span role="img" aria-label="playing">▶</span> Playing
+                                </>
+                              )}
                             </span>
                           </div>
                         )}
@@ -351,20 +388,37 @@ const AdminMonitor = () => {
                         />
                       </div>
                       <div className="table-actions">
-                        <button
-                          className="btn-start-hand"
-                          onClick={() => handleStartHand(table.id)}
-                          disabled={!table.handOver || table.activePlayers < 2}
-                          title={
-                            table.activePlayers < 2
+                        {(() => {
+                          const cooldownSeconds = Math.max(
+                            0,
+                            Math.ceil((startHandCooldownUntil - Date.now()) / 1000)
+                          );
+                          const isDisabled = !table.handOver || table.activePlayers < 2 || cooldownSeconds > 0;
+                          const titleText = cooldownSeconds > 0
+                            ? `Rate limited - wait ${cooldownSeconds}s`
+                            : table.activePlayers < 2
                               ? 'Need at least 2 active players'
                               : table.handOver
                                 ? 'Start new hand'
-                                : 'Hand already in progress'
-                          }
-                        >
-                          ▶ Start Hand
-                        </button>
+                                : 'Hand already in progress';
+
+                          return (
+                            <button
+                              className="btn-start-hand"
+                              onClick={() => handleStartHand(table.id)}
+                              disabled={isDisabled}
+                              title={titleText}
+                            >
+                              {cooldownSeconds > 0 ? (
+                                `Wait ${cooldownSeconds}s`
+                              ) : (
+                                <>
+                                  <span role="img" aria-label="start">▶</span> Start Hand
+                                </>
+                              )}
+                            </button>
+                          );
+                        })()}
                       </div>
                     </div>
                   ))}
@@ -372,7 +426,9 @@ const AdminMonitor = () => {
               </div>
 
               <div className="info-section">
-                <h3>🏆 Leaderboard (Top 10)</h3>
+                <h3>
+                  <span role="img" aria-label="trophy">🏆</span> Leaderboard (Top 10)
+                </h3>
                 <div className="leaderboard-table">
                   <table>
                     <thead>
@@ -385,8 +441,8 @@ const AdminMonitor = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {leaderboard.slice(0, 10).map((player) => (
-                        <tr key={player.walletAddress}>
+                      {leaderboard.slice(0, 10).map((player, idx) => (
+                        <tr key={player.walletAddress || player.id || player.name || `${idx}-${player.position}`}>
                           <td className="position">#{player.position}</td>
                           <td className="name">{player.name}</td>
                           <td className="chips">{Math.round(player.chips).toLocaleString()}</td>
@@ -405,7 +461,9 @@ const AdminMonitor = () => {
 
               {tournamentDetails.eliminatedPlayers?.length > 0 && (
                 <div className="info-section">
-                  <h3>💀 Recently Eliminated ({tournamentDetails.eliminatedPlayers.length})</h3>
+                  <h3>
+                    <span role="img" aria-label="skull">💀</span> Recently Eliminated ({tournamentDetails.eliminatedPlayers.length})
+                  </h3>
                   <div className="eliminated-list">
                     {tournamentDetails.eliminatedPlayers.slice(-5).reverse().map((player, idx) => (
                       <div key={idx} className="eliminated-item">
@@ -424,7 +482,9 @@ const AdminMonitor = () => {
           {!tournamentDetails && (
             <div className="details-panel empty">
               <div className="empty-state">
-                <h2>👈 Select a tournament</h2>
+                <h2>
+                  <span role="img" aria-label="pointer">👈</span> Select a tournament
+                </h2>
                 <p>Click on a tournament card to view its details</p>
               </div>
             </div>
