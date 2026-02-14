@@ -313,6 +313,33 @@
             transition: width 0.3s;
           }
         }
+
+        .table-actions {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 10px;
+
+          .btn-start-hand {
+            background: #ff9f43;
+            color: #1b1b1b;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, opacity 0.2s ease;
+
+            &:hover {
+              background: #ffb15c;
+            }
+
+            &:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+            }
+          }
+        }
       }
     }
 

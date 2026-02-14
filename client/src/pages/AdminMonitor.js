@@ -94,6 +94,24 @@ const AdminMonitor = () => {
     }
   };
 
+  const handleStartHand = async (tableId) => {
+    if (!selectedTournament) return;
+
+    try {
+      await axios.post(`/api/tournaments/${selectedTournament}/tables/${tableId}/start-hand`);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await fetchTournamentDetails(selectedTournament);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await fetchLeaderboard(selectedTournament);
+    } catch (error) {
+      console.error('Error starting hand:', error);
+      if (error.response?.status === 429) {
+        console.warn('Rate limited - slowing down requests');
+        setAutoRefresh(false);
+      }
+    }
+  };
+
   // Select tournament
   const handleSelectTournament = async (tournamentId) => {
     setSelectedTournament(tournamentId);
@@ -331,6 +349,22 @@ const AdminMonitor = () => {
                             backgroundColor: table.activePlayers > 0 ? '#00FF00' : '#FF0000'
                           }}
                         />
+                      </div>
+                      <div className="table-actions">
+                        <button
+                          className="btn-start-hand"
+                          onClick={() => handleStartHand(table.id)}
+                          disabled={!table.handOver || table.activePlayers < 2}
+                          title={
+                            table.activePlayers < 2
+                              ? 'Need at least 2 active players'
+                              : table.handOver
+                                ? 'Start new hand'
+                                : 'Hand already in progress'
+                          }
+                        >
+                          ▶ Start Hand
+                        </button>
                       </div>
                     </div>
                   ))}

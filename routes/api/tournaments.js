@@ -3,10 +3,12 @@ const router = express.Router();
 
 // This will be set after socket initialization
 let tournamentManager = null;
+let botManager = null;
 
 // Initialize with socket module
 const initTournamentRoutes = (socketModule) => {
   tournamentManager = socketModule.tournamentManager;
+  botManager = socketModule.botManager;
 };
 
 // @route   POST /api/tournaments/create
@@ -155,6 +157,44 @@ router.get('/:id', (req, res) => {
     });
   } catch (error) {
     console.error('Error getting tournament:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// @route   POST /api/tournaments/:id/tables/:tableId/start-hand
+// @desc    Start a new hand on a specific table
+// @access  Public
+router.post('/:id/tables/:tableId/start-hand', (req, res) => {
+  try {
+    const { id, tableId } = req.params;
+
+    if (!tournamentManager || !botManager) {
+      return res.status(500).json({ error: 'Tournament manager not initialized' });
+    }
+
+    const tournament = tournamentManager.getTournament(parseInt(id));
+    if (!tournament) {
+      return res.status(404).json({ error: 'Tournament not found' });
+    }
+
+    const table = tournament.tables?.find((t) => String(t.id) === String(tableId));
+    if (!table) {
+      return res.status(404).json({ error: 'Table not found' });
+    }
+
+    if (!table.handOver) {
+      return res.status(409).json({ error: 'Hand already in progress' });
+    }
+
+    botManager.handleHandOver(table, table.id);
+
+    res.json({
+      success: true,
+      message: 'Hand starting',
+      tableId: table.id
+    });
+  } catch (error) {
+    console.error('Error starting hand:', error);
     res.status(500).json({ error: error.message });
   }
 });

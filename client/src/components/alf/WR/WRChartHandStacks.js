@@ -11,6 +11,7 @@ import {
   Legend
 } from 'chart.js'
 import socketContext from '../../../context/websocket/socketContext'
+import axios from 'axios'
 import { SC_TABLE_UPDATED } from '../../../pokergame/actions'
 
 Chart.register(
@@ -74,6 +75,7 @@ const WRStartHandStacks = ({ table, tournament }) => {
     Array.isArray(currentTable?.handStackSnapshots) ? currentTable.handStackSnapshots : []
   )
   const [showSnapshotList, setShowSnapshotList] = useState(false)
+  const [isStartingHand, setIsStartingHand] = useState(false)
 
   useEffect(() => {
     const initialSnapshots = Array.isArray(currentTable?.handStackSnapshots)
@@ -254,6 +256,27 @@ const WRStartHandStacks = ({ table, tournament }) => {
     }
   }, [chartData, chartOptions])
 
+  const canStartHand = Boolean(
+    tournament?.id &&
+    tableId &&
+    (currentTable?.handOver !== false) &&
+    (typeof currentTable?.activePlayers !== 'number' || currentTable.activePlayers >= 2)
+  )
+
+  const handleStartHand = async () => {
+    if (!tournament?.id || !tableId) return
+    if (!canStartHand || isStartingHand) return
+
+    try {
+      setIsStartingHand(true)
+      await axios.post(`/api/tournaments/${tournament.id}/tables/${tableId}/start-hand`)
+    } catch (error) {
+      console.error('Error starting hand:', error)
+    } finally {
+      setIsStartingHand(false)
+    }
+  }
+
   if (!tables.length) {
     return <div style={{ color: '#888', fontSize: '0.95rem', marginTop: '0.5rem' }}>No tables available</div>
   }
@@ -268,7 +291,34 @@ const WRStartHandStacks = ({ table, tournament }) => {
 
   return (
     <div style={{ marginTop: '1rem', backgroundColor: 'rgba(7, 10, 29, 0.65)', padding: '0.75rem', borderRadius: 8 }}>
-      <div style={{ marginBottom: '0.5rem', color: '#ccc', fontWeight: 600 }}>Start-Hand Stacks</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <div style={{ color: '#ccc', fontWeight: 600 }}>Start-Hand Stacks</div>
+        <button
+          type="button"
+          onClick={handleStartHand}
+          disabled={!canStartHand || isStartingHand}
+          style={{
+            backgroundColor: canStartHand ? '#ff9f43' : 'rgba(255, 159, 67, 0.4)',
+            color: '#1b1b1b',
+            border: 'none',
+            padding: '0.35rem 0.65rem',
+            borderRadius: 6,
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            cursor: canStartHand ? 'pointer' : 'not-allowed',
+            opacity: isStartingHand ? 0.7 : 1
+          }}
+          title={
+            !tournament?.id
+              ? 'Only available for tournament tables'
+              : currentTable?.handOver === false
+                ? 'Hand already in progress'
+                : 'Start new hand'
+          }
+        >
+          {isStartingHand ? 'Starting...' : 'Start Hand'}
+        </button>
+      </div>
       
       {/* Table Tabs */}
       {tables.length > 1 && (
