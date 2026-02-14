@@ -223,12 +223,13 @@ useEffect(() => {
   const seatDisplaySlots = [
     { top: '-30%', left: '50%', scale: 0.66, origin: 'top center' },
     { top: '-8%', right: '22%', scale: 0.66, origin: 'top center' },
-    { top: '14%', right: '6%', scale: 0.66, origin: 'top right' },
-    { top: '42%', right: '1%', scale: 0.66, origin: 'top right' },
+    { top: '28%', right: '15%', scale: 0.66, origin: 'top right' },
+    { top: '62%', right: '11%', scale: 0.66, origin: 'top right' },
     { bottom: '-8%', left: '70%', scale: 0.99, origin: 'bottom center', zIndex: '120' },
-    { top: '42%', left: '1%', scale: 0.66, origin: 'top left' },
-    { top: '14%', left: '6%', scale: 0.66, origin: 'top left' },
+    { top: '62%', left: '15%', scale: 0.66, origin: 'top left' },
+    { top: '28%', left: '11%', scale: 0.66, origin: 'top left' },
     { top: '-8%', left: '22%', scale: 0.66, origin: 'top center' },
+
     { top: '-30%', left: '34%', scale: 0.66, origin: 'top center' }
   ]
 
@@ -239,6 +240,8 @@ useEffect(() => {
     const bottomAnchorSeat = mode === 'player' && seatId ? seatId : 4
     return normalizeSeatNumber(bottomAnchorSeat + (displayIndex - HERO_DISPLAY_INDEX), maxSeats)
   }
+
+  const [isGameUIExpanded, setIsGameUIExpanded] = useState(true)
 
   return (
     <>
@@ -278,7 +281,7 @@ useEffect(() => {
 
           {/* User info */}
             <PositionedUISlot
-              top="7vh"
+              bottom="2vh"
               left="1.5rem"
               scale="0.25"
               style={{ zIndex: '50', display: 'flex', gap: '0.5rem' }}
@@ -341,7 +344,7 @@ useEffect(() => {
                   bottom="2vh"
                   left="19.5rem"
                   scale="0.65"
-                  style={{ zIndex: '150' }}
+                  style={{ zIndex: '150', maxWidth: '25vw' }}
                 >
                   <TournInfoPanel tournamentInfo={tournamentInfo} currentTable={currentTable} />
                 </PositionedUISlot>
@@ -386,27 +389,14 @@ useEffect(() => {
           
 
 
-                
-              
-              
-             
-
-              
-              
-              
-
-
-             
-
-            
             
             
               <PositionedUISlot
                 width="100%"
-                bottom="4%"
+                bottom="22%"
                 left="50%"
                 origin="center center"
-                scale="0.20"
+                scale="0.17"
                 style={{
                   display: 'flex',
                   textAlign: 'center',
@@ -431,7 +421,8 @@ useEffect(() => {
                   </>
                 )}
               </PositionedUISlot>
-              <PositionedUISlot zIndex="1500" top="-15%" scale="1.60" origin="top center">
+            {/*info hides behind table*/}
+              <PositionedUISlot zIndex="15000" top="-15%" scale="1.60" origin="top center">
                 {messages && messages.length > 0 && (
                   <>
                     <InfoPill>{messages[messages.length - 1]}</InfoPill>
@@ -466,15 +457,33 @@ useEffect(() => {
           )}
         </PokerTableWrapper>
 
-{/* GameUI*/}               
+{/* GameUI - Collapsible */}               
             <PositionedUISlot 
-            
-              bottom="10vh"
-                  left="19.5rem"
-                  scale="0.65"
-                  style={{ zIndex: '150' }}
+              bottom={isGameUIExpanded ? "10vh" : "2vh"}
+              left="19.5rem"
+              scale="0.65"
+              style={{ 
+                zIndex: '150', 
+                maxWidth: isGameUIExpanded ? '25vw' : 'auto',
+                transition: 'all 0.3s ease'
+              }}
             >
-                 {currentTable &&
+              <div 
+                onClick={() => setIsGameUIExpanded(!isGameUIExpanded)}
+                style={{
+                  cursor: 'pointer',
+                  padding: '0.5rem',
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  borderRadius: '8px',
+                  marginBottom: '0.5rem',
+                  textAlign: 'center',
+                  color: 'white',
+                  fontSize: '0.9rem'
+                }}
+              >
+                {isGameUIExpanded ? '▼ Collapse' : '▲ Expand'}
+              </div>
+              {isGameUIExpanded && currentTable &&
                 currentTable.seats[seatId] &&
                 currentTable.seats[seatId].turn && 
                 mode==='player' &&

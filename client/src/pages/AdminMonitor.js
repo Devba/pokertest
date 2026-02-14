@@ -26,10 +26,23 @@ const AdminMonitor = () => {
   const [tournamentDetails, setTournamentDetails] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [autoRefresh, setAutoRefresh] = useState(false);
-  const [refreshInterval, setRefreshInterval] = useState(30);
+  const [refreshInterval, setRefreshInterval] = useState(60);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [nextRefreshTime, setNextRefreshTime] = useState(null);
   const [countdownSeconds, setCountdownSeconds] = useState(0);
+  const [lowPowerMode, setLowPowerMode] = useState(false);
+
+  // Cleanup socket connections on mount/unmount to reduce server load
+  useEffect(() => {
+    return () => {
+      // Close any background socket connections when leaving admin monitor
+      if (window.socket && window.socket.connected) {
+        console.log('Closing socket connections from admin monitor');
+        window.socket.emit('CS_DISCONNECT');
+        window.socket.close();
+      }
+    };
+  }, []);
 
   // Fetch all tournaments
   const fetchTournaments = async () => {
@@ -106,7 +119,8 @@ const AdminMonitor = () => {
     initialFetch();
     
     if (autoRefresh) {
-      setNextRefreshTime(new Date(Date.now() + refreshInterval * 1000));
+      const actualInterval = lowPowerMode ? refreshInterval * 2 : refreshInterval;
+      setNextRefreshTime(new Date(Date.now() + actualInterval * 1000));
       const interval = setInterval(async () => {
         await fetchTournaments();
         if (selectedTournament) {
@@ -116,11 +130,11 @@ const AdminMonitor = () => {
           await new Promise(resolve => setTimeout(resolve, 500));
           await fetchLeaderboard(selectedTournament);
         }
-      }, refreshInterval * 1000);
+      }, actualInterval * 1000);
       
       return () => clearInterval(interval);
     }
-  }, [autoRefresh, refreshInterval, selectedTournament]);
+  }, [autoRefresh, refreshInterval, selectedTournament, lowPowerMode]);
 
   // Countdown timer effect
   useEffect(() => {
@@ -171,10 +185,19 @@ const AdminMonitor = () => {
                 onChange={(e) => setRefreshInterval(Number(e.target.value))}
                 disabled={!autoRefresh}
               >
-                <option value="30">30s</option>
                 <option value="60">60s</option>
                 <option value="120">2m</option>
+                <option value="300">5m</option>
               </select>
+              <label style={{ marginLeft: '15px' }}>
+                <input
+                  type="checkbox"
+                  checked={lowPowerMode}
+                  onChange={(e) => setLowPowerMode(e.target.checked)}
+                  disabled={!autoRefresh}
+                />
+                Low Power Mode
+              </label>
               <button onClick={fetchTournaments} className="btn-refresh">
                 🔄 Refresh Now
               </button>
