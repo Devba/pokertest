@@ -542,9 +542,17 @@ getMinutesPerLevel(blindStructure) {
     const minTablesNeeded = Math.ceil(totalPlayers / maxCapacity);
     
     if (minTablesNeeded < numTables) {
-      console.log(`🔄 Can consolidate from ${numTables} to ${minTablesNeeded} tables`);
-      this.consolidateTables(tournament, minTablesNeeded);
-      return;
+      const hasActiveHands = tournament.tables.some(table => !table.handOver);
+
+      if (hasActiveHands) {
+        console.log(`⏸️  Deferring consolidation for tournament ${tournamentId} - one or more tables are mid-hand`);
+      } else {
+        console.log(`🔄 Can consolidate from ${numTables} to ${minTablesNeeded} tables`);
+        this.consolidateTables(tournament, minTablesNeeded);
+        this.broadcastTournamentUpdate(tournamentId);
+        this.startTablesReadyToPlay(tournamentId);
+        return;
+      }
     }
 
     // Balance existing tables - move players from largest to smallest
@@ -565,7 +573,10 @@ getMinutesPerLevel(blindStructure) {
       const smallestCount = smallestTable.activePlayers().length;
       
       // Only move if difference is 2 or more players
-      if (largestCount - smallestCount >= 2 && largestCount > maxPlayersPerTable) {
+      if (largestCount - smallestCount >= 2 &&
+          largestCount > maxPlayersPerTable &&
+          largestTable.handOver &&
+          smallestTable.handOver) {
         console.log(`🔀 Moving player from table ${largestTable.id} (${largestCount} players) to ${smallestTable.id} (${smallestCount} players)`);
         
         // Move one player from largest to smallest
@@ -576,6 +587,9 @@ getMinutesPerLevel(blindStructure) {
           this.broadcastTableState(largestTable);
           this.broadcastTableState(smallestTable);
         }
+      } else if (largestCount - smallestCount >= 2 &&
+        (!largestTable.handOver || !smallestTable.handOver)) {
+        console.log(`⏸️  Deferring rebalance move between ${largestTable.id} and ${smallestTable.id} - one table is mid-hand`);
       }
     } while (moved);
     
@@ -692,16 +706,28 @@ getMinutesPerLevel(blindStructure) {
     if (fromPlayers.length === 0) return false;
     
     // Try to find a player that's not on button/blinds
-    let seatToMove = specificSocketId 
+    let seatToMove = specificSocketId
       ? fromPlayers.find(s => s.player.socketId === specificSocketId)
-      : fromPlayers.find(s => 
-          s.id !== fromTable.button && 
-          s.id !== fromTable.smallBlind && 
-          s.id !== fromTable.bigBlind
+      : fromPlayers.find(s =>
+          s.id !== fromTable.button &&
+          s.id !== fromTable.smallBlind &&
+          s.id !== fromTable.bigBlind &&
+          (fromTable.handOver || s.id !== fromTable.turn)
         );
+
+    if (specificSocketId && !seatToMove) {
+      console.warn(`⚠️  Could not find requested player ${specificSocketId} on table ${fromTable.id}`);
+      return false;
+    }
     
     // If all are on button/blinds, just take the first one
-    if (!seatToMove) seatToMove = fromPlayers[0];
+    if (!seatToMove) {
+      if (!fromTable.handOver) {
+        console.log(`⏸️  Deferring move from table ${fromTable.id} - no safe seat available during active hand`);
+        return false;
+      }
+      seatToMove = fromPlayers[0];
+    }
     
     const player = seatToMove.player;
     const currentStack = seatToMove.stack;

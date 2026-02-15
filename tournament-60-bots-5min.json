@@ -1,12 +1,12 @@
 {
   "tournament": {
-    "name": "60 Bots Championship (5min Registration)",
+    "name": "60 Bots Championship (15min Registration)",
     "buyIn": 0,
     "maxPlayers": 80,
     "startingChips": 5000,
     "blindStructure": "normal",
     "startTime": "immediate",
-    "registrationPeriod": 5,
+    "registrationPeriod": 15,
     "creatorWallet": "bot-system"
   },
   "bots": {

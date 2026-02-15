@@ -132,6 +132,33 @@ class Table {
     }
     return current;
   }
+  nextUnfoldedPlayerWithChips(player, places = 1) {
+    const eligibleSeats = Object.values(this.seats).filter(
+      (seat) => seat && !seat.folded && !seat.sittingOut && seat.stack > 0,
+    );
+
+    if (eligibleSeats.length === 0) {
+      return null;
+    }
+
+    let i = 0;
+    let current = player;
+    let safetyCounter = 0;
+    const maxIterations = this.maxPlayers * 3;
+
+    while (i < places && safetyCounter < maxIterations) {
+      current = current === this.maxPlayers ? 1 : current + 1;
+      const seat = this.seats[current];
+
+      if (seat && !seat.folded && !seat.sittingOut && seat.stack > 0) {
+        i++;
+      }
+
+      safetyCounter++;
+    }
+
+    return i === places ? current : null;
+  }
   nextActivePlayer(player, places) {
     let i = 0;
     let current = player;
@@ -366,9 +393,9 @@ class Table {
       this.dealNextStreet();
       this.turn = this.handOver
         ? null
-        : this.nextUnfoldedPlayer(this.button, 1);
+        : this.nextUnfoldedPlayerWithChips(this.button, 1);
     } else {
-      this.turn = this.nextUnfoldedPlayer(lastTurn, 1);
+      this.turn = this.nextUnfoldedPlayerWithChips(lastTurn, 1);
     }
 
     for (let i = 1; i <= this.maxPlayers; i++) {

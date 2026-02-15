@@ -15,8 +15,8 @@ const axios = require('axios');
 const BASE_URL = 'http://localhost:7777';
 const CONFIG_PATH = path.join(__dirname, 'tournament-60-bots-5min.json');
 const DEFAULT_BOT_STRATEGIES = ['tight', 'loose', 'aggressive', 'passive', 'balanced'];
-const INTERVAL_MS = 10 * 60 * 1000;
-
+const INTERVAL_MS = 30 * 60 * 1000; // cambiamos a 30 minutos para dar más tiempo a los torneos a desarrollarse y evitar solapamientos excesivos. 30 minutos es un buen equilibrio para torneos rápidos como este, permitiendo que la mayoría de los torneos terminen antes de que el siguiente comience. Además, esto reduce la carga en el sistema al no tener tantos torneos activos al mismo tiempo.
+console.log('🕒 60 Bots Auto Launcher (every 30 minutes)');
 let launchCount = 0;
 
 function loadConfig() {

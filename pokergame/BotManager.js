@@ -157,20 +157,61 @@ class BotManager {
       return;
     }
     
-    if (!table.turn) {
-      console.log(`⚠️  checkAndActForBot: no turn set on table ${tableId}`);
-      return;
-    }
-    
     if (table.handOver) {
       console.log(`⚠️  checkAndActForBot: hand is over on table ${tableId}`);
       return;
     }
 
-    const currentSeat = table.seats[table.turn];
+    if (!table.turn) {
+      console.log(`⚠️  checkAndActForBot: no turn set on table ${tableId}`);
+
+      const unfolded = typeof table.unfoldedPlayers === 'function'
+        ? table.unfoldedPlayers()
+        : [];
+
+      if (unfolded.length === 0) {
+        console.log(`⚠️  Table ${tableId}: no unfolded players available to recover turn`);
+        return;
+      }
+
+      table.turn = unfolded[0].id;
+      for (let i = 1; i <= table.maxPlayers; i++) {
+        if (table.seats[i]) {
+          table.seats[i].turn = i === table.turn;
+        }
+      }
+
+      console.log(`🔧 Table ${tableId}: recovered missing turn -> seat ${table.turn}`);
+    }
+
+    let currentSeat = table.seats[table.turn];
     if (!currentSeat || !currentSeat.player) {
       console.log(`⚠️  checkAndActForBot: no player in seat ${table.turn} on table ${tableId}`);
-      return;
+
+      const unfolded = typeof table.unfoldedPlayers === 'function'
+        ? table.unfoldedPlayers()
+        : [];
+
+      if (unfolded.length <= 1) {
+        console.log(`⚠️  Table ${tableId}: cannot recover turn from empty seat; unfolded players=${unfolded.length}`);
+        return;
+      }
+
+      const replacementSeat = unfolded[0];
+      table.turn = replacementSeat.id;
+      for (let i = 1; i <= table.maxPlayers; i++) {
+        if (table.seats[i]) {
+          table.seats[i].turn = i === table.turn;
+        }
+      }
+
+      currentSeat = table.seats[table.turn];
+      if (!currentSeat || !currentSeat.player) {
+        console.log(`⚠️  Table ${tableId}: failed to recover turn to valid seat`);
+        return;
+      }
+
+      console.log(`🔧 Table ${tableId}: recovered turn from empty seat -> seat ${table.turn}`);
     }
 
     const player = currentSeat.player;
